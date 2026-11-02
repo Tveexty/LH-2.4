@@ -14,11 +14,11 @@ logger = get_logger(__name__)
 class GitHubUpdaterAndDiagnostics:
     """
     Модуль автообновления с GitHub, проверки новой версии,
-    перехода на GitHub, информации «О приложении» и полной Диагностики приложения (v2.6).
+    перехода на GitHub, информации «О приложении» и полной Диагностики приложения (v2.9).
     """
 
-    CURRENT_VERSION = "2.6.0"
-    BUILD_NUMBER = "2026.11.02-PRO"
+    CURRENT_VERSION = "2.9.0"
+    BUILD_NUMBER = "2026.11.02-LUMA-2.9"
     DEFAULT_GITHUB_REPO = "https://github.com/launcher-hab/LauncherHab"
 
     def __init__(self, ui_core):
@@ -30,8 +30,8 @@ class GitHubUpdaterAndDiagnostics:
             getattr(self.core.theme_manager, "github_auto_update", True)
         )
         self.last_check_time = "Не проверялось"
-        self.latest_remote_version = "2.6.0"
-        self.update_status_text = "Установлена актуальная версия 2.6.0"
+        self.latest_remote_version = "2.9.0"
+        self.update_status_text = "Установлена актуальная версия 2.9.0 (Luma Beta Core)"
         self.update_available = False
         self.last_diagnostics_results = []
 

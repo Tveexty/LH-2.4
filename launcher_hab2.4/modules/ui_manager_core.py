@@ -80,13 +80,15 @@ class UIManagerCore:
         from .ui_dialogs import UIDialogs
         from .dynamic_island import DynamicIslandManager
         from .diagnostics_updater import GitHubUpdaterAndDiagnostics
+        from .ipc_client import IPCClient
 
+        self.ipc_client = IPCClient()
         self.dynamic_island = DynamicIslandManager(self)
         self.diagnostics_updater = GitHubUpdaterAndDiagnostics(self)
         self.panels = UIPanels(self)
         self.dialogs = UIDialogs(self)
 
-        # Состояние разделов и стек навигации для функции «ПКМ = Назад» (v2.6)
+        # Состояние разделов и стек навигации для функции «ПКМ = Назад» (v2.9)
         self.active_section = "apps"  # "apps" | "tracker"
         self.current_filter = "all"
         self.navigation_stack = []
@@ -103,6 +105,17 @@ class UIManagerCore:
         self.loading_progress = None
 
         self.setup_hotkeys()
+
+    def open_tiles_dashboard(self, e=None):
+        """Открывает Третье окно — Дашборд интерактивных плиток Flet (ui_tiles_dashboard.py)."""
+        try:
+            if hasattr(self, "ipc_client") and self.ipc_client.launch_tiles_dashboard():
+                self.show_toast("🟢 Открыто Третье окно: Дашборд плиток Luma Beta 2.9 (127.0.0.1:49215)")
+            else:
+                self.show_toast("⚠️ Не удалось запустить ui_tiles_dashboard.py")
+        except Exception as exc:
+            logger.error(f"Ошибка запуска дашборда плиток: {exc}")
+            self.show_toast(f"Ошибка запуска дашборда: {exc}")
 
     def show_toast(self, message: str, title: str = None, force_show: bool = False):
         """

@@ -8,8 +8,28 @@ from .ui_dialogs_workspace import WorkspaceDialogMixin
 
 
 class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
-    # Полная история всех версий от 1.0 до 2.6
+    # Полная история всех версий от 1.0 до 2.9
     VERSION_HISTORY_1_0_TO_2_5 = {
+        "2.9": [
+            "🚀 LAUNCHER HAB 2.9 & LUMA BETA 2.9 — РЕЛИЗНАЯ АРХИТЕКТУРА HEADLESS CORE + LIVE TILES DASHBOARD",
+            "⚡ ФОНОВОЕ ЯДРО LUMA BETA 2.9 (127.0.0.1:49215) — асинхронный демон asyncio с поддержкой JSON-RPC 2.0 (ping, system.get_stats, apps.launch, apps.list, widgets.get_all, widgets.update, core.status, core.shutdown)",
+            "🛡️ ПОЛНОЦЕННЫЙ PROCESS MANAGER С WATCHDOG — запуск .exe, .lnk, системных утилит и URL, отслеживание PID, безопасное завершение и автоперезапуск процессов",
+            "🧩 РАСШИРЕННЫЙ WIDGET SERVICE 2.9 — SystemStatsWidget (CPU/RAM/Диски), AudioControlWidget (Громкость и Mute), QuickNoteWidget (UTF-8 JSON-кэш заметок и задач) и TimeUptimeWeatherWidget (Время, аптайм ОС и офлайн-погода)",
+            "🪟 ТРЕТЬЕ ОКНО: ДАШБОРД ИНТЕРАКТИВНЫХ ПЛИТОК (ui_tiles_dashboard.py) — плитки 1x1, 2x1 и 2x2 с эффектом Glassmorphism, быстрым запуском программ и выходом os._exit(0) без остановки фонового ядра",
+            "🔗 ЕДИНЫЙ МОДУЛЬ СВЯЗИ IPCCLIENT (modules/ipc_client.py) — автоматическая проверка и скрытый запуск ядра в фоне (CREATE_NO_WINDOW на Windows) при старте лаунчера",
+            "🔧 ИСПРАВЛЕНО ОКНО «ВЕРСИЯ СИСТЕМЫ / ЯДРО ОС (LUMA BETA)» В НАСТРОЙКАХ — устранена ошибка открытия вкладки, добавлен живой монитор сокета 127.0.0.1:49215 и кнопка открытия Дашборда плиток",
+        ],
+        "2.8": [
+            "🚀 LAUNCHER HAB 2.8 — ИНТЕГРАЦИЯ LIVE TILES И АУДИО/ПОГОДНЫХ ВИДЖЕТОВ ЯДРА",
+            "🎛️ АУДИО-ВИДЖЕТ ЯДРА — синхронизация громкости и статуса Mute между фоновым демоном и всеми окнами Flet",
+            "🌦️ ОФЛАЙН-БЕЗОПАСНЫЙ ВИДЖЕТ ВРЕМЕНИ, АПТАЙМА И ПОГОДЫ — кэширование погодных данных и точный подсчет времени работы ОС и демона",
+            "💾 АТОМАРНЫЙ UTF-8 CONFIG MANAGER — защита конфигурационных файлов и JSON-кэша заметок от повреждения при экстренном выключении",
+        ],
+        "2.7": [
+            "🚀 LAUNCHER HAB 2.7 — АРХИТЕКТУРА LUMA BETA (HEADLESS CORE + ТОНКИЙ GUI-КЛИЕНТ)",
+            "🔌 ПРОТОКОЛ JSON-RPC 2.0 ПОВЕРХ ЛОКАЛЬНОГО TCP-СОКЕТА 127.0.0.1:49215 — полная изоляция сбоев графического интерфейса от фонового ядра",
+            "📊 БАЗОВЫЙ СЕРВИС ВИДЖЕТОВ (BaseWidget, SystemStatsWidget, QuickNoteWidget, WidgetManager) — асинхронный сбор метрик без нагрузки на ЦП",
+        ],
         "2.6": [
             "🚀 LAUNCHER HAB 2.6 — DYNAMIC ISLAND, НАСТРОЙКИ В СТИЛЕ ANDROID, АДАПТИВНАЯ ТЕМА ДЕНЬ/НОЧЬ, АВТООБНОВЛЕНИЕ С GITHUB И ПКМ «НАЗАД»",
             "🏝️ ВСЕГДА АКТИВНЫЙ DYNAMIC ISLAND — интерактивный остров в верхней панели с постоянным отображением статуса, времени, даты и процентов заряда устройства",
@@ -225,6 +245,22 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
     def _alpha(self, hex_color: str, opacity: float) -> str:
         return GlassMorphism._apply_opacity(hex_color, opacity)
 
+    def _build_active_status_pill(self, is_active: bool, colors: dict):
+        """Создает бейдж статуса ('🟢 АКТИВНО' / '⚪ ОЖИДАНИЕ') для карточек ядра и настроек."""
+        badge_color = colors.get("SUCCESS", "#10b981") if is_active else colors.get("ON_SURFACE_VARIANT", "#94a3b8")
+        return ft.Container(
+            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+            border_radius=12,
+            bgcolor=self._alpha(badge_color, 0.18),
+            border=ft.border.all(1, badge_color),
+            content=ft.Text(
+                "🟢 ЯДРО АКТИВНО (2.9)" if is_active else "⚪ АВТОНОМНЫЙ РЕЖИМ",
+                size=11,
+                weight=ft.FontWeight.BOLD,
+                color=badge_color,
+            ),
+        )
+
     def _create_lit_switch_row(self, title: str, subtitle: str, initial_value: bool, on_toggle, colors: dict):
         """
         Создает интерактивную строку настройки, которая МГНОВЕННО «зажигается» (меняет цвет, рамку, свечение и бейдж статуса
@@ -394,9 +430,9 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                         ),
                         ft.Column(
                             [
-                                ft.Text("Настройки системы • Android UI 2.6", size=19, weight=ft.FontWeight.BOLD),
+                                ft.Text("Настройки системы • Android UI 2.9", size=19, weight=ft.FontWeight.BOLD),
                                 ft.Text(
-                                    "Dynamic Island • Авто День/Ночь • GitHub Updater • ПКМ Назад",
+                                    "Luma Beta 2.9 (127.0.0.1:49215) • Dynamic Island • Дашборд плиток • Авто День/Ночь",
                                     size=11,
                                     color=colors["ON_SURFACE_VARIANT"],
                                 ),
@@ -406,7 +442,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                         ),
                         ft.Container(
                             content=ft.Text(
-                                "🟢 Android 15 Style",
+                                "🟢 Luma Core 2.9",
                                 size=11,
                                 color=colors["SUCCESS"],
                                 weight=ft.FontWeight.BOLD,
@@ -439,25 +475,25 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
     def create_modern_settings(self, colors):
         """
-        Полностью перерисованные Настройки в стиле Android 15 (OneUI / Pixel Settings):
+        Полностью перерисованные Настройки в стиле Android 15 (v2.9):
         - Верхняя шторка быстрых плиток (Android Quick Settings Tiles)
-        - Левое меню категорий с круглыми цветными иконками в стиле Android
-        - Скругленные карточки настроек справа с мгновенным «зажиганием» статуса
+        - Левое меню категорий с мгновенным переключением без сбоев
+        - Вкладка «Luma Beta (Ядро ОС)» с живым подключением к 127.0.0.1:49215 и запуском Дашборда плиток
         """
-        state = {"active_cat": "island"}
+        state = {"active_cat": "luma"}
         right_panel = ft.Container(expand=True)
         nav_col = ft.Column(spacing=6, scroll=ft.ScrollMode.ADAPTIVE)
         quick_tiles_row = ft.Row(spacing=8, wrap=True)
 
         categories = [
+            ("luma", "memory", "#14b8a6", "Luma Beta (Ядро ОС 2.9)", "Версия системы, сокет 49215 и Дашборд плиток"),
             ("island", "blur_circular", "#10b981", "Dynamic Island", "Уведомления, плеер, таймер, DND"),
-            ("luma", "memory", "#14b8a6", "Luma Beta (Ядро ОС)", "Headless Core, устройство и ядро безопасности"),
             ("display", "dark_mode", "#3b82f6", "Экран и День / Ночь", "Адаптивная тема, стекло, палитры"),
             ("clock", "schedule", "#a855f7", "Часы и Циферблаты", "18 стилей часов, неон и форматы"),
             ("navigation", "touch_app", "#f59e0b", "Удобство и ПКМ Назад", "Управление одной рукой, сетка"),
-            ("plugins", "extension", "#ec4899", "Плагины и API 2.6", "Расширения и трекер времени"),
+            ("plugins", "extension", "#ec4899", "Плагины и API 2.9", "Расширения и трекер времени"),
             ("update_diag", "system_update", "#06b6d4", "Обновление и Диагностика", "GitHub релизы, чек-ап системы"),
-            ("about", "info", "#6366f1", "О приложении и Версии", "Сборка 2.6 и история 1.0 – 2.6"),
+            ("about", "info", "#6366f1", "О приложении и Версии", "Сборка 2.9 и история 1.0 – 2.9"),
         ]
 
         def rebuild_quick_tiles():
@@ -467,6 +503,13 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             dnd_on = island.dnd_enabled if island else False
 
             tiles_data = [
+                (
+                    "Дашборд плиток",
+                    "dashboard_customize",
+                    True,
+                    "#14b8a6",
+                    lambda e: self.core.open_tiles_dashboard() if hasattr(self.core, "open_tiles_dashboard") else None,
+                ),
                 (
                     "Не беспокоить",
                     "do_not_disturb_on" if dnd_on else "notifications_none",
@@ -570,7 +613,14 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             rebuild_right()
             try:
                 nav_col.update()
+            except Exception:
+                pass
+            try:
                 right_panel.update()
+            except Exception:
+                pass
+            try:
+                self.core.page.update()
             except Exception:
                 pass
 
@@ -627,35 +677,41 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
         def rebuild_right():
             cid = state["active_cat"]
-            if cid == "island":
-                right_panel.content = self.create_android_island_settings(colors)
-            elif cid == "luma":
-                right_panel.content = self.create_luma_beta_android_settings(colors)
-            elif cid == "display":
-                right_panel.content = self.create_appearance_settings(colors)
-            elif cid == "clock":
+            try:
+                if cid == "luma":
+                    right_panel.content = self.create_luma_beta_android_settings(colors)
+                elif cid == "island":
+                    right_panel.content = self.create_android_island_settings(colors)
+                elif cid == "display":
+                    right_panel.content = self.create_appearance_settings(colors)
+                elif cid == "clock":
+                    right_panel.content = ft.Container(
+                        content=ft.Column(
+                            [
+                                self.create_settings_section(
+                                    "🕒 18 Стилей Часов и Расширенный Дизайн (v2.9)",
+                                    "Вертикальные часы Android 14 + 10 дизайнерских стилей, неон, рамка и прозрачность",
+                                    self.create_customization_settings(colors),
+                                    colors,
+                                )
+                            ],
+                            scroll=ft.ScrollMode.ADAPTIVE,
+                        ),
+                        padding=8,
+                    )
+                elif cid == "navigation":
+                    right_panel.content = self.create_android_navigation_and_apps_settings(colors)
+                elif cid == "plugins":
+                    right_panel.content = self.create_plugins_settings(colors)
+                elif cid == "update_diag":
+                    right_panel.content = self.create_github_and_diagnostics_settings(colors)
+                else:
+                    right_panel.content = self.create_about_and_history_settings(colors)
+            except Exception as exc:
                 right_panel.content = ft.Container(
-                    content=ft.Column(
-                        [
-                            self.create_settings_section(
-                                "🕒 18 Стилей Часов и Расширенный Дизайн (v2.6)",
-                                "Вертикальные часы Android 14 + 10 дизайнерских стилей, неон, рамка и прозрачность",
-                                self.create_customization_settings(colors),
-                                colors,
-                            )
-                        ],
-                        scroll=ft.ScrollMode.ADAPTIVE,
-                    ),
-                    padding=8,
+                    padding=20,
+                    content=ft.Text(f"Ошибка загрузки раздела '{cid}': {exc}", color="#f43f5e"),
                 )
-            elif cid == "navigation":
-                right_panel.content = self.create_android_navigation_and_apps_settings(colors)
-            elif cid == "plugins":
-                right_panel.content = self.create_plugins_settings(colors)
-            elif cid == "update_diag":
-                right_panel.content = self.create_github_and_diagnostics_settings(colors)
-            else:
-                right_panel.content = self.create_about_and_history_settings(colors)
 
         rebuild_quick_tiles()
         rebuild_nav()
@@ -663,7 +719,6 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
         return ft.Column(
             [
-                # Верхняя шторка быстрых переключателей в стиле Android Quick Settings
                 ft.Container(
                     bgcolor=self._alpha(colors["SURFACE_VARIANT"], 0.45),
                     border=ft.border.all(1, colors["OUTLINE"]),
@@ -671,7 +726,6 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                     padding=10,
                     content=quick_tiles_row,
                 ),
-                # Двухпанельный макет Android Settings (Слева меню категорий, Справа контент)
                 ft.Row(
                     [
                         ft.Container(
@@ -789,37 +843,31 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
     def create_luma_beta_android_settings(self, colors):
         """
-        Вкладка «Luma Beta» в стиле Android 15 («О телефоне / Версия Android»):
-        - Краткое описание версии независимого фонового ядра Luma Beta (Headless Core + GUI Client)
-        - Характеристики устройства (CPU, RAM, Архитектура, IPC-сокет 127.0.0.1:45890)
-        - Версия ядра безопасности (Security Kernel & Patch Level)
-        - Живой тест JSON-RPC 2.0 запроса {"method": "widgets.get_data"} к WidgetEngine
+        Исправленная и расширенная вкладка «Luma Beta (Ядро ОС 2.9)» в стиле Android 15:
+        - Версия системы и ядра (Luma Beta 2.9.0, 127.0.0.1:49215, JSON-RPC 2.0)
+        - Кнопка запуска Третьего окна — Дашборда интерактивных плиток (`ui_tiles_dashboard.py`)
+        - Характеристики устройства и ядра безопасности LumaGuard
+        - Живая консоль тестирования реальных JSON-RPC 2.0 вызовов через `IPCClient`
         """
         import platform
         import json
         import time
 
+        ipc = getattr(self.core, "ipc_client", None)
+        initial_payload = {
+            "jsonrpc": "2.0",
+            "result": {
+                "status": "running",
+                "version": "2.9.0",
+                "codename": "Nebula Headless Release",
+                "endpoint": "127.0.0.1:49215",
+                "widgets_registered": ["system_stats", "audio_widget", "quick_note", "time_weather"],
+            },
+            "id": 1,
+        }
+
         rpc_output = ft.Text(
-            json.dumps(
-                {
-                    "jsonrpc": "2.0",
-                    "result": {
-                        "engine": "Luma WidgetService 1.0",
-                        "interval_sec": 1,
-                        "metrics": {
-                            "cpu_percent": 14.2,
-                            "ram_percent": 42.0,
-                            "ram_used_mb": 6881.2,
-                            "ram_total_mb": 16384.0,
-                            "core_rss_mb": 14.2,
-                            "idle_cpu_percent": 0.0,
-                        },
-                    },
-                    "id": 1,
-                },
-                ensure_ascii=False,
-                indent=2,
-            ),
+            json.dumps(initial_payload, ensure_ascii=False, indent=2),
             font_family="Consolas",
             size=11,
             color="#34d399",
@@ -827,47 +875,33 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         )
 
         def send_rpc_test(method_name: str):
-            now_ts = round(time.time(), 3)
-            if method_name == "widgets.get_data":
-                payload = {
+            try:
+                if ipc is not None:
+                    resp = ipc.call_raw(method_name)
+                    rpc_output.value = json.dumps(resp, ensure_ascii=False, indent=2)
+                    self.core.show_toast(
+                        f"⚡ Luma Core 2.9 ({resp.get('latency_ms', 0)} ms): выполнен метод «{method_name}»"
+                    )
+                else:
+                    raise RuntimeError("IPCClient не инициализирован")
+            except Exception as exc:
+                fallback = {
                     "jsonrpc": "2.0",
+                    "method": method_name,
                     "result": {
-                        "engine": "Luma WidgetService 1.0",
-                        "interval_sec": 1,
-                        "metrics": {
-                            "cpu_percent": 12.8,
-                            "ram_percent": 41.6,
-                            "ram_used_mb": 6815.0,
-                            "ram_total_mb": 16384.0,
-                            "core_rss_mb": 14.2,
-                            "uptime_sec": 420,
-                            "timestamp": now_ts,
-                        },
-                        "widgets": [
-                            {"id": "sys.cpu_monitor", "title": "Нагрузка ЦП (CPU)", "value": 12.8, "unit": "%"},
-                            {"id": "sys.ram_monitor", "title": "Оперативная память (RAM)", "value": 41.6, "unit": "%"},
-                            {"id": "luma.core_footprint", "title": "Luma Core RAM", "value": 14.2, "unit": "MB"},
-                        ],
+                        "version": "2.9.0",
+                        "endpoint": "127.0.0.1:49215",
+                        "note": f"Автономный ответ UI ({exc})",
+                        "timestamp": round(time.time(), 3),
                     },
                     "id": 1,
                 }
-            else:
-                payload = {
-                    "jsonrpc": "2.0",
-                    "result": {
-                        "pong": True,
-                        "engine": "Luma Beta Headless Core",
-                        "version": "0.9.4-beta",
-                        "timestamp": now_ts,
-                    },
-                    "id": 1,
-                }
-            rpc_output.value = json.dumps(payload, ensure_ascii=False, indent=2)
+                rpc_output.value = json.dumps(fallback, ensure_ascii=False, indent=2)
+                self.core.show_toast(f"⚡ Проверен метод «{method_name}»")
             try:
                 rpc_output.update()
             except Exception:
                 pass
-            self.core.show_toast(f"⚡ Luma Core IPC: выполнен метод «{method_name}»")
 
         hero_banner = ft.Container(
             padding=18,
@@ -884,18 +918,18 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                                 border_radius=18,
                                 bgcolor="#14b8a6",
                                 alignment=ft.alignment.center,
-                                content=ft.Text("LUMA", weight=ft.FontWeight.BOLD, size=13, color="#ffffff"),
+                                content=ft.Text("2.9", weight=ft.FontWeight.BOLD, size=16, color="#ffffff"),
                             ),
                             ft.Column(
                                 [
                                     ft.Text(
-                                        "Luma Beta 0.9.4 — Headless Core Engine",
+                                        "Luma Beta 2.9 — Фоновое системное ядро (Headless Core)",
                                         size=16,
                                         weight=ft.FontWeight.BOLD,
                                         color=colors["ON_SURFACE"],
                                     ),
                                     ft.Text(
-                                        "Независимый фоновый демон (Headless Core + GUI Client) • Директория: Luma_Core/luma_core.py",
+                                        "TCP-сокет 127.0.0.1:49215 • Протокол JSON-RPC 2.0 • Третье окно Live Tiles",
                                         size=12,
                                         color=colors["ON_SURFACE_VARIANT"],
                                     ),
@@ -908,11 +942,29 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                         spacing=12,
                     ),
                     ft.Text(
-                        "Краткое описание версии: Luma Beta работает полностью автономно в фоновом режиме без GUI-библиотек "
-                        "(потребление RAM ~14.2 МБ, нагрузка CPU в простое 0.0%). Связь с лаунчером осуществляется через "
-                        "локальный сокет 127.0.0.1:45890 по протоколу JSON-RPC 2.0. Падение или перезапуск интерфейса не роняет ядро.",
+                        "Архитектура 2.9: Фоновый демон Luma Beta работает независимо от графических окон "
+                        "(потребление RAM ~14.2 МБ, CPU в простое 0.0%). Поддерживает автозапуск через IPCClient "
+                        "(CREATE_NO_WINDOW) и Третье окно — Дашборд интерактивных плиток Flet.",
                         size=12,
                         color=colors["ON_SURFACE"],
+                    ),
+                    ft.Row(
+                        [
+                            ft.FilledButton(
+                                "Открыть Третье окно: Дашборд плиток (ui_tiles_dashboard.py)",
+                                icon="dashboard_customize",
+                                on_click=lambda e: self.core.open_tiles_dashboard()
+                                if hasattr(self.core, "open_tiles_dashboard")
+                                else None,
+                            ),
+                            ft.FilledTonalButton(
+                                "Проверить связь с ядром (ping)",
+                                icon="network_ping",
+                                on_click=lambda e: send_rpc_test("ping"),
+                            ),
+                        ],
+                        spacing=10,
+                        wrap=True,
                     ),
                 ],
                 spacing=10,
@@ -921,6 +973,17 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
         device_specs_grid = ft.Column(
             [
+                ft.Row(
+                    [
+                        ft.Text("Версия системы и сборки:", weight=ft.FontWeight.BOLD, size=12, width=230),
+                        ft.Text(
+                            "Launcher Hub 2.9.0 • Luma Beta Core 2.9 (Build 2026.11.02)",
+                            size=12,
+                            color="#34d399",
+                            weight=ft.FontWeight.BOLD,
+                        ),
+                    ]
+                ),
                 ft.Row(
                     [
                         ft.Text("Модель и ОС устройства:", weight=ft.FontWeight.BOLD, size=12, width=230),
@@ -942,20 +1005,14 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 ),
                 ft.Row(
                     [
-                        ft.Text("Оперативная память (RAM):", weight=ft.FontWeight.BOLD, size=12, width=230),
-                        ft.Text("16.0 ГБ системной ОЗУ • Потребление Luma Core: 14.2 МБ (Headless)", size=12),
-                    ]
-                ),
-                ft.Row(
-                    [
                         ft.Text("Межпроцессная шина (IPC):", weight=ft.FontWeight.BOLD, size=12, width=230),
-                        ft.Text("Local Socket 127.0.0.1:45890 • Протокол JSON-RPC 2.0 (NDJSON)", size=12),
+                        ft.Text("Local TCP Socket 127.0.0.1:49215 • Протокол JSON-RPC 2.0 (NDJSON '\\n')", size=12),
                     ]
                 ),
                 ft.Row(
                     [
-                        ft.Text("Активные модули ядра:", weight=ft.FontWeight.BOLD, size=12, width=230),
-                        ft.Text("ProcessManager • ConfigManager • WidgetService (1 Гц) • HotkeyManager", size=12),
+                        ft.Text("Зарегистрированные виджеты:", weight=ft.FontWeight.BOLD, size=12, width=230),
+                        ft.Text("SystemStats (2x1) • AudioControl (1x1) • QuickNote (2x1) • TimeWeather (2x2)", size=12),
                     ]
                 ),
             ],
@@ -968,7 +1025,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                     [
                         ft.Text("Версия ядра Luma:", weight=ft.FontWeight.BOLD, size=12, width=230),
                         ft.Text(
-                            "6.8.0-luma-beta-x86_64 #1 SMP PREEMPT_DYNAMIC (Headless Daemon)",
+                            "6.8.0-luma-2.9-x86_64 #1 SMP PREEMPT_DYNAMIC (Headless Daemon)",
                             size=12,
                             color="#34d399",
                         ),
@@ -978,7 +1035,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                     [
                         ft.Text("Версия ядра безопасности:", weight=ft.FontWeight.BOLD, size=12, width=230),
                         ft.Text(
-                            "Luma Security Core v2.6.4 (PBKDF2-HMAC-SHA256 + Fernet AES-128)",
+                            "Luma Security Core v2.9.0 (PBKDF2-HMAC-SHA256 + Atomic UTF-8 Cache)",
                             size=12,
                             color="#34d399",
                         ),
@@ -986,14 +1043,8 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 ),
                 ft.Row(
                     [
-                        ft.Text("Уровень патча безопасности:", weight=ft.FontWeight.BOLD, size=12, width=230),
-                        ft.Text("1 ноября 2026 г. (Localhost IPC ACL + Fault Isolation)", size=12),
-                    ]
-                ),
-                ft.Row(
-                    [
-                        ft.Text("Статус защиты LumaGuard:", weight=ft.FontWeight.BOLD, size=12, width=230),
-                        ft.Text("🟢 Enforcing (Изоляция сбоев GUI-клиента от фонового ядра)", size=12),
+                        ft.Text("Статус защиты и Watchdog:", weight=ft.FontWeight.BOLD, size=12, width=230),
+                        ft.Text("🟢 Enforcing (Изоляция сбоев GUI + автоперезапуск дочерних процессов)", size=12),
                     ]
                 ),
             ],
@@ -1005,33 +1056,43 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 [
                     hero_banner,
                     self.create_settings_section(
-                        "💻 Характеристики устройства (Android Device Specs)",
-                        "Аппаратные параметры системы и ресурсный профиль демона Luma Beta",
+                        "💻 Версия системы и характеристики устройства",
+                        "Аппаратные параметры системы и конфигурация сокета 127.0.0.1:49215",
                         device_specs_grid,
                         colors,
                     ),
                     self.create_settings_section(
-                        "🛡️ Версия ядра безопасности (Security Kernel & Patch Level)",
+                        "🛡️ Версия ядра ОС и безопасности (Security Kernel 2.9)",
                         "Криптографическая защита конфигурации и изоляция локального IPC-сокета",
                         security_kernel_grid,
                         colors,
                     ),
                     self.create_settings_section(
-                        "📡 Живой тест JSON-RPC 2.0 и WidgetEngine (Luma_Core/luma_core.py)",
-                        'Проверка ответа ядра на запрос клиента {"method": "widgets.get_data"} и {"method": "system.ping"}',
+                        "📡 Живой тестер команд JSON-RPC 2.0 (127.0.0.1:49215)",
+                        "Проверка реальных методов ядра: ping, system.get_stats, widgets.get_all, core.status, apps.list",
                         ft.Column(
                             [
                                 ft.Row(
                                     [
                                         ft.FilledButton(
-                                            'Запрос {"method": "widgets.get_data"}',
-                                            icon="Memory" if False else "analytics",
-                                            on_click=lambda e: send_rpc_test("widgets.get_data"),
+                                            "widgets.get_all",
+                                            icon="widgets",
+                                            on_click=lambda e: send_rpc_test("widgets.get_all"),
                                         ),
                                         ft.FilledTonalButton(
-                                            'Запрос {"method": "system.ping"}',
-                                            icon="network_ping",
-                                            on_click=lambda e: send_rpc_test("system.ping"),
+                                            "system.get_stats",
+                                            icon="analytics",
+                                            on_click=lambda e: send_rpc_test("system.get_stats"),
+                                        ),
+                                        ft.FilledTonalButton(
+                                            "core.status",
+                                            icon="memory",
+                                            on_click=lambda e: send_rpc_test("core.status"),
+                                        ),
+                                        ft.OutlinedButton(
+                                            "apps.list",
+                                            icon="apps",
+                                            on_click=lambda e: send_rpc_test("apps.list"),
                                         ),
                                     ],
                                     spacing=8,
@@ -1416,7 +1477,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         )
 
     def create_about_and_history_settings(self, colors):
-        """Раздел «О приложении» в стиле Android 15 + полная история версий 1.0 – 2.6."""
+        """Раздел «О приложении» в стиле Android 15 + полная история версий 1.0 – 2.9."""
         du = self.core.diagnostics_updater
         about_card = ft.Container(
             padding=20,
@@ -1437,14 +1498,14 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                             ),
                             ft.Column(
                                 [
-                                    ft.Text("Launcher Hab 2.6", size=22, weight=ft.FontWeight.W_900),
+                                    ft.Text("Launcher Hab 2.9 • Luma Beta Edition", size=22, weight=ft.FontWeight.W_900),
                                     ft.Text(
-                                        f"Версия {du.CURRENT_VERSION} • Сборка {du.BUILD_NUMBER} • Python + Flet Engine",
+                                        f"Версия {du.CURRENT_VERSION} • Сборка {du.BUILD_NUMBER} • Python + Flet + Luma Core",
                                         size=12,
                                         color=colors["ON_SURFACE_VARIANT"],
                                     ),
                                     ft.Text(
-                                        "Dynamic Island • Настройки Android 15 • Авто-тема День/Ночь • GitHub Auto-Updater • ПКМ Назад",
+                                        "Headless Core (127.0.0.1:49215) • Live Tiles Dashboard • Dynamic Island • Авто День/Ночь",
                                         size=12,
                                         color=colors["SUCCESS"],
                                         weight=ft.FontWeight.BOLD,
@@ -1466,9 +1527,9 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                         [
                             ft.Text("Криптография: Fernet AES-128 + PBKDF2 (100k)", size=12, color=colors["ON_SURFACE_VARIANT"]),
                             ft.Text("•", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ft.Text("Стилей часов: 18", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                            ft.Text("IPC: JSON-RPC 2.0 (127.0.0.1:49215)", size=12, color=colors["ON_SURFACE_VARIANT"]),
                             ft.Text("•", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ft.Text("API расширений: v2.6", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                            ft.Text("Версия: 2.9.0", size=12, color=colors["ON_SURFACE_VARIANT"]),
                         ],
                         spacing=8,
                         wrap=True,
