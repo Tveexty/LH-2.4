@@ -1,0 +1,6 @@
+{
+  "name": "Launcher Hab 2.4",
+  "description": "Современный лаунчер приложений на Python + Flet с настоящим эффектом прозрачного стекла (Glassmorphism 2.4), плавными переходами, фоновым контроллером системного звука, Plugin API 2.4 и трекером игрового/экранного времени Game & App Session Tracker.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
