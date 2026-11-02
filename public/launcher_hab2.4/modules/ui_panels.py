@@ -8,19 +8,17 @@ class UIPanels:
     WEEKDAYS_RU = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 
     def _with_opacity(self, hex_color: str, percent: int) -> str:
-        if not isinstance(hex_color, str) or not hex_color.startswith("#"):
-            return hex_color
-        clean = hex_color[:7] if len(hex_color) >= 7 else hex_color
-        if len(clean) != 7:
-            return hex_color
-        alpha = max(0, min(255, int(percent * 2.55)))
-        return f"{clean}{alpha:02x}"
+        """Возвращает цвет в формате Flet #AARRGGBB."""
+        return GlassMorphism._apply_opacity(hex_color, max(0.0, min(1.0, percent / 100.0)))
 
     def __init__(self, ui_core):
         self.core = ui_core
         self.current_time_text = None
         self.current_date_text = None
         self.clock_container = None
+        self.android_clock_hours = None
+        self.android_clock_minutes = None
+        self.android_clock_date = None
         self.devices_container = None
         self.volume_slider_container = None
         self.audio_button = None
@@ -33,7 +31,7 @@ class UIPanels:
         self.create_time_elements()
 
         clock_frame_enabled = getattr(self.core.theme_manager, "clock_glass_frame", True)
-        clock_style = getattr(self.core.theme_manager, "clock_style", "standard")
+        clock_style = getattr(self.core.theme_manager, "clock_style", "android_vertical")
 
         if clock_style == "pill_glass":
             time_inner = ft.Row(
@@ -47,6 +45,22 @@ class UIPanels:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 tight=True,
             )
+        elif clock_style in ("android_vertical", "stacked"):
+            time_inner = ft.Row(
+                [
+                    self.current_time_text,
+                    ft.Container(
+                        width=2,
+                        height=28,
+                        bgcolor=colors["ACCENT"],
+                        border_radius=2,
+                    ),
+                    self.current_date_text,
+                ],
+                spacing=8,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
+            )
         else:
             time_inner = ft.Column(
                 [self.current_time_text, self.current_date_text],
@@ -57,20 +71,20 @@ class UIPanels:
 
         self.clock_container = ft.Container(
             content=time_inner,
-            padding=ft.padding.symmetric(horizontal=14, vertical=8),
+            padding=ft.padding.symmetric(horizontal=14, vertical=6),
             alignment=ft.alignment.center,
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.35) if clock_frame_enabled else "transparent",
-            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.14)) if clock_frame_enabled else None,
+            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.65) if clock_frame_enabled else "transparent",
+            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.10)) if clock_frame_enabled else None,
             border_radius=14,
             on_click=self.core.show_settings,
-            tooltip="Нажмите для настройки стиля часов",
+            tooltip="Нажмите для настройки стиля часов (Android Vertical, Flip, Капсула и др.)",
         )
 
-        # Навигационный переключатель разделов с плавной анимацией (v2.4)
+        # Навигационный переключатель разделов (v2.4)
         active_sec = getattr(self.core, "active_section", "apps")
         section_switcher = ft.Container(
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.35),
-            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.12)),
+            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.65),
+            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.08)),
             border_radius=12,
             padding=3,
             content=ft.Row(
@@ -78,12 +92,21 @@ class UIPanels:
                     ft.Container(
                         content=ft.Row(
                             [
-                                ft.Icon("grid_view", size=15, color=colors["ON_SURFACE"] if active_sec == "apps" else colors["ON_SURFACE_VARIANT"]),
-                                ft.Text("Приложения", size=12, weight=ft.FontWeight.W_600 if active_sec == "apps" else ft.FontWeight.NORMAL, color=colors["ON_SURFACE"] if active_sec == "apps" else colors["ON_SURFACE_VARIANT"]),
+                                ft.Icon(
+                                    "grid_view",
+                                    size=15,
+                                    color="#ffffff" if active_sec == "apps" else colors["ON_SURFACE_VARIANT"],
+                                ),
+                                ft.Text(
+                                    "Приложения",
+                                    size=12,
+                                    weight=ft.FontWeight.W_600 if active_sec == "apps" else ft.FontWeight.NORMAL,
+                                    color="#ffffff" if active_sec == "apps" else colors["ON_SURFACE_VARIANT"],
+                                ),
                             ],
                             spacing=5,
                         ),
-                        bgcolor=GlassMorphism._apply_opacity(colors["ACCENT"], 0.28) if active_sec == "apps" else "transparent",
+                        bgcolor=colors["ACCENT"] if active_sec == "apps" else "transparent",
                         border_radius=9,
                         padding=ft.padding.symmetric(horizontal=12, vertical=6),
                         on_click=lambda e: self.core.switch_section("apps"),
@@ -91,12 +114,21 @@ class UIPanels:
                     ft.Container(
                         content=ft.Row(
                             [
-                                ft.Icon("insights", size=15, color=colors["ON_SURFACE"] if active_sec == "tracker" else colors["ON_SURFACE_VARIANT"]),
-                                ft.Text("Трекер времени", size=12, weight=ft.FontWeight.W_600 if active_sec == "tracker" else ft.FontWeight.NORMAL, color=colors["ON_SURFACE"] if active_sec == "tracker" else colors["ON_SURFACE_VARIANT"]),
+                                ft.Icon(
+                                    "insights",
+                                    size=15,
+                                    color="#ffffff" if active_sec == "tracker" else colors["ON_SURFACE_VARIANT"],
+                                ),
+                                ft.Text(
+                                    "Трекер времени",
+                                    size=12,
+                                    weight=ft.FontWeight.W_600 if active_sec == "tracker" else ft.FontWeight.NORMAL,
+                                    color="#ffffff" if active_sec == "tracker" else colors["ON_SURFACE_VARIANT"],
+                                ),
                             ],
                             spacing=5,
                         ),
-                        bgcolor=GlassMorphism._apply_opacity(colors["ACCENT"], 0.28) if active_sec == "tracker" else "transparent",
+                        bgcolor=colors["ACCENT"] if active_sec == "tracker" else "transparent",
                         border_radius=9,
                         padding=ft.padding.symmetric(horizontal=12, vertical=6),
                         on_click=lambda e: self.core.switch_section("tracker"),
@@ -107,22 +139,19 @@ class UIPanels:
             ),
         )
 
-        # Устройства
         self.devices_container = ft.Container(
             content=self.core.system_monitor.create_devices_header(colors),
             padding=8,
             alignment=ft.alignment.center,
         )
 
-        # Кнопка плагинов
         plugins_button = ft.IconButton(
             icon="extension",
             icon_color=colors["ON_SURFACE"],
             on_click=self.core.show_plugins_manager,
-            tooltip="Платформа плагинов и расширений (API 2.4)",
+            tooltip="Платформа плагинов и магазин расширений (API 2.4)",
         )
 
-        # Кнопка звука
         current_vol = self.core.audio_controller.get_volume_level()
         self.audio_button = ft.IconButton(
             icon="volume_off" if current_vol == 0 else ("volume_down" if current_vol < 50 else "volume_up"),
@@ -131,7 +160,6 @@ class UIPanels:
             tooltip="Системная громкость (фоновый контроллер)",
         )
 
-        # Слайдер громкости с поддержкой Mute
         vol_value_label = ft.Text(f"{current_vol}%", size=11, color=colors["ON_SURFACE"], width=34)
 
         def _handle_vol_slider(ev):
@@ -180,9 +208,9 @@ class UIPanels:
                 spacing=2,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.75),
+            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.85),
             blur=GlassMorphism._make_blur(14),
-            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.14)),
+            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.12)),
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=8, vertical=2),
             visible=self.core.volume_slider_visible,
@@ -207,7 +235,7 @@ class UIPanels:
             ft.Row(
                 [
                     workspace_button,
-                    ft.Text("Launcher Hab 2.4", size=22, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
+                    ft.Text("Launcher Hab 2.4", size=21, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
                     ft.Container(width=10),
                     section_switcher,
                 ],
@@ -230,20 +258,22 @@ class UIPanels:
 
         return ft.Container(
             content=ft.Row(header_content, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.82) if self.core.theme_manager.glass_effect_enabled else colors["SURFACE"],
+            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.88)
+            if self.core.theme_manager.glass_effect_enabled
+            else colors["SURFACE"],
             blur=GlassMorphism._make_blur(18) if self.core.theme_manager.glass_effect_enabled else None,
-            border=ft.border.only(bottom=ft.BorderSide(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.1))),
+            border=ft.border.only(bottom=ft.BorderSide(1, colors["OUTLINE"])),
             padding=ft.padding.symmetric(horizontal=16, vertical=10),
             margin=0,
         )
 
     def create_time_elements(self):
         colors = self.core.get_colors()
-        clock_style = getattr(self.core.theme_manager, "clock_style", "standard")
+        clock_style = getattr(self.core.theme_manager, "clock_style", "android_vertical")
         base_size = getattr(self.core.theme_manager, "time_font_size", 20)
 
-        if clock_style == "stacked":
-            font_size = max(26, base_size + 8)
+        if clock_style in ("android_vertical", "stacked"):
+            font_size = max(17, min(26, base_size))
         elif clock_style == "pill_glass":
             font_size = max(14, base_size - 2)
         else:
@@ -252,26 +282,140 @@ class UIPanels:
         self.current_time_text = ft.Text(
             "",
             size=font_size,
-            font_family="Consolas" if clock_style == "cyber_mono" else getattr(self.core.theme_manager, "time_font_family", self.core.theme_manager.font_family),
+            font_family="Consolas"
+            if clock_style in ("cyber_mono", "split_flip")
+            else getattr(self.core.theme_manager, "time_font_family", self.core.theme_manager.font_family),
             text_align=ft.TextAlign.CENTER,
             weight=ft.FontWeight.BOLD,
             color=getattr(self.core.theme_manager, "time_color", colors["ON_SURFACE"]),
         )
         self.current_date_text = ft.Text(
             "",
-            size=getattr(self.core.theme_manager, "date_font_size", 12),
+            size=getattr(self.core.theme_manager, "date_font_size", 11),
             font_family=getattr(self.core.theme_manager, "date_font_family", self.core.theme_manager.font_family),
             text_align=ft.TextAlign.CENTER,
             color=getattr(self.core.theme_manager, "date_color", colors["ON_SURFACE_VARIANT"]),
             visible=getattr(self.core.theme_manager, "show_date", True),
         )
 
+    def create_android_vertical_clock_banner(self):
+        """
+        Вертикальный виджет часов в стиле Android 14 Lockscreen + быстрый переключатель стилей часов.
+        Отображается, если выбран вертикальный стиль часов или включен виджет часов.
+        """
+        colors = self.core.get_colors()
+        now = datetime.now()
+        is_12h = getattr(self.core.theme_manager, "time_format", "24") == "12"
+        hours_str = now.strftime("%I" if is_12h else "%H")
+        mins_str = now.strftime("%M")
+        weekday_ru = self.WEEKDAYS_RU[now.weekday()]
+        date_str = f"{weekday_ru}, {now.strftime('%d.%m.%Y')}"
+
+        self.android_clock_hours = ft.Text(
+            hours_str,
+            size=44,
+            weight=ft.FontWeight.W_900,
+            color=getattr(self.core.theme_manager, "time_color", colors["ON_SURFACE"]),
+            height=48,
+        )
+        self.android_clock_minutes = ft.Text(
+            mins_str,
+            size=44,
+            weight=ft.FontWeight.W_900,
+            color=colors["ACCENT"],
+            height=48,
+        )
+        self.android_clock_date = ft.Text(
+            date_str,
+            size=13,
+            weight=ft.FontWeight.W_500,
+            color=getattr(self.core.theme_manager, "date_color", colors["ON_SURFACE_VARIANT"]),
+        )
+
+        current_style = getattr(self.core.theme_manager, "clock_style", "android_vertical")
+        style_Name = self.core.theme_manager.CLOCK_STYLES.get(current_style, current_style)
+
+        def _cycle_clock_style(_):
+            keys = list(self.core.theme_manager.CLOCK_STYLES.keys())
+            idx = keys.index(current_style) if current_style in keys else 0
+            next_style = keys[(idx + 1) % len(keys)]
+            self.core.theme_manager.set_clock_preferences(style=next_style)
+            self.core.update_header()
+            self.core.update_main_content()
+            self.core.update_time()
+
+        banner_content = ft.Row(
+            [
+                # Вертикальный блок часов как на Android 14 (Часы сверху, Минуты снизу)
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            self.android_clock_hours,
+                            self.android_clock_minutes,
+                        ],
+                        spacing=0,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        tight=True,
+                    ),
+                    padding=ft.padding.symmetric(horizontal=18, vertical=8),
+                    bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.75),
+                    border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ACCENT"], 0.30)),
+                    border_radius=18,
+                ),
+                ft.Column(
+                    [
+                        ft.Row(
+                            [
+                                ft.Icon("schedule", size=16, color=colors["ACCENT"]),
+                                ft.Text(
+                                    f"Стиль часов: {style_Name}",
+                                    size=14,
+                                    weight=ft.FontWeight.BOLD,
+                                    color=colors["ON_SURFACE"],
+                                ),
+                            ],
+                            spacing=6,
+                        ),
+                        self.android_clock_date,
+                        ft.Row(
+                            [
+                                ft.TextButton(
+                                    "Сменить стиль часов",
+                                    icon="style",
+                                    on_click=_cycle_clock_style,
+                                ),
+                                ft.TextButton(
+                                    "Настроить часы",
+                                    icon="tune",
+                                    on_click=self.core.show_settings,
+                                ),
+                            ],
+                            spacing=4,
+                        ),
+                    ],
+                    spacing=4,
+                    expand=True,
+                ),
+            ],
+            spacing=18,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+        return GlassMorphism.create_card(
+            banner_content,
+            colors,
+            hover_effect=False,
+            intensity=self.core.theme_manager.glass_intensity,
+        )
+
     def create_sidebar(self):
         colors = self.core.get_colors()
         return ft.Container(
             content=self.create_sidebar_content(),
-            width=350,
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.72) if self.core.theme_manager.glass_effect_enabled else colors["SURFACE"],
+            width=340,
+            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.82)
+            if self.core.theme_manager.glass_effect_enabled
+            else colors["SURFACE"],
             blur=GlassMorphism._make_blur(18) if self.core.theme_manager.glass_effect_enabled else None,
             padding=0,
             margin=0,
@@ -281,15 +425,15 @@ class UIPanels:
         colors = self.core.get_colors()
 
         self.search_field = ft.TextField(
-            hint_text="Поиск приложений...",
+            hint_text="Поиск приложений и плагинов...",
             prefix_icon="search",
             filled=True,
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.55),
+            bgcolor=colors["SURFACE_VARIANT"],
             border_radius=12,
             on_change=self.core.filter_apps,
             content_padding=14,
             expand=True,
-            border_color=GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.1),
+            border_color=colors["OUTLINE"],
         )
 
         filter_button = self.create_filter_button()
@@ -302,7 +446,7 @@ class UIPanels:
                         [
                             ft.Icon("apps", color=colors["ACCENT"], size=20),
                             ft.Text("Библиотека", size=17, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"], expand=True),
-                            ft.Text(f"{self.core.get_apps_count()} прил.", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                            ft.Text(f"{self.core.get_apps_count()} элем.", size=12, color=colors["ON_SURFACE_VARIANT"]),
                         ]
                     ),
                     padding=ft.padding.only(left=20, right=20, top=16, bottom=6),
@@ -311,9 +455,9 @@ class UIPanels:
                     content=ft.Row([self.search_field, filter_button], spacing=10),
                     padding=ft.padding.symmetric(horizontal=15, vertical=8),
                 ),
-                ft.Divider(color=GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.1), height=1),
+                ft.Divider(color=colors["OUTLINE"], height=1),
                 ft.Container(content=self.apps_list, expand=True),
-                ft.Divider(color=GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.1), height=1),
+                ft.Divider(color=colors["OUTLINE"], height=1),
                 ft.Container(
                     content=self.create_add_app_button(),
                     padding=ft.padding.symmetric(horizontal=15, vertical=10),
@@ -322,9 +466,9 @@ class UIPanels:
         )
 
     def create_apps_list(self):
-        apps_list = ft.ListView(expand=True, spacing=4, padding=8)
+        apps_list = ft.ListView(expand=True, spacing=6, padding=10)
 
-        all_apps = self.core.app_manager.all_apps + self.core.app_manager.custom_apps
+        all_apps = self.core.get_all_launchable_items()
         filtered_apps = self.filter_apps_by_type(all_apps)
 
         for app in filtered_apps:
@@ -334,19 +478,49 @@ class UIPanels:
 
     def create_app_list_item(self, app):
         colors = self.core.get_colors()
-        is_installed = self.core.app_manager.is_app_installed(app)
+        is_plugin = app.get("type") == "plugin"
+        is_installed = True if is_plugin else self.core.app_manager.is_app_installed(app)
+        is_running = (
+            self.core.plugin_manager.is_app_running(app)
+            if hasattr(self.core.plugin_manager, "is_app_running")
+            else False
+        )
         badge_text = (
             self.core.plugin_manager.get_app_card_badge(app)
             if hasattr(self.core.plugin_manager, "get_app_card_badge")
-            else None
+            else "0 мин"
         )
 
-        if self.core.theme_manager.advanced_glass_enabled:
-            bg_color = self._with_opacity(colors["SURFACE"], self.core.theme_manager.advanced_glass_opacity)
+        if is_running:
+            bg_color = GlassMorphism._apply_opacity(colors["ACCENT"], 0.16)
+            border_color = GlassMorphism._apply_opacity(colors["ACCENT"], 0.55)
+        elif is_plugin:
+            bg_color = GlassMorphism._apply_opacity("#8b5cf6", 0.12)
+            border_color = GlassMorphism._apply_opacity("#a78bfa", 0.25)
         else:
-            bg_color = GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.25)
+            bg_color = GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.55)
+            border_color = GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.07)
 
-        subtitle_str = f"{app['category']} • {badge_text}" if badge_text else f"{app['category']} • {'Установлено' if is_installed else 'Не установлено'}"
+        subtitle_str = f"{app['category']} • {badge_text}"
+
+        title_row_controls = [
+            ft.Text(
+                app["name"],
+                color=colors["ON_SURFACE"] if is_installed else colors["ERROR"],
+                size=13,
+                weight=ft.FontWeight.W_600,
+                max_lines=1,
+                overflow=ft.TextOverflow.ELLIPSIS,
+            )
+        ]
+        if is_running:
+            title_row_controls.append(
+                ft.Text("• Активно", color=colors["SUCCESS"], size=11, weight=ft.FontWeight.W_600)
+            )
+        elif is_plugin:
+            title_row_controls.append(
+                ft.Text("• Плагин", color="#a78bfa", size=11, weight=ft.FontWeight.W_500)
+            )
 
         app_item = ft.Container(
             content=ft.Row(
@@ -354,31 +528,30 @@ class UIPanels:
                     ft.Container(
                         content=ft.Icon(
                             app["icon"],
-                            color=colors["WEB_BLUE"]
-                            if app["type"] == "web"
-                            else (colors["ON_SURFACE"] if is_installed else colors["ERROR"]),
-                            size=26,
+                            color="#a78bfa"
+                            if is_plugin
+                            else (
+                                colors["WEB_BLUE"]
+                                if app["type"] == "web"
+                                else (colors["ON_SURFACE"] if is_installed else colors["ERROR"])
+                            ),
+                            size=24,
                         ),
-                        width=46,
-                        height=46,
+                        width=44,
+                        height=44,
                         alignment=ft.alignment.center,
-                        bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.45),
-                        border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.12)),
+                        bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.75),
+                        border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.08)),
                         border_radius=12,
                     ),
                     ft.Column(
                         [
-                            ft.Text(
-                                f"{app['name']} — {badge_text}" if badge_text and app.get("category") == "Games" else app["name"],
-                                color=colors["ON_SURFACE"] if is_installed else colors["ERROR"],
-                                size=13,
-                                weight=ft.FontWeight.W_600,
-                                max_lines=1,
-                                overflow=ft.TextOverflow.ELLIPSIS,
-                            ),
+                            ft.Row(title_row_controls, spacing=6),
                             ft.Text(
                                 subtitle_str,
-                                color=colors["ON_SURFACE_VARIANT"] if is_installed else colors["ERROR"],
+                                color=colors["SUCCESS"]
+                                if is_running
+                                else (colors["ON_SURFACE_VARIANT"] if is_installed else colors["ERROR"]),
                                 size=11,
                                 max_lines=1,
                                 overflow=ft.TextOverflow.ELLIPSIS,
@@ -388,11 +561,15 @@ class UIPanels:
                         spacing=2,
                     ),
                     ft.IconButton(
-                        icon="more_vert",
+                        icon="tune" if is_plugin else "more_vert",
                         icon_size=18,
                         icon_color=colors["ON_SURFACE_VARIANT"],
-                        on_click=lambda e, app=app: self.core.show_app_menu_dialog(app),
-                        tooltip="Меню приложения",
+                        on_click=lambda e, app=app: (
+                            self.core.plugin_manager.show_plugin_settings_modal(app["package"])
+                            if is_plugin
+                            else self.core.show_app_menu_dialog(app)
+                        ),
+                        tooltip="Настройки плагина" if is_plugin else "Меню приложения",
                         style=ft.ButtonStyle(padding=ft.padding.all(6), bgcolor="transparent"),
                     ),
                 ],
@@ -400,22 +577,21 @@ class UIPanels:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             padding=ft.padding.symmetric(horizontal=12, vertical=10),
-            border_radius=12,
-            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.08)),
+            border_radius=14,
+            border=ft.border.all(1, border_color),
             on_click=lambda e, app=app: self.core.launch_app(app),
             tooltip=f"Запустить {app['name']}",
             bgcolor=bg_color,
-            margin=ft.margin.symmetric(vertical=2),
             animate=ft.Animation(180, ft.AnimationCurve.EASE_OUT),
         )
 
         def on_hover(e):
             if e.data == "true":
-                app_item.bgcolor = GlassMorphism._apply_opacity(colors["ACCENT"], 0.18)
-                app_item.border = ft.border.all(1, GlassMorphism._apply_opacity(colors["ACCENT"], 0.4))
+                app_item.bgcolor = GlassMorphism._apply_opacity(colors["ACCENT"], 0.20)
+                app_item.border = ft.border.all(1, GlassMorphism._apply_opacity(colors["ACCENT"], 0.45))
             else:
                 app_item.bgcolor = bg_color
-                app_item.border = ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.08))
+                app_item.border = ft.border.all(1, border_color)
             app_item.update()
 
         app_item.on_hover = on_hover
@@ -429,16 +605,16 @@ class UIPanels:
             content=ft.Row(
                 [
                     ft.Container(
-                        content=ft.Icon("add", color=colors["ACCENT"], size=26),
-                        width=48,
-                        height=48,
+                        content=ft.Icon("add", color=colors["ACCENT"], size=24),
+                        width=44,
+                        height=44,
                         alignment=ft.alignment.center,
                         bgcolor=GlassMorphism._apply_opacity(colors["ACCENT"], 0.22),
                         border_radius=12,
                     ),
                     ft.Column(
                         [
-                            ft.Text("Добавить приложение", color=colors["ON_SURFACE"], size=14, weight=ft.FontWeight.W_600),
+                            ft.Text("Добавить приложение", color=colors["ON_SURFACE"], size=13, weight=ft.FontWeight.W_600),
                             ft.Text("EXE, URI или веб-сервис + трекер", color=colors["ON_SURFACE_VARIANT"], size=11),
                         ],
                         expand=True,
@@ -449,7 +625,7 @@ class UIPanels:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             padding=ft.padding.symmetric(horizontal=14, vertical=10),
-            border_radius=12,
+            border_radius=14,
             border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ACCENT"], 0.35)),
             on_click=self.core.show_add_custom_app_dialog,
             tooltip="Добавить новое приложение",
@@ -459,7 +635,7 @@ class UIPanels:
 
         def on_hover(e):
             if e.data == "true":
-                add_button.bgcolor = GlassMorphism._apply_opacity(colors["ACCENT"], 0.26)
+                add_button.bgcolor = GlassMorphism._apply_opacity(colors["ACCENT"], 0.24)
             else:
                 add_button.bgcolor = bg_color
             add_button.update()
@@ -469,18 +645,17 @@ class UIPanels:
 
     def create_filter_button(self):
         colors = self.core.get_colors()
-        filter_btn = ft.Container(
+        return ft.Container(
             content=ft.Icon("filter_list", color=colors["ON_SURFACE"], size=20),
             width=44,
             height=44,
             alignment=ft.alignment.center,
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.55),
-            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.1)),
+            bgcolor=colors["SURFACE_VARIANT"],
+            border=ft.border.all(1, colors["OUTLINE"]),
             border_radius=12,
             on_click=self.core.show_filter_menu,
-            tooltip="Фильтровать по типу",
+            tooltip="Фильтровать по типу (Приложения / Плагины / Веб)",
         )
-        return filter_btn
 
     def create_main_content(self):
         """Оборачивает основной контент в ft.AnimatedSwitcher для плавной анимации переходов между разделами."""
@@ -488,28 +663,29 @@ class UIPanels:
         self.animated_switcher = ft.AnimatedSwitcher(
             content=inner,
             transition=ft.AnimatedSwitcherTransition.FADE,
-            duration=300,
-            reverse_duration=220,
+            duration=280,
+            reverse_duration=200,
             switch_in_curve=ft.AnimationCurve.EASE_OUT_CUBIC,
             switch_out_curve=ft.AnimationCurve.EASE_IN_CUBIC,
         )
         return ft.Container(
             content=self.animated_switcher,
             expand=True,
-            padding=10,
+            padding=12,
             margin=0,
         )
 
     def create_main_content_internal(self):
         colors = self.core.get_colors()
 
-        # Если открыта вкладка «Трекер времени» (Game & App Session Tracker)
+        # Вкладка «Трекер времени»
         if getattr(self.core, "active_section", "apps") == "tracker":
             tracker_ui = None
             if hasattr(self.core.plugin_manager, "get_plugin_ui"):
                 tracker_ui = self.core.plugin_manager.get_plugin_ui("session_tracker_plugin")
             if not tracker_ui:
                 from plugins.session_tracker_plugin import GameAppSessionTrackerPlugin
+
                 temp_plugin = GameAppSessionTrackerPlugin()
                 temp_plugin.set_context(self.core)
                 tracker_ui = temp_plugin.get_ui_component()
@@ -519,7 +695,9 @@ class UIPanels:
                 colors,
                 hover_effect=False,
                 intensity=self.core.theme_manager.glass_intensity,
-                custom_opacity=self.core.theme_manager.advanced_glass_opacity if self.core.theme_manager.advanced_glass_enabled else None,
+                custom_opacity=self.core.theme_manager.advanced_glass_opacity
+                if self.core.theme_manager.advanced_glass_enabled
+                else None,
             )
             return ft.Container(
                 key="section_tracker",
@@ -527,10 +705,16 @@ class UIPanels:
                 expand=True,
             )
 
+        main_content_list = []
+
+        # Показываем крупный вертикальный виджет часов Android 14 если включено
+        if getattr(self.core.theme_manager, "show_android_clock_widget", True):
+            main_content_list.append(self.create_android_vertical_clock_banner())
+
         favorites_content = self.create_favorites_panel()
         category_sections = self.create_category_sections()
 
-        main_content_list = [favorites_content]
+        main_content_list.append(favorites_content)
 
         if category_sections:
             main_content_list.extend(category_sections)
@@ -538,16 +722,21 @@ class UIPanels:
             no_apps_content = ft.Column(
                 [
                     ft.Icon("search_off", size=64, color=colors["ON_SURFACE_VARIANT"]),
-                    ft.Text("Нет приложений по выбранному фильтру", size=18, color=colors["ON_SURFACE_VARIANT"], weight=ft.FontWeight.W_500),
-                    ft.Text("Попробуйте выбрать другой фильтр или добавьте свои приложения", size=14, color=colors["ON_SURFACE_VARIANT"]),
+                    ft.Text(
+                        "Нет элементов по выбранному фильтру",
+                        size=18,
+                        color=colors["ON_SURFACE_VARIANT"],
+                        weight=ft.FontWeight.W_500,
+                    ),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=15,
             )
-            no_apps_card = (
-                GlassMorphism.create_card(no_apps_content, colors, hover_effect=False, intensity=self.core.theme_manager.glass_intensity)
-                if self.core.theme_manager.glass_effect_enabled
-                else ft.Container(content=no_apps_content, padding=80, alignment=ft.alignment.center)
+            no_apps_card = GlassMorphism.create_card(
+                no_apps_content,
+                colors,
+                hover_effect=False,
+                intensity=self.core.theme_manager.glass_intensity,
             )
             main_content_list.append(no_apps_card)
 
@@ -557,7 +746,9 @@ class UIPanels:
             perf = self.core.system_monitor.get_performance_info()
             self.core.floating_hud_cpu_text = ft.Text(f"CPU {perf['cpu']}%", size=11, color=colors["ON_SURFACE"])
             self.core.floating_hud_ram_text = ft.Text(f"RAM {perf['ram']}%", size=11, color=colors["ON_SURFACE"])
-            self.core.floating_hud_apps_text = ft.Text(f"Избранных: {len(self.core.app_manager.favorite_apps)}", size=11, color=colors["ON_SURFACE"])
+            self.core.floating_hud_apps_text = ft.Text(
+                f"Избранных: {len(self.core.app_manager.favorite_apps)}", size=11, color=colors["ON_SURFACE"]
+            )
             hud = ft.Container(
                 content=ft.Column(
                     [
@@ -571,12 +762,16 @@ class UIPanels:
                 right=14,
                 top=14,
                 padding=12,
-                bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.65),
+                bgcolor=GlassMorphism._apply_opacity(colors["SURFACE"], 0.85),
                 blur=GlassMorphism._make_blur(18),
                 border_radius=14,
-                border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.18)),
+                border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.14)),
             )
-            return ft.Container(key=f"section_apps_{self.core.current_filter}_hud", content=ft.Stack([main_column, hud]), expand=True)
+            return ft.Container(
+                key=f"section_apps_{self.core.current_filter}_hud",
+                content=ft.Stack([main_column, hud]),
+                expand=True,
+            )
 
         self.core.floating_hud_cpu_text = None
         self.core.floating_hud_ram_text = None
@@ -586,37 +781,40 @@ class UIPanels:
     def create_favorites_panel(self):
         colors = self.core.get_colors()
         favorite_apps = self.core.app_manager.favorite_apps
+        runs_cnt = getattr(self.core.theme_manager, "card_columns", 6)
 
-        favorites_counter = ft.Container(
-            content=ft.Text(
-                f"{len(favorite_apps)}/10",
-                size=12,
-                color=colors["ON_SURFACE_VARIANT"],
-                weight=ft.FontWeight.W_500,
+        header_row = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon("star", color="#f59e0b", size=20),
+                    ft.Text("Избранное", size=18, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
+                    ft.Text(f"{len(favorite_apps)}/10", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                    ft.Container(expand=True),
+                    ft.Text(
+                        "Клик — запуск и учет сессии • ПКМ / меню — управление",
+                        size=11,
+                        color=colors["ON_SURFACE_VARIANT"],
+                    ),
+                ],
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.45),
-            padding=ft.padding.symmetric(horizontal=10, vertical=4),
-            border_radius=8,
+            padding=ft.padding.symmetric(horizontal=15, vertical=6),
         )
 
         if not favorite_apps:
             empty_content = ft.Column(
                 [
-                    ft.Container(
-                        content=ft.Row(
-                            [
-                                ft.Icon("star", color=colors["ACCENT"], size=20),
-                                ft.Text("Избранное", size=16, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
-                                favorites_counter,
-                            ]
-                        ),
-                        padding=ft.padding.symmetric(horizontal=15, vertical=10),
-                    ),
+                    header_row,
                     ft.Container(
                         content=ft.Column(
                             [
                                 ft.Icon("star_border", size=32, color=colors["ON_SURFACE_VARIANT"]),
-                                ft.Text("Добавьте приложения в избранное", size=12, color=colors["ON_SURFACE_VARIANT"], text_align=ft.TextAlign.CENTER),
+                                ft.Text(
+                                    "Добавьте приложения в избранное через меню (⋮)",
+                                    size=12,
+                                    color=colors["ON_SURFACE_VARIANT"],
+                                    text_align=ft.TextAlign.CENTER,
+                                ),
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                             spacing=8,
@@ -626,27 +824,25 @@ class UIPanels:
                     ),
                 ]
             )
-            return (
-                GlassMorphism.create_card(empty_content, colors, hover_effect=False, intensity=self.core.theme_manager.glass_intensity)
-                if self.core.theme_manager.glass_effect_enabled
-                else ft.Container(content=empty_content, bgcolor=colors["SURFACE"], border_radius=12, margin=ft.margin.symmetric(horizontal=10, vertical=5))
+            return GlassMorphism.create_card(
+                empty_content, colors, hover_effect=False, intensity=self.core.theme_manager.glass_intensity
             )
 
         favorites_grid = ft.GridView(
-            runs_count=6,
+            runs_count=runs_cnt,
             max_extent=130,
-            child_aspect_ratio=0.86,
+            child_aspect_ratio=0.84,
             spacing=15,
             run_spacing=20,
             padding=16,
         )
 
         for app in favorite_apps:
-            is_installed = self.core.app_manager.is_app_installed(app)
+            is_installed = True if app.get("type") == "plugin" else self.core.app_manager.is_app_installed(app)
             badge = (
                 self.core.plugin_manager.get_app_card_badge(app)
                 if hasattr(self.core.plugin_manager, "get_app_card_badge")
-                else None
+                else "0 мин"
             )
             running = (
                 self.core.plugin_manager.is_app_running(app)
@@ -669,158 +865,151 @@ class UIPanels:
 
             def create_hover_handler(button):
                 def on_hover(e):
-                    if e.data == "true":
-                        button.scale = 1.05
-                    else:
-                        button.scale = 1.0
+                    button.scale = 1.05 if e.data == "true" else 1.0
                     button.update()
+
                 return on_hover
 
             app_container.on_hover = create_hover_handler(app_container)
             favorites_grid.controls.append(app_container)
 
-        favorites_content = ft.Column(
-            [
-                ft.Container(
-                    content=ft.Row(
-                        [
-                            ft.Icon("star", color=colors["ACCENT"], size=20),
-                            ft.Text("Избранное", size=18, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
-                            favorites_counter,
-                        ]
-                    ),
-                    padding=ft.padding.symmetric(horizontal=15, vertical=6),
-                ),
-                favorites_grid,
-            ]
-        )
+        favorites_content = ft.Column([header_row, favorites_grid])
 
-        return (
-            GlassMorphism.create_card(
-                favorites_content,
-                colors,
-                hover_effect=False,
-                intensity=self.core.theme_manager.glass_intensity,
-                custom_opacity=self.core.theme_manager.advanced_glass_opacity if self.core.theme_manager.advanced_glass_enabled else None,
-            )
-            if self.core.theme_manager.glass_effect_enabled
-            else ft.Container(content=favorites_content, bgcolor=colors["SURFACE"], border_radius=12, margin=ft.margin.symmetric(horizontal=10, vertical=5))
+        return GlassMorphism.create_card(
+            favorites_content,
+            colors,
+            hover_effect=False,
+            intensity=self.core.theme_manager.glass_intensity,
+            custom_opacity=self.core.theme_manager.advanced_glass_opacity
+            if self.core.theme_manager.advanced_glass_enabled
+            else None,
         )
 
     def create_category_sections(self):
         colors = self.core.get_colors()
-        all_available_apps = self.core.app_manager.all_apps + self.core.app_manager.custom_apps
+        all_available_apps = self.core.get_all_launchable_items()
         filtered_apps = self.filter_apps_by_type(all_available_apps)
+        runs_cnt = getattr(self.core.theme_manager, "card_columns", 6)
 
         categories = {}
+        # Сначала выводим Плагины и Games вверху для быстрого доступа, затем остальные категории
+        preferred_order = ["Плагины", "Games", "Browser", "Social", "Media", "Music", "Development", "Office", "System"]
+        for cat in preferred_order:
+            categories[cat] = []
+
         for app in filtered_apps:
-            if app["category"] not in categories:
-                categories[app["category"]] = []
-            categories[app["category"]].append(app)
+            cat = app.get("category", "Custom")
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(app)
 
         category_sections = []
         for category, apps in categories.items():
-            if apps:
-                apps_grid = ft.GridView(
-                    runs_count=6,
-                    max_extent=130,
-                    child_aspect_ratio=0.86,
-                    spacing=15,
-                    run_spacing=20,
-                    padding=16,
+            if not apps:
+                continue
+
+            apps_grid = ft.GridView(
+                runs_count=runs_cnt,
+                max_extent=130,
+                child_aspect_ratio=0.84,
+                spacing=15,
+                run_spacing=20,
+                padding=16,
+            )
+
+            for app in apps:
+                is_plugin = app.get("type") == "plugin"
+                is_installed = True if is_plugin else self.core.app_manager.is_app_installed(app)
+                badge = (
+                    self.core.plugin_manager.get_app_card_badge(app)
+                    if hasattr(self.core.plugin_manager, "get_app_card_badge")
+                    else "0 мин"
+                )
+                running = (
+                    self.core.plugin_manager.is_app_running(app)
+                    if hasattr(self.core.plugin_manager, "is_app_running")
+                    else False
                 )
 
-                for app in apps:
-                    is_installed = self.core.app_manager.is_app_installed(app)
-                    badge = (
-                        self.core.plugin_manager.get_app_card_badge(app)
-                        if hasattr(self.core.plugin_manager, "get_app_card_badge")
-                        else None
-                    )
-                    running = (
-                        self.core.plugin_manager.is_app_running(app)
-                        if hasattr(self.core.plugin_manager, "is_app_running")
-                        else False
-                    )
-
-                    app_button = GlassMorphism.create_app_button(
-                        app,
-                        colors,
-                        is_installed,
-                        glass_effect=self.core.theme_manager.glass_effect_enabled,
-                        on_click=lambda e, app=app: self.core.launch_app(app),
-                        on_long_press=lambda e, app=app: self.core.show_app_menu_dialog(app),
-                        session_badge_text=badge,
-                        is_running=running,
-                        intensity=self.core.theme_manager.glass_intensity,
-                    )
-
-                    def create_hover_handler(button):
-                        def on_hover(e):
-                            if e.data == "true":
-                                button.scale = 1.05
-                            else:
-                                button.scale = 1.0
-                            button.update()
-                        return on_hover
-
-                    app_button.on_hover = create_hover_handler(app_button)
-                    apps_grid.controls.append(app_button)
-
-                category_header = ft.Container(
-                    content=ft.Row(
-                        [
-                            ft.Icon(self.get_category_icon(category), color=colors["ACCENT"], size=20),
-                            ft.Text(category, size=18, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
-                            ft.Container(
-                                content=ft.Text(f"{len(apps)}", size=12, color=colors["ON_SURFACE_VARIANT"], weight=ft.FontWeight.W_500),
-                                bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.45),
-                                padding=ft.padding.symmetric(horizontal=10, vertical=4),
-                                border_radius=10,
-                            ),
-                        ]
+                app_button = GlassMorphism.create_app_button(
+                    app,
+                    colors,
+                    is_installed,
+                    glass_effect=self.core.theme_manager.glass_effect_enabled,
+                    on_click=lambda e, app=app: self.core.launch_app(app),
+                    on_long_press=lambda e, app=app: (
+                        self.core.plugin_manager.show_plugin_settings_modal(app["package"])
+                        if is_plugin
+                        else self.core.show_app_menu_dialog(app)
                     ),
-                    padding=ft.padding.only(left=16, top=8, bottom=6, right=16),
+                    session_badge_text=badge,
+                    is_running=running,
+                    intensity=self.core.theme_manager.glass_intensity,
                 )
 
-                category_content = ft.Column([category_header, apps_grid])
+                def create_hover_handler(button):
+                    def on_hover(e):
+                        button.scale = 1.05 if e.data == "true" else 1.0
+                        button.update()
 
-                if self.core.theme_manager.glass_effect_enabled:
-                    category_card = GlassMorphism.create_card(
-                        category_content,
-                        colors,
-                        hover_effect=False,
-                        intensity=self.core.theme_manager.glass_intensity,
-                        custom_opacity=self.core.theme_manager.advanced_glass_opacity if self.core.theme_manager.advanced_glass_enabled else None,
-                    )
-                else:
-                    category_card = ft.Container(
-                        content=category_content,
-                        shadow=ft.BoxShadow(blur_radius=8, color=colors["GLASS_SHADOW"], offset=ft.Offset(0, 2)),
-                        margin=ft.margin.only(bottom=20),
-                        border_radius=14,
-                        bgcolor=colors["SURFACE"],
-                    )
+                    return on_hover
 
-                category_sections.append(category_card)
+                app_button.on_hover = create_hover_handler(app_button)
+                apps_grid.controls.append(app_button)
+
+            # Заголовок категории как на скриншоте 2 (с синей вертикальной полоской-акцентом)
+            category_header = ft.Container(
+                content=ft.Row(
+                    [
+                        ft.Container(
+                            width=4,
+                            height=18,
+                            bgcolor="#a78bfa" if category == "Плагины" else colors["ACCENT"],
+                            border_radius=2,
+                        ),
+                        ft.Text(category, size=18, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
+                        ft.Text("•", size=14, color=colors["ON_SURFACE_VARIANT"]),
+                        ft.Text(f"{len(apps)}", size=13, color=colors["ON_SURFACE_VARIANT"], weight=ft.FontWeight.W_500),
+                    ],
+                    spacing=8,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                padding=ft.padding.only(left=16, top=8, bottom=4, right=16),
+            )
+
+            category_content = ft.Column([category_header, apps_grid])
+
+            category_card = GlassMorphism.create_card(
+                category_content,
+                colors,
+                hover_effect=False,
+                intensity=self.core.theme_manager.glass_intensity,
+                custom_opacity=self.core.theme_manager.advanced_glass_opacity
+                if self.core.theme_manager.advanced_glass_enabled
+                else None,
+            )
+            category_sections.append(category_card)
 
         return category_sections
 
     def filter_apps_by_type(self, apps_list):
         if self.core.current_filter == "all":
             return apps_list
+        elif self.core.current_filter == "plugin":
+            return [app for app in apps_list if app.get("type") == "plugin"]
         elif self.core.current_filter == "web":
-            return [app for app in apps_list if app["type"] == "web"]
+            return [app for app in apps_list if app.get("type") == "web"]
         elif self.core.current_filter == "app":
-            return [app for app in apps_list if app["type"] == "app"]
+            return [app for app in apps_list if app.get("type") == "app"]
         elif self.core.current_filter == "system":
-            return [app for app in apps_list if app["type"] == "system"]
+            return [app for app in apps_list if app.get("type") == "system"]
         elif self.core.current_filter == "custom":
             return [app for app in apps_list if app in self.core.app_manager.custom_apps]
         return apps_list
 
     def get_category_icon(self, category):
         icons = {
+            "Плагины": "extension",
             "Browser": "web",
             "Media": "play_arrow",
             "Music": "music_note",
@@ -838,6 +1027,7 @@ class UIPanels:
 
     def show_search_results(self, results, query):
         colors = self.core.get_colors()
+        runs_cnt = getattr(self.core.theme_manager, "card_columns", 6)
 
         if not results:
             no_results_content = ft.Column(
@@ -854,9 +1044,7 @@ class UIPanels:
                 content=ft.Column(
                     [
                         self.create_favorites_panel(),
-                        GlassMorphism.create_card(no_results_content, colors, hover_effect=False)
-                        if self.core.theme_manager.glass_effect_enabled
-                        else ft.Container(content=no_results_content, padding=80, alignment=ft.alignment.center),
+                        GlassMorphism.create_card(no_results_content, colors, hover_effect=False),
                     ],
                     scroll=ft.ScrollMode.ADAPTIVE,
                 ),
@@ -879,20 +1067,20 @@ class UIPanels:
             )
 
             results_grid = ft.GridView(
-                runs_count=6,
+                runs_count=runs_cnt,
                 max_extent=130,
-                child_aspect_ratio=0.86,
+                child_aspect_ratio=0.84,
                 spacing=15,
                 run_spacing=20,
                 padding=16,
             )
 
             for app in results:
-                is_installed = self.core.app_manager.is_app_installed(app)
+                is_installed = True if app.get("type") == "plugin" else self.core.app_manager.is_app_installed(app)
                 badge = (
                     self.core.plugin_manager.get_app_card_badge(app)
                     if hasattr(self.core.plugin_manager, "get_app_card_badge")
-                    else None
+                    else "0 мин"
                 )
                 app_button = GlassMorphism.create_app_button(
                     app,
@@ -906,10 +1094,11 @@ class UIPanels:
                 results_grid.controls.append(app_button)
 
             search_results_content = ft.Column([results_header, results_grid])
-            search_card = (
-                GlassMorphism.create_card(search_results_content, colors, hover_effect=False, intensity=self.core.theme_manager.glass_intensity)
-                if self.core.theme_manager.glass_effect_enabled
-                else ft.Container(content=search_results_content, border_radius=12, bgcolor=colors["SURFACE"])
+            search_card = GlassMorphism.create_card(
+                search_results_content,
+                colors,
+                hover_effect=False,
+                intensity=self.core.theme_manager.glass_intensity,
             )
 
             new_view = ft.Container(
@@ -922,7 +1111,7 @@ class UIPanels:
         else:
             self.core.main_content.content = new_view
 
-        if hasattr(self.core, "page"):
+        if hasattr(self.core, "page") and self.core.page:
             self.core.page.update()
 
     def create_loading_progress(self):
@@ -933,7 +1122,9 @@ class UIPanels:
                     ft.Icon("rocket_launch", size=40, color=colors["ACCENT"]),
                     ft.Text("Запуск приложения...", size=14, color=colors["ON_SURFACE"], weight=ft.FontWeight.W_500),
                     ft.Container(
-                        content=ft.ProgressBar(value=0, color=colors["ACCENT"], bgcolor=colors["SURFACE_VARIANT"], height=8, border_radius=4),
+                        content=ft.ProgressBar(
+                            value=0, color=colors["ACCENT"], bgcolor=colors["SURFACE_VARIANT"], height=8, border_radius=4
+                        ),
                         width=250,
                         padding=ft.padding.only(top=10),
                     ),

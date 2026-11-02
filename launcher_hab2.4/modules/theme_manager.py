@@ -1,7 +1,5 @@
 # [file name]: theme_manager.py
 import flet as ft
-import json
-import os
 from .file_manager import FileManager
 from .logger import get_logger
 
@@ -9,36 +7,61 @@ logger = get_logger(__name__)
 
 
 class ThemeManager:
+    # Расширенные стили часов v2.4 (включая вертикальные часы Android 14 и популярные веб-стили)
     CLOCK_STYLES = {
-        "standard": "Классический (14:32:08)",
-        "stacked": "Вертикальный Stacked (14 / 32)",
-        "minimal": "Минималистичный (14:32)",
-        "pill_glass": "Стеклянная капсула (14:32 • Дата)",
-        "cyber_mono": "Цифровой моно ([ 14 : 32 : 08 ])",
-        "compact_badge": "Компактный с днем недели",
+        "android_vertical": "Android 14 Вертикальный (Крупный HH / MM)",
+        "stacked": "Компактный вертикальный (14 / 32)",
+        "standard": "Классический цифровой (14:32:08)",
+        "pill_glass": "Android Капсула (14:32 • Дата)",
+        "split_flip": "Flip-карточки ([14] : [32])",
+        "cyber_mono": "Киберпанк Моно ([ 14 : 32 : 08 ])",
+        "minimal": "Минималистичный тонкий (14:32)",
+        "compact_badge": "Бейдж с днем недели",
     }
 
+    # Все прозрачные цвета записаны в формате Flet #AARRGGBB (Alpha в начале!)
     BASE_THEMES = {
         "dark": {
-            "NAME": "Темная",
-            "BG": "#16181d",
-            "SURFACE": "#222630",
-            "SURFACE_VARIANT": "#2f3542",
+            "NAME": "Темная (Midnight Slate)",
+            "BG": "#0d111a",
+            "SURFACE": "#151b26",
+            "SURFACE_VARIANT": "#1e2636",
+            "ON_SURFACE": "#f1f5f9",
+            "ON_SURFACE_VARIANT": "#8b9bb4",
+            "OUTLINE": "#263042",
+            "ACCENT": "#3b82f6",
+            "ACCENT_GLOW": "#333b82f6",
+            "ERROR": "#ef4444",
+            "SUCCESS": "#10b981",
+            "WEB_BLUE": "#60a5fa",
+            "GLASS_BG": "#b8151b26",
+            "GLASS_BORDER": "#18f8fafc",
+            "GLASS_SHADOW": "#66000000",
+            "GLASS_BG_LIGHT": "#881e2636",
+            "SETTINGS_BG": "#0d111a",
+            "SETTINGS_SURFACE": "#151b26",
+            "SETTINGS_CARD": "#1b2230",
+        },
+        "amoled": {
+            "NAME": "Черный Оникс (AMOLED)",
+            "BG": "#07090e",
+            "SURFACE": "#10141d",
+            "SURFACE_VARIANT": "#181e2b",
             "ON_SURFACE": "#f8fafc",
             "ON_SURFACE_VARIANT": "#94a3b8",
-            "OUTLINE": "#3b4252",
-            "ACCENT": "#4285f4",
-            "ACCENT_GLOW": "#4285f440",
-            "ERROR": "#ff6b6b",
-            "SUCCESS": "#4caf50",
-            "WEB_BLUE": "#60a5fa",
-            "GLASS_BG": "#22263066",
-            "GLASS_BORDER": "#ffffff24",
-            "GLASS_SHADOW": "#00000045",
-            "GLASS_BG_LIGHT": "#22263038",
-            "SETTINGS_BG": "#16181d",
-            "SETTINGS_SURFACE": "#222630",
-            "SETTINGS_CARD": "#2b303c",
+            "OUTLINE": "#222938",
+            "ACCENT": "#10b981",
+            "ACCENT_GLOW": "#3310b981",
+            "ERROR": "#f87171",
+            "SUCCESS": "#10b981",
+            "WEB_BLUE": "#38bdf8",
+            "GLASS_BG": "#c010141d",
+            "GLASS_BORDER": "#16ffffff",
+            "GLASS_SHADOW": "#80000000",
+            "GLASS_BG_LIGHT": "#80181e2b",
+            "SETTINGS_BG": "#07090e",
+            "SETTINGS_SURFACE": "#10141d",
+            "SETTINGS_CARD": "#161b26",
         },
         "light": {
             "NAME": "Светлая",
@@ -49,38 +72,38 @@ class ThemeManager:
             "ON_SURFACE_VARIANT": "#64748b",
             "OUTLINE": "#cbd5e1",
             "ACCENT": "#3b82f6",
-            "ACCENT_GLOW": "#3b82f620",
+            "ACCENT_GLOW": "#243b82f6",
             "ERROR": "#dc2626",
             "SUCCESS": "#059669",
             "WEB_BLUE": "#2563eb",
-            "GLASS_BG": "#ffffff85",
-            "GLASS_BORDER": "#0f172a14",
-            "GLASS_SHADOW": "#0f172a12",
-            "GLASS_BG_LIGHT": "#ffffff55",
+            "GLASS_BG": "#d8ffffff",
+            "GLASS_BORDER": "#180f172a",
+            "GLASS_SHADOW": "#1f0f172a",
+            "GLASS_BG_LIGHT": "#99ffffff",
             "SETTINGS_BG": "#f8fafc",
             "SETTINGS_SURFACE": "#ffffff",
             "SETTINGS_CARD": "#f1f5f9",
         },
         "purple": {
             "NAME": "Фиолетовая",
-            "BG": "#151426",
-            "SURFACE": "#252342",
-            "SURFACE_VARIANT": "#35325c",
+            "BG": "#121121",
+            "SURFACE": "#1d1b36",
+            "SURFACE_VARIANT": "#2a274d",
             "ON_SURFACE": "#ffffff",
             "ON_SURFACE_VARIANT": "#c4b5fd",
-            "OUTLINE": "#4c4682",
+            "OUTLINE": "#3d386b",
             "ACCENT": "#a855f7",
-            "ACCENT_GLOW": "#a855f735",
+            "ACCENT_GLOW": "#33a855f7",
             "ERROR": "#ff6b6b",
             "SUCCESS": "#34d399",
             "WEB_BLUE": "#c084fc",
-            "GLASS_BG": "#25234270",
-            "GLASS_BORDER": "#ffffff22",
-            "GLASS_SHADOW": "#00000045",
-            "GLASS_BG_LIGHT": "#25234240",
-            "SETTINGS_BG": "#151426",
-            "SETTINGS_SURFACE": "#252342",
-            "SETTINGS_CARD": "#35325c",
+            "GLASS_BG": "#b81d1b36",
+            "GLASS_BORDER": "#1fffffff",
+            "GLASS_SHADOW": "#66000000",
+            "GLASS_BG_LIGHT": "#802a274d",
+            "SETTINGS_BG": "#121121",
+            "SETTINGS_SURFACE": "#1d1b36",
+            "SETTINGS_CARD": "#262347",
         },
         "spring": {
             "NAME": "Весна",
@@ -91,14 +114,14 @@ class ThemeManager:
             "ON_SURFACE_VARIANT": "#880e4f",
             "OUTLINE": "#f472b6",
             "ACCENT": "#e91e63",
-            "ACCENT_GLOW": "#e91e6320",
+            "ACCENT_GLOW": "#24e91e63",
             "ERROR": "#f44336",
             "SUCCESS": "#10b981",
             "WEB_BLUE": "#db2777",
-            "GLASS_BG": "#fce7f380",
-            "GLASS_BORDER": "#880e4f15",
-            "GLASS_SHADOW": "#00000018",
-            "GLASS_BG_LIGHT": "#fce7f345",
+            "GLASS_BG": "#ccfcd7eb",
+            "GLASS_BORDER": "#20880e4f",
+            "GLASS_SHADOW": "#24000000",
+            "GLASS_BG_LIGHT": "#88fce7f3",
             "SETTINGS_BG": "#fff5f7",
             "SETTINGS_SURFACE": "#fce7f3",
             "SETTINGS_CARD": "#fbcfe8",
@@ -114,45 +137,57 @@ class ThemeManager:
 
     def load_settings(self):
         settings = self.file_manager.load_settings()
-        if settings is None:
+        if not isinstance(settings, dict):
             settings = {}
 
         self.current_theme = settings.get("theme", "dark")
-        self.glass_effect_enabled = settings.get("glass_effect", True)
+        self.glass_effect_enabled = bool(settings.get("glass_effect", True))
         self.glass_intensity = settings.get("glass_intensity", "medium")
-        self.advanced_glass_enabled = settings.get("advanced_glass_enabled", True)
-        self.advanced_glass_opacity = settings.get("advanced_glass_opacity", 35)
-        self.desktop_mode_enabled = settings.get("desktop_mode_enabled", True)
-        self.smooth_animations = settings.get("smooth_animations", True)
-        self.android_animations = settings.get("android_animations", True)
+        self.advanced_glass_enabled = bool(settings.get("advanced_glass_enabled", True))
+        self.advanced_glass_opacity = int(settings.get("advanced_glass_opacity", 72))
+        self.desktop_mode_enabled = bool(settings.get("desktop_mode_enabled", True))
+        self.smooth_animations = bool(settings.get("smooth_animations", True))
+        self.android_animations = bool(settings.get("android_animations", True))
 
-        # Настройки времени, часов и шрифтов (v2.2 - v2.4)
+        # Настройки времени, часов и шрифтов (v2.4)
         self.time_format = settings.get("time_format", "24")
         self.date_format = settings.get("date_format", "dd.mm.yyyy")
         self.font_family = settings.get("font_family", "Segoe UI")
-        self.font_size = settings.get("font_size", 14)
-        self.time_font_size = settings.get("time_font_size", 20)
-        self.date_font_size = settings.get("date_font_size", 12)
+        self.font_size = int(settings.get("font_size", 14))
+        self.time_font_size = int(settings.get("time_font_size", 22))
+        self.date_font_size = int(settings.get("date_font_size", 12))
         self.time_font_family = settings.get("time_font_family", self.font_family)
         self.date_font_family = settings.get("date_font_family", self.font_family)
-        self.backup_auto = settings.get("backup_auto", True)
-        self.backup_interval = settings.get("backup_interval", 7)
-        self.search_cache_enabled = settings.get("search_cache_enabled", True)
-        self.virtualization_enabled = settings.get("virtualization_enabled", True)
+        self.backup_auto = bool(settings.get("backup_auto", True))
+        self.backup_interval = int(settings.get("backup_interval", 7))
+        self.search_cache_enabled = bool(settings.get("search_cache_enabled", True))
+        self.virtualization_enabled = bool(settings.get("virtualization_enabled", True))
 
-        # Расширенные настройки стилей часов v2.4
-        self.clock_style = settings.get("clock_style", "standard")
-        self.show_date = settings.get("show_date", True)
-        self.show_seconds = settings.get("show_seconds", True)
-        self.show_weekday = settings.get("show_weekday", True)
-        self.clock_glass_frame = settings.get("clock_glass_frame", True)
+        # Расширенные настройки стилей часов v2.4 (по умолчанию вертикальные часы как на Android)
+        self.clock_style = settings.get("clock_style", "android_vertical")
+        if self.clock_style not in self.CLOCK_STYLES:
+            self.clock_style = "android_vertical"
+        self.show_date = bool(settings.get("show_date", True))
+        self.show_seconds = bool(settings.get("show_seconds", True))
+        self.show_weekday = bool(settings.get("show_weekday", True))
+        self.clock_glass_frame = bool(settings.get("clock_glass_frame", True))
+        self.show_android_clock_widget = bool(settings.get("show_android_clock_widget", True))
         self.time_color = settings.get(
-            "time_color", self.get_theme(self.current_theme).get("ON_SURFACE", "#ffffff")
+            "time_color", self.get_theme(self.current_theme).get("ON_SURFACE", "#f1f5f9")
         )
         self.date_color = settings.get(
-            "date_color", self.get_theme(self.current_theme).get("ON_SURFACE_VARIANT", "#94a3b8")
+            "date_color", self.get_theme(self.current_theme).get("ON_SURFACE_VARIANT", "#8b9bb4")
         )
-        self.search_history_enabled = settings.get("search_history_enabled", True)
+        self.search_history_enabled = bool(settings.get("search_history_enabled", True))
+
+        # Новые важные настройки программы v2.4
+        self.show_plugins_in_grid = bool(settings.get("show_plugins_in_grid", True))
+        self.launch_behavior = settings.get("launch_behavior", "keep")  # "keep" | "minimize"
+        self.card_columns = int(settings.get("card_columns", 6))
+        self.detox_notifications = bool(settings.get("detox_notifications", True))
+        self.auto_update_enabled = bool(settings.get("auto_update_enabled", True))
+        self.system_notifications_enabled = bool(settings.get("system_notifications_enabled", True))
+        self.autostart_windows = bool(settings.get("autostart_windows", False))
 
     def save_settings(self):
         settings_data = {
@@ -181,15 +216,23 @@ class ThemeManager:
             "show_seconds": self.show_seconds,
             "show_weekday": self.show_weekday,
             "clock_glass_frame": self.clock_glass_frame,
+            "show_android_clock_widget": self.show_android_clock_widget,
             "time_color": self.time_color,
             "date_color": self.date_color,
             "search_history_enabled": self.search_history_enabled,
+            "show_plugins_in_grid": self.show_plugins_in_grid,
+            "launch_behavior": self.launch_behavior,
+            "card_columns": self.card_columns,
+            "detox_notifications": self.detox_notifications,
+            "auto_update_enabled": self.auto_update_enabled,
+            "system_notifications_enabled": self.system_notifications_enabled,
+            "autostart_windows": self.autostart_windows,
         }
         return self.file_manager.save_settings(settings_data)
 
     def load_custom_themes(self):
         themes = self.file_manager.load_data("custom_themes.json", {})
-        return themes if themes is not None else {}
+        return themes if isinstance(themes, dict) else {}
 
     def save_custom_themes(self):
         self.file_manager.save_data("custom_themes.json", self.custom_themes)
@@ -273,6 +316,16 @@ class ThemeManager:
             return True
         return False
 
+    def delete_custom_theme(self, name):
+        if name in self.custom_themes:
+            del self.custom_themes[name]
+            self.save_custom_themes()
+            if self.current_theme == name:
+                self.current_theme = "dark"
+                self.save_settings()
+            return True
+        return False
+
     def set_time_format(self, format_type):
         if format_type in ["12", "24"]:
             self.time_format = format_type
@@ -288,7 +341,7 @@ class ThemeManager:
         self.save_settings()
 
     def set_font_size(self, font_size):
-        self.font_size = font_size
+        self.font_size = int(font_size)
         self.save_settings()
 
     def set_time_style(self, time_size=None, date_size=None, time_family=None, date_family=None):
@@ -303,13 +356,13 @@ class ThemeManager:
         self.save_settings()
 
     def set_backup_settings(self, auto_backup, interval):
-        self.backup_auto = auto_backup
-        self.backup_interval = interval
+        self.backup_auto = bool(auto_backup)
+        self.backup_interval = int(interval)
         self.save_settings()
 
     def set_performance_settings(self, search_cache, virtualization):
-        self.search_cache_enabled = search_cache
-        self.virtualization_enabled = virtualization
+        self.search_cache_enabled = bool(search_cache)
+        self.virtualization_enabled = bool(virtualization)
         self.save_settings()
 
     def set_clock_preferences(
@@ -322,6 +375,7 @@ class ThemeManager:
         show_weekday=None,
         clock_glass_frame=None,
         time_font_size=None,
+        show_android_clock_widget=None,
     ):
         if style in self.CLOCK_STYLES:
             self.clock_style = style
@@ -333,10 +387,32 @@ class ThemeManager:
             self.show_weekday = bool(show_weekday)
         if clock_glass_frame is not None:
             self.clock_glass_frame = bool(clock_glass_frame)
+        if show_android_clock_widget is not None:
+            self.show_android_clock_widget = bool(show_android_clock_widget)
         if time_font_size is not None:
-            self.time_font_size = max(14, min(44, int(time_font_size)))
+            self.time_font_size = max(14, min(48, int(time_font_size)))
         if isinstance(time_color, str) and time_color.startswith("#"):
             self.time_color = time_color
         if isinstance(date_color, str) and date_color.startswith("#"):
             self.date_color = date_color
+        self.save_settings()
+
+    def set_program_preferences(
+        self,
+        show_plugins_in_grid=None,
+        launch_behavior=None,
+        card_columns=None,
+        detox_notifications=None,
+        autostart_windows=None,
+    ):
+        if show_plugins_in_grid is not None:
+            self.show_plugins_in_grid = bool(show_plugins_in_grid)
+        if launch_behavior in ["keep", "minimize"]:
+            self.launch_behavior = launch_behavior
+        if card_columns is not None:
+            self.card_columns = max(4, min(8, int(card_columns)))
+        if detox_notifications is not None:
+            self.detox_notifications = bool(detox_notifications)
+        if autostart_windows is not None:
+            self.autostart_windows = bool(autostart_windows)
         self.save_settings()

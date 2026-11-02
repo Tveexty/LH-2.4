@@ -1,7 +1,15 @@
-export type ThemeKey = 'dark' | 'light' | 'purple' | 'spring';
-export type ClockStyleKey = 'standard' | 'stacked' | 'minimal' | 'pill_glass' | 'cyber_mono' | 'compact_badge';
+export type ThemeKey = 'dark' | 'amoled' | 'light' | 'purple' | 'spring';
+export type ClockStyleKey =
+  | 'android_vertical'
+  | 'stacked'
+  | 'standard'
+  | 'pill_glass'
+  | 'split_flip'
+  | 'cyber_mono'
+  | 'minimal'
+  | 'compact_badge';
 export type GlassIntensity = 'light' | 'medium' | 'strong';
-export type AppType = 'app' | 'web' | 'system';
+export type AppType = 'app' | 'web' | 'system' | 'plugin';
 
 export interface AppItem {
   id: string;
@@ -18,9 +26,11 @@ export interface AppItem {
   monthMinutes: number;
   weekMinutes: number;
   todayMinutes: number;
+  elapsedSeconds: number;
   dailyLimitMinutes: number;
   detoxGroup: string;
   isRunning?: boolean;
+  pluginId?: string;
 }
 
 export interface DetoxGroup {
@@ -33,8 +43,26 @@ export interface PluginItem {
   id: string;
   name: string;
   version: string;
+  author?: string;
+  category?: string;
+  icon?: string;
   description: string;
   enabled: boolean;
+  file: string;
+  hooks: string[];
+  showInLauncher?: boolean;
+  customIntervalSec?: number;
+  notificationsEnabled?: boolean;
+}
+
+export interface CatalogPluginItem {
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  category: string;
+  icon: string;
+  description: string;
   file: string;
   hooks: string[];
 }
@@ -47,57 +75,134 @@ export interface WorkspacePreset {
   launchApps: string[];
 }
 
-export const THEMES: Record<ThemeKey, {
-  name: string;
-  isDark: boolean;
-  bgGradient: string;
-  surfaceRgba: string;
-  accent: string;
-  accentHex: string;
-}> = {
+export interface BackupRecord {
+  id: string;
+  filename: string;
+  createdAt: string;
+  sizeKb: string;
+}
+
+export const THEMES: Record<
+  ThemeKey,
+  {
+    name: string;
+    isDark: boolean;
+    bgGradient: string;
+    surfaceRgba: string;
+    cardHex: string;
+    accent: string;
+    accentHex: string;
+  }
+> = {
   dark: {
-    name: 'Темная',
+    name: 'Темная (Midnight Slate)',
     isDark: true,
-    bgGradient: 'radial-gradient(circle at 18% 15%, rgba(59, 130, 246, 0.16), transparent 42%), radial-gradient(circle at 82% 80%, rgba(99, 102, 241, 0.12), transparent 45%), linear-gradient(145deg, #11141c 0%, #171b26 55%, #12151e 100%)',
-    surfaceRgba: 'rgba(30, 35, 48, 0.58)',
+    bgGradient:
+      'radial-gradient(circle at 16% 12%, rgba(59, 130, 246, 0.11), transparent 40%), radial-gradient(circle at 85% 82%, rgba(16, 185, 129, 0.06), transparent 45%), linear-gradient(155deg, #0b0f17 0%, #0d111a 55%, #111723 100%)',
+    surfaceRgba: 'rgba(21, 27, 38, 0.88)',
+    cardHex: '#151b26',
     accent: 'blue',
-    accentHex: '#4285f4',
+    accentHex: '#3b82f6',
+  },
+  amoled: {
+    name: 'Черный Оникс (AMOLED)',
+    isDark: true,
+    bgGradient:
+      'radial-gradient(circle at 20% 15%, rgba(16, 185, 129, 0.08), transparent 40%), linear-gradient(155deg, #05070b 0%, #080b11 60%, #0c1018 100%)',
+    surfaceRgba: 'rgba(13, 17, 24, 0.92)',
+    cardHex: '#0d1118',
+    accent: 'emerald',
+    accentHex: '#10b981',
   },
   light: {
     name: 'Светлая',
     isDark: false,
-    bgGradient: 'radial-gradient(circle at 20% 15%, rgba(59, 130, 246, 0.12), transparent 45%), radial-gradient(circle at 80% 85%, rgba(14, 165, 233, 0.10), transparent 45%), linear-gradient(145deg, #eef2f7 0%, #f8fafc 60%, #e2e8f0 100%)',
-    surfaceRgba: 'rgba(255, 255, 255, 0.68)',
+    bgGradient:
+      'radial-gradient(circle at 20% 15%, rgba(59, 130, 246, 0.12), transparent 45%), radial-gradient(circle at 80% 85%, rgba(14, 165, 233, 0.10), transparent 45%), linear-gradient(145deg, #eef2f7 0%, #f8fafc 60%, #e2e8f0 100%)',
+    surfaceRgba: 'rgba(255, 255, 255, 0.82)',
+    cardHex: '#ffffff',
     accent: 'blue',
     accentHex: '#2563eb',
   },
   purple: {
     name: 'Фиолетовая',
     isDark: true,
-    bgGradient: 'radial-gradient(circle at 22% 18%, rgba(168, 85, 247, 0.22), transparent 45%), radial-gradient(circle at 80% 78%, rgba(217, 70, 239, 0.14), transparent 45%), linear-gradient(145deg, #131124 0%, #1d1936 55%, #141229 100%)',
-    surfaceRgba: 'rgba(39, 34, 68, 0.58)',
+    bgGradient:
+      'radial-gradient(circle at 22% 18%, rgba(168, 85, 247, 0.18), transparent 45%), radial-gradient(circle at 80% 78%, rgba(217, 70, 239, 0.12), transparent 45%), linear-gradient(145deg, #0f0b1d 0%, #17122b 55%, #120e24 100%)',
+    surfaceRgba: 'rgba(26, 20, 48, 0.86)',
+    cardHex: '#1a1430',
     accent: 'purple',
     accentHex: '#a855f7',
   },
   spring: {
     name: 'Весна',
     isDark: false,
-    bgGradient: 'radial-gradient(circle at 22% 18%, rgba(236, 72, 153, 0.15), transparent 45%), radial-gradient(circle at 80% 78%, rgba(244, 114, 182, 0.14), transparent 45%), linear-gradient(145deg, #fff5f8 0%, #fce7f3 60%, #fbcfe8 100%)',
-    surfaceRgba: 'rgba(255, 245, 250, 0.72)',
+    bgGradient:
+      'radial-gradient(circle at 22% 18%, rgba(236, 72, 153, 0.14), transparent 45%), radial-gradient(circle at 80% 78%, rgba(244, 114, 182, 0.12), transparent 45%), linear-gradient(145deg, #fff5f8 0%, #fce7f3 60%, #fbcfe8 100%)',
+    surfaceRgba: 'rgba(255, 245, 250, 0.82)',
+    cardHex: '#ffffff',
     accent: 'pink',
-    accentHex: '#e91e63',
+    accentHex: '#ec4899',
   },
 };
 
-export const CLOCK_STYLE_OPTIONS: { id: ClockStyleKey; label: string; sample: string }[] = [
-  { id: 'standard', label: 'Классический', sample: '14:32:08' },
-  { id: 'stacked', label: 'Stacked (Вертикальный)', sample: '14 / 32' },
-  { id: 'minimal', label: 'Минималистичный', sample: '14:32' },
-  { id: 'pill_glass', label: 'Стеклянная капсула', sample: '14:32 • Пн, 02.11' },
-  { id: 'cyber_mono', label: 'Цифровой Моно', sample: '[ 14 : 32 : 08 ]' },
-  { id: 'compact_badge', label: 'Компактный с днем недели', sample: 'Пн • 14:32' },
+export const CLOCK_STYLE_OPTIONS: {
+  id: ClockStyleKey;
+  label: string;
+  sample: string;
+  description: string;
+}[] = [
+  {
+    id: 'android_vertical',
+    label: 'Android 14 Вертикальный (HH / MM)',
+    sample: '14 / 32',
+    description: 'Крупные вертикальные часы в стиле экрана блокировки Android 14 / Pixel',
+  },
+  {
+    id: 'stacked',
+    label: 'Двухэтажный (Stacked Compact)',
+    sample: '14 : 32',
+    description: 'Компактные часы в два этажа с датой сбоку',
+  },
+  {
+    id: 'standard',
+    label: 'Классический (Горизонтальный)',
+    sample: '14:32:08',
+    description: 'Традиционные цифровые часы с секундами и датой снизу',
+  },
+  {
+    id: 'pill_glass',
+    label: 'Стеклянная капсула (OneUI Pill)',
+    sample: '14:32 • Пн, 02.11',
+    description: 'Стильная капсула в одну строку с иконкой и датой',
+  },
+  {
+    id: 'split_flip',
+    label: 'Раздельные карточки (Flip Clock)',
+    sample: '[14] [32] [08]',
+    description: 'Часы и минуты на отдельных темных карточках',
+  },
+  {
+    id: 'cyber_mono',
+    label: 'Кибер-Моно (Терминал)',
+    sample: '[ 14 : 32 : 08 ]',
+    description: 'Моноширинный киберпанк-стиль в квадратных скобках',
+  },
+  {
+    id: 'minimal',
+    label: 'Минималистичный (Чистый)',
+    sample: '14:32',
+    description: 'Чистое время без лишних рамок',
+  },
+  {
+    id: 'compact_badge',
+    label: 'Компактный бейдж с днем недели',
+    sample: 'Пн • 14:32',
+    description: 'Акцентный бейдж дня недели и текущее время',
+  },
 ];
 
+// All apps start at 0 minutes / 0 seconds. Timer starts counting in real time when launched!
 export const INITIAL_APPS: AppItem[] = [
   {
     id: 'steam',
@@ -109,12 +214,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'app',
     installed: true,
     favorite: true,
-    monthMinutes: 2520, // 42 ч в месяц
-    weekMinutes: 840,
-    todayMinutes: 95,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 180,
     detoxGroup: 'Игры',
-    isRunning: true,
+    isRunning: false,
   },
   {
     id: 'chrome',
@@ -126,11 +232,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'web',
     installed: true,
     favorite: true,
-    monthMinutes: 1980, // 33 ч в месяц
-    weekMinutes: 520,
-    todayMinutes: 75,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 240,
     detoxGroup: 'Браузеры',
+    isRunning: false,
   },
   {
     id: 'telegram',
@@ -142,11 +250,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'app',
     installed: true,
     favorite: true,
-    monthMinutes: 1140, // 19 ч в месяц
-    weekMinutes: 310,
-    todayMinutes: 52,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 60,
     detoxGroup: 'Соцсети и мессенджеры',
+    isRunning: false,
   },
   {
     id: 'vk',
@@ -158,91 +268,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'web',
     installed: true,
     favorite: true,
-    monthMinutes: 660, // 11 ч в месяц
-    weekMinutes: 175,
-    todayMinutes: 35,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 60,
     detoxGroup: 'Соцсети и мессенджеры',
-  },
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    package: 'youtube',
-    category: 'Media',
-    icon: 'Play',
-    url: 'https://youtube.com',
-    type: 'web',
-    installed: true,
-    favorite: false,
-    monthMinutes: 1560, // 26 ч в месяц
-    weekMinutes: 410,
-    todayMinutes: 65,
-    dailyLimitMinutes: 90,
-    detoxGroup: 'Медиа',
-  },
-  {
-    id: 'vlc',
-    name: 'VLC Media Player',
-    package: 'vlc',
-    category: 'Media',
-    icon: 'Film',
-    url: 'vlc://',
-    type: 'app',
-    installed: true,
-    favorite: false,
-    monthMinutes: 480, // 8 ч в месяц
-    weekMinutes: 120,
-    todayMinutes: 20,
-    dailyLimitMinutes: 180,
-    detoxGroup: 'Медиа',
-  },
-  {
-    id: 'vkmusic',
-    name: 'VK Музыка',
-    package: 'vkmusic',
-    category: 'Music',
-    icon: 'Music',
-    url: 'https://vk.com/music',
-    type: 'web',
-    installed: true,
-    favorite: false,
-    monthMinutes: 720, // 12 ч в месяц
-    weekMinutes: 190,
-    todayMinutes: 30,
-    dailyLimitMinutes: 180,
-    detoxGroup: 'Медиа',
-  },
-  {
-    id: 'yandexmusic',
-    name: 'Яндекс Музыка',
-    package: 'yandexmusic',
-    category: 'Music',
-    icon: 'Headphones',
-    url: 'https://music.yandex.ru',
-    type: 'web',
-    installed: true,
-    favorite: false,
-    monthMinutes: 900, // 15 ч в месяц
-    weekMinutes: 240,
-    todayMinutes: 40,
-    dailyLimitMinutes: 180,
-    detoxGroup: 'Медиа',
-  },
-  {
-    id: 'firefox',
-    name: 'Firefox',
-    package: 'firefox',
-    category: 'Browser',
-    icon: 'Compass',
-    url: 'https://mozilla.org',
-    type: 'web',
-    installed: true,
-    favorite: false,
-    monthMinutes: 420, // 7 ч в месяц
-    weekMinutes: 95,
-    todayMinutes: 15,
-    dailyLimitMinutes: 240,
-    detoxGroup: 'Браузеры',
+    isRunning: false,
   },
   {
     id: 'vkgames',
@@ -254,11 +286,103 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'web',
     installed: true,
     favorite: false,
-    monthMinutes: 840, // 14 ч в месяц
-    weekMinutes: 210,
-    todayMinutes: 45,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 180,
     detoxGroup: 'Игры',
+    isRunning: false,
+  },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    package: 'youtube',
+    category: 'Media',
+    icon: 'Play',
+    url: 'https://youtube.com',
+    type: 'web',
+    installed: true,
+    favorite: false,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
+    dailyLimitMinutes: 90,
+    detoxGroup: 'Медиа',
+    isRunning: false,
+  },
+  {
+    id: 'vlc',
+    name: 'VLC Media Player',
+    package: 'vlc',
+    category: 'Media',
+    icon: 'Film',
+    url: 'vlc://',
+    type: 'app',
+    installed: true,
+    favorite: false,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
+    dailyLimitMinutes: 180,
+    detoxGroup: 'Медиа',
+    isRunning: false,
+  },
+  {
+    id: 'vkmusic',
+    name: 'VK Музыка',
+    package: 'vkmusic',
+    category: 'Music',
+    icon: 'Music',
+    url: 'https://vk.com/music',
+    type: 'web',
+    installed: true,
+    favorite: false,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
+    dailyLimitMinutes: 180,
+    detoxGroup: 'Медиа',
+    isRunning: false,
+  },
+  {
+    id: 'yandexmusic',
+    name: 'Яндекс Музыка',
+    package: 'yandexmusic',
+    category: 'Music',
+    icon: 'Headphones',
+    url: 'https://music.yandex.ru',
+    type: 'web',
+    installed: true,
+    favorite: false,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
+    dailyLimitMinutes: 180,
+    detoxGroup: 'Медиа',
+    isRunning: false,
+  },
+  {
+    id: 'firefox',
+    name: 'Firefox',
+    package: 'firefox',
+    category: 'Browser',
+    icon: 'Compass',
+    url: 'https://mozilla.org',
+    type: 'web',
+    installed: true,
+    favorite: false,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
+    dailyLimitMinutes: 240,
+    detoxGroup: 'Браузеры',
+    isRunning: false,
   },
   {
     id: 'calc',
@@ -270,11 +394,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'system',
     installed: true,
     favorite: false,
-    monthMinutes: 65,
-    weekMinutes: 20,
-    todayMinutes: 5,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 300,
     detoxGroup: 'Система',
+    isRunning: false,
   },
   {
     id: 'explorer',
@@ -286,11 +412,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'system',
     installed: true,
     favorite: false,
-    monthMinutes: 360, // 6 ч в месяц
-    weekMinutes: 90,
-    todayMinutes: 15,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 300,
     detoxGroup: 'Система',
+    isRunning: false,
   },
   {
     id: 'taskmgr',
@@ -302,11 +430,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'system',
     installed: true,
     favorite: false,
-    monthMinutes: 180, // 3 ч в месяц
-    weekMinutes: 45,
-    todayMinutes: 8,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 300,
     detoxGroup: 'Система',
+    isRunning: false,
   },
   {
     id: 'cmd',
@@ -318,11 +448,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'system',
     installed: true,
     favorite: false,
-    monthMinutes: 540, // 9 ч в месяц
-    weekMinutes: 130,
-    todayMinutes: 25,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 300,
     detoxGroup: 'Система',
+    isRunning: false,
   },
   {
     id: 'winword',
@@ -334,11 +466,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'app',
     installed: true,
     favorite: false,
-    monthMinutes: 600, // 10 ч в месяц
-    weekMinutes: 160,
-    todayMinutes: 30,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 300,
     detoxGroup: 'Работа',
+    isRunning: false,
   },
   {
     id: 'yandexdisk',
@@ -350,11 +484,13 @@ export const INITIAL_APPS: AppItem[] = [
     type: 'web',
     installed: true,
     favorite: false,
-    monthMinutes: 240, // 4 ч в месяц
-    weekMinutes: 60,
-    todayMinutes: 10,
+    monthMinutes: 0,
+    weekMinutes: 0,
+    todayMinutes: 0,
+    elapsedSeconds: 0,
     dailyLimitMinutes: 300,
     detoxGroup: 'Работа',
+    isRunning: false,
   },
 ];
 
@@ -370,55 +506,129 @@ export const INITIAL_PLUGINS: PluginItem[] = [
     id: 'session_tracker_plugin',
     name: 'Game & App Session Tracker',
     version: '2.4.0',
-    description: 'Отслеживает время в каждом запущенном приложении или игре (аналог статистики Steam / Экранного времени), выводит часы на карточках («42 ч в мес»), строит графики (день/неделя/месяц) и контролирует лимиты детокса.',
+    author: 'LauncherHab Team',
+    category: 'Аналитика и Детокс',
+    icon: 'BarChart3',
+    description:
+      'Отслеживает время с 00:00 в реальном времени после запуска каждого приложения или игры, выводит таймер и часы на карточках, строит графики (день/неделя/месяц) и контролирует лимиты детокса.',
     enabled: true,
     file: 'plugins/session_tracker_plugin.py',
     hooks: ['on_load', 'on_app_launched', 'on_tick', 'get_app_card_badge', 'get_ui_component'],
+    showInLauncher: true,
+    customIntervalSec: 1,
+    notificationsEnabled: true,
   },
   {
     id: 'focus_mode_plugin',
     name: 'Focus Mode (Pomodoro)',
-    version: '2.3.0',
-    description: 'Режим концентрации с Pomodoro-таймером на 25 минут и автоматическим закрытием отвлекающих мессенджеров.',
+    version: '2.4.0',
+    author: 'LauncherHab Team',
+    category: 'Продуктивность',
+    icon: 'Clock',
+    description:
+      'Режим концентрации с Pomodoro-таймером на 25 минут и автоматическим закрытием отвлекающих мессенджеров.',
     enabled: true,
     file: 'plugins/focus_mode_plugin.py',
     hooks: ['set_context', 'get_ui_component'],
+    showInLauncher: true,
+    customIntervalSec: 60,
+    notificationsEnabled: true,
   },
   {
     id: 'smart_music_controller',
     name: 'Smart Music Controller',
-    version: '2.3.0',
+    version: '2.4.0',
+    author: 'LauncherHab Team',
+    category: 'Медиа',
+    icon: 'Music',
     description: 'Встроенный мини-плеер для быстрого переключения треков и управления медиапотоком.',
     enabled: true,
     file: 'plugins/smart_music_controller.py',
     hooks: ['get_ui_component'],
+    showInLauncher: true,
+    customIntervalSec: 30,
+    notificationsEnabled: true,
   },
   {
     id: 'smart_weather_plugin',
     name: 'Smart Weather Plugin',
-    version: '2.3.0',
-    description: 'Отображение актуальной температуры, влажности и скорости ветра прямо в панели расширений.',
+    version: '2.4.0',
+    author: 'LauncherHab Team',
+    category: 'Виджеты',
+    icon: 'Cloud',
+    description: 'Отображение актуальной температуры, влажности и скорости ветра прямо в окне запуска.',
     enabled: true,
     file: 'plugins/smart_weather_plugin.py',
     hooks: ['get_ui_component'],
-  },
-  {
-    id: 'smart_file_finder',
-    name: 'Smart File Finder',
-    version: '2.3.0',
-    description: 'Быстрый мгновенный поиск локальных файлов по рабочей директории.',
-    enabled: false,
-    file: 'plugins/smart_file_finder.py',
-    hooks: ['get_ui_component'],
+    showInLauncher: true,
+    customIntervalSec: 300,
+    notificationsEnabled: true,
   },
   {
     id: 'idea_notebook_plugin',
     name: 'Idea Notebook',
-    version: '2.3.0',
-    description: 'Быстрые заметки и сохранение идей в idea_notes.txt по горячей клавише Ctrl + Alt + N.',
+    version: '2.4.0',
+    author: 'LauncherHab Team',
+    category: 'Утилиты',
+    icon: 'FileText',
+    description: 'Быстрые заметки и сохранение идей в idea_notes.txt без ошибок show_snack_bar.',
     enabled: true,
     file: 'plugins/idea_notebook_plugin.py',
     hooks: ['get_ui_component'],
+    showInLauncher: true,
+    customIntervalSec: 60,
+    notificationsEnabled: true,
+  },
+  {
+    id: 'smart_file_finder',
+    name: 'Smart File Finder',
+    version: '2.4.0',
+    author: 'LauncherHab Team',
+    category: 'Система',
+    icon: 'Search',
+    description: 'Быстрый мгновенный поиск локальных файлов по рабочей директории.',
+    enabled: true,
+    file: 'plugins/smart_file_finder.py',
+    hooks: ['get_ui_component'],
+    showInLauncher: true,
+    customIntervalSec: 60,
+    notificationsEnabled: true,
+  },
+];
+
+export const PLUGIN_CATALOG: CatalogPluginItem[] = [
+  {
+    id: 'system_cleaner_plugin',
+    name: 'System Cleaner & RAM Optimizer',
+    version: '2.4.0',
+    author: 'LauncherHab Store',
+    category: 'Система',
+    icon: 'Activity',
+    description: 'Очистка временного кэша системы и освобождение неиспользуемой оперативной памяти в 1 клик.',
+    file: 'plugins/system_cleaner_plugin.py',
+    hooks: ['on_load', 'get_ui_component'],
+  },
+  {
+    id: 'game_booster_plugin',
+    name: 'Game Booster Pro (FPS & Ping)',
+    version: '2.4.0',
+    author: 'LauncherHab Store',
+    category: 'Игры',
+    icon: 'Gamepad2',
+    description: 'Повышение приоритета игровых процессов и мониторинг задержки сети перед запуском игр.',
+    file: 'plugins/game_booster_plugin.py',
+    hooks: ['on_load', 'on_app_launched', 'get_ui_component'],
+  },
+  {
+    id: 'quick_clipboard_plugin',
+    name: 'Quick Clipboard History',
+    version: '2.4.0',
+    author: 'LauncherHab Store',
+    category: 'Продуктивность',
+    icon: 'Copy',
+    description: 'Менеджер буфера обмена с быстрым копированием сохраненных сниппетов и команд.',
+    file: 'plugins/quick_clipboard_plugin.py',
+    hooks: ['on_load', 'get_ui_component'],
   },
 ];
 
@@ -448,111 +658,141 @@ export const INITIAL_WORKSPACES: WorkspacePreset[] = [
 
 export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string; summary: string }[] = [
   {
-    path: 'plugins/session_tracker_plugin.py',
-    title: 'plugins/session_tracker_plugin.py',
-    badge: 'NEW v2.4',
-    summary: 'Плагин Game & App Session Tracker: учет времени, бейджи «42 ч в мес», графики День/Неделя/Месяц и группы детокса.',
+    path: 'modules/encryption_manager.py',
+    title: 'modules/encryption_manager.py',
+    badge: 'FIXED v2.4',
+    summary:
+      'Исправлена ошибка Fernet key must be 32 url-safe base64-encoded bytes (SHA-256 -> 32-байтный URL-safe Base64 ключ для надежного сохранения настроек).',
   },
   {
     path: 'modules/glass_morphism.py',
     title: 'modules/glass_morphism.py',
-    badge: 'UPDATED v2.4',
-    summary: 'Настоящее прозрачное стекло с аппаратным размытием ft.Blur, плавной анимацией и поддержкой бейджей времени на карточках.',
+    badge: 'FIXED v2.4',
+    summary:
+      'Исправлены желтые полоски: формат цветов Flet переведен на #AARRGGBB, стиль темной темы приведен к Midnight Slate как на скриншоте 2.',
   },
   {
-    path: 'modules/audio_controller.py',
-    title: 'modules/audio_controller.py',
-    badge: 'UPDATED v2.4',
-    summary: 'Неблокирующий фоновый контроллер системной громкости (pycaw CoreAudio COM в фоновом потоке + Linux/macOS + Mute).',
+    path: 'plugins/session_tracker_plugin.py',
+    title: 'plugins/session_tracker_plugin.py',
+    badge: 'ZERO-START v2.4',
+    summary:
+      'Трекер времени начинается с 0 мин и запускает живой посекундный таймер (🟢 00:00:15) при старте приложения или игры.',
   },
   {
     path: 'modules/plugin_manager.py',
     title: 'modules/plugin_manager.py',
-    badge: 'UPDATED v2.4',
-    summary: 'Расширенный PluginAPI 2.4 с хуками on_app_launched, on_tick, get_app_card_badge и встроенным SDK-генератором шаблонов.',
-  },
-  {
-    path: 'modules/ui_dialogs_add_app.py',
-    title: 'modules/ui_dialogs_add_app.py',
-    badge: 'UPDATED v2.4',
-    summary: 'Улучшенное единое окно добавления приложения: живое превью карточки, поиск по 70+ иконкам, CLI-аргументы и лимит детокса.',
+    badge: 'STORE & API v2.4',
+    summary:
+      'Расширенный PluginAPI 2.4: плагины в списке запуска («Плагины»), магазин расширений (скачать/установить/настроить/удалить).',
   },
   {
     path: 'modules/ui_panels.py',
     title: 'modules/ui_panels.py',
-    badge: 'UPDATED v2.4',
-    summary: 'Плавные переходы между разделами через ft.AnimatedSwitcher, переключатель Трекер/Приложения и 6 стилей часов.',
-  },
-  {
-    path: 'modules/ui_manager_core.py',
-    title: 'modules/ui_manager_core.py',
-    badge: 'UPDATED v2.4',
-    summary: 'Ядро Launcher Hab 2.4: фоновый тик плагинов, интеграция трекера при запуске приложений и обновление стилей часов.',
+    badge: 'ANDROID CLOCK v2.4',
+    summary:
+      'Вертикальные часы Android 14 (HH / MM), 8 стилей часов и вывод активных плагинов в библиотеке и сетке.',
   },
   {
     path: 'modules/ui_dialogs.py',
     title: 'modules/ui_dialogs.py',
     badge: 'UPDATED v2.4',
-    summary: 'Настройки 6 стилей часов, быстрые цветовые пресеты, управление плагинами и история обновлений версии 2.4.',
+    summary:
+      '5 вкладок настроек, менеджер резервных копий (восстановление/удаление), 8 стилей часов и устранение show_snack_bar.',
+  },
+  {
+    path: 'modules/ui_manager_core.py',
+    title: 'modules/ui_manager_core.py',
+    badge: 'UPDATED v2.4',
+    summary:
+      'Ядро Launcher Hab 2.4: ежесекундный тик таймера запущенных приложений, метод show_toast через page.open(ft.SnackBar).',
   },
   {
     path: 'modules/theme_manager.py',
     title: 'modules/theme_manager.py',
     badge: 'UPDATED v2.4',
-    summary: 'Хранение настроек прозрачного стекла, 6 стилей часов (standard, stacked, minimal, pill_glass, cyber_mono, compact_badge).',
+    summary:
+      'Сохранение всех настроек в launcher_settings.json, 8 стилей часов и темы Midnight Slate / Черный Оникс.',
   },
   {
-    path: 'версии .txt',
-    title: 'версии .txt',
-    badge: 'CHANGELOG 2.4',
-    summary: 'Полный список изменений новой версии Launcher Hab 2.4.',
+    path: 'modules/file_manager.py',
+    title: 'modules/file_manager.py',
+    badge: 'FIXED v2.4',
+    summary:
+      'Надежное чтение и запись зашифрованных/JSON настроек без повреждения файла при сбое.',
+  },
+  {
+    path: 'modules/audio_controller.py',
+    title: 'modules/audio_controller.py',
+    badge: 'UPDATED v2.4',
+    summary:
+      'Неблокирующий фоновый контроллер системной громкости (pycaw CoreAudio COM в фоновом потоке + Mute).',
   },
   {
     path: 'main.py',
     title: 'main.py',
     badge: 'ENTRY',
-    summary: 'Точка входа Flet-приложения Launcher Hab 2.4.',
+    summary: 'Точка входа Flet-приложения Launcher Hab 2.4 на языке Python.',
   },
 ];
 
 export const VERSION_HISTORY: Record<string, string[]> = {
   '2.4': [
-    '🚀 LAUNCHER HUB 2.4 – ПРОЗРАЧНОЕ СТЕКЛО, SESSION TRACKER И PLUGIN API 2.4',
-    '🔮 НАСТОЯЩИЙ ЭФФЕКТ ПРОЗРАЧНОГО СТЕКЛА (GLASSMORPHISM 2.4) – аппаратное размытие заднего фона (ft.Blur), стеклянные блики границ и настраиваемая прозрачность',
-    '✨ ПЛАВНАЯ АНИМАЦИЯ ПЕРЕХОДОВ МЕЖДУ РАЗДЕЛАМИ – мягкие переходы между библиотекой, фильтрами, поиском и трекером времени через AnimatedSwitcher',
-    '➕ УЛУЧШЕННОЕ ОКНО «ДОБАВИТЬ ПРИЛОЖЕНИЕ» – живое превью карточки, поиск по 70+ иконкам, автоопределение типа (EXE / URL), CLI-аргументы и лимит времени',
-    '🧩 ПЛАТФОРМА РАСШИРЕНИЙ И PLUGIN API 2.4 – новый SDK с хуками жизненного цикла (on_app_launched, on_tick), бейджами карточек и генератором шаблонов',
-    '🔊 ФОНОВЫЙ КОНТРОЛЛЕР СИСТЕМНОЙ ГРОМКОСТИ – мгновенное изменение громкости в фоновом потоке через CoreAudio (pycaw / COM Interop) без зависаний и кнопка Mute',
-    '🎮 ПЛАГИН «GAME & APP SESSION TRACKER» – отслеживание игрового и экранного времени: бейджи на карточках («Steam — 42 ч в мес») и графики за день/неделю/месяц',
-    '🛑 ГРУППЫ ЦИФРОВОГО ДЕТОКСА – настраиваемые дневные лимиты для игр, соцсетей и медиа с автоматическими уведомлениями при превышении',
-    '🕒 РАСШИРЕННАЯ КАСТОМИЗАЦИЯ СТИЛЕЙ ЧАСОВ – 6 стилей часов (Классический, Stacked, Минималистичный, Стеклянная капсула, Цифровой Моно, Компактный), управление секундами, днем недели и пресетами цвета',
+    '🚀 LAUNCHER HUB 2.4 – MIDNIGHT SLATE, ANDROID VERTICAL CLOCK, ZERO-START TRACKER & PLUGIN STORE',
+    '🛡 ИСПРАВЛЕНО ШИФРОВАНИЕ FERNET И СОХРАНЕНИЕ НАСТРОЕК – корректный 32-байтный URL-safe Base64 ключ через SHA-256',
+    '🎨 УБРАНЫ ЖЕЛТЫЕ ПОЛОСКИ И ОБНОВЛЕНА ТЕМНАЯ ТЕМА – исправлен порядок байтов #AARRGGBB в Flet и внедрен дизайн Midnight Slate (как на скриншоте 2)',
+    '🔔 ИСПРАВЛЕНА ОШИБКА SHOW_SNACK_BAR – все уведомления переведены на современный метод page.open(ft.SnackBar(...))',
+    '⏱ ТРЕКЕР ВРЕМЕНИ С НУЛЯ (0 МИН) + ЖИВОЙ СЕКУНДОМЕР – отсчет начинается с 00:00 строго после запуска приложения',
+    '🧩 ПЛАГИНЫ В СПИСКЕ ЗАПУСКА + МАГАЗИН ПЛАГИНОВ – запуск любого плагина из категории «Плагины», скачивание, настройка и удаление',
+    '📱 ВЕРТИКАЛЬНЫЕ ЧАСЫ КАК НА ANDROID 14 + 8 СТИЛЕЙ ЧАСОВ – крупные часы HH / MM, Flip-карточки, Стеклянная капсула и Кибер-Моно',
   ],
   '2.3': [
     '🎨 УЛУЧШЕННЫЙ LIQUID GLASS ИНТЕРФЕЙС – переработанный стеклянный дизайн и эффекты прозрачности',
     '🖥 FLOATING HUD – плавающая панель с системной информацией CPU/RAM',
     '🗑 ФИКСИРОВАННАЯ КОРЗИНА – быстрый доступ к корзине в правом нижнем углу',
-    '🔎 ИСТОРИЯ ПОИСКА – сохранение предыдущих поисковых запросов',
     '🔌 СИСТЕМА ПЛАГИНОВ – базовая поддержка расширений LauncherHub',
-    '🎯 FOCUS MODE, SMART WEATHER, SMART MUSIC, FILE FINDER, IDEA NOTEBOOK',
   ],
   '2.2': [
     '⚡ ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ – кэширование поиска и виртуализация списков',
     '💾 СИСТЕМА РЕЗЕРВНОГО КОПИРОВАНИЯ – автоматическое сохранение и восстановление настроек',
-    '⌨️ РАСШИРЕННЫЕ ГОРЯЧИЕ КЛАВИШИ – кастомные комбинации клавиш',
   ],
 };
 
-export function formatMonthBadge(minutes: number): string {
-  const hours = minutes / 60;
-  if (hours >= 10) return `${Math.round(hours)} ч в мес`;
-  if (hours >= 1) return `${hours.toFixed(1)} ч в мес`;
-  if (minutes > 0) return `${minutes} мин в мес`;
-  return '0 ч в мес';
+export function formatLiveClock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) {
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }
+  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-export function formatDurationRu(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
+export function formatMonthBadge(minutes: number, elapsedSeconds = 0, isRunning = false): string {
+  if (isRunning) {
+    return `🟢 ${formatLiveClock(elapsedSeconds)}`;
+  }
+  const totalSec = Math.max(Math.round(minutes * 60), elapsedSeconds);
+  if (totalSec <= 0) {
+    return '0 мин';
+  }
+  if (totalSec < 60) {
+    return `${totalSec} сек`;
+  }
+  const totalMinutes = totalSec / 60;
+  const hours = totalMinutes / 60;
+  if (hours >= 10) return `${Math.round(hours)} ч в мес`;
+  if (hours >= 1) return `${hours.toFixed(1)} ч в мес`;
+  return `${Math.max(1, Math.round(totalMinutes))} мин в мес`;
+}
+
+export function formatDurationRu(minutes: number, elapsedSeconds = 0): string {
+  const totalSec = Math.max(Math.round(minutes * 60), elapsedSeconds);
+  if (totalSec <= 0) return '0 мин';
+  if (totalSec < 60) return `${totalSec} сек`;
+  const totalMin = Math.floor(totalSec / 60);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
   if (h > 0 && m > 0) return `${h} ч ${m} мин`;
   if (h > 0) return `${h} ч`;
   return `${m} мин`;

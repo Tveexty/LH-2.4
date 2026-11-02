@@ -23,10 +23,9 @@ class AddAppDialogMixin:
         selected_icon = {"value": "apps"}
         app_type_state = {"value": "app"}
 
-        # Живая карточка предпросмотра в стиле Glassmorphism 2.4
         preview_icon = ft.Icon("apps", size=38, color=colors["ACCENT"])
         preview_title = ft.Text("Новое приложение", size=13, weight=ft.FontWeight.W_600, color=colors["ON_SURFACE"])
-        preview_meta = ft.Text("Games • APP • 0 ч в мес", size=11, color=colors["ON_SURFACE_VARIANT"])
+        preview_meta = ft.Text("Games • APP • 0 мин (старт по запуску)", size=11, color=colors["ON_SURFACE_VARIANT"])
 
         preview_card = GlassMorphism.create_container(
             content=ft.Row(
@@ -66,7 +65,7 @@ class AddAppDialogMixin:
             preview_title.value = (app_name.value or "").strip() or "Новое приложение"
             cat_val = app_category.value or "Custom"
             limit_val = (daily_limit_field.value or "120").strip()
-            preview_meta.value = f"{cat_val} • {detected.upper()} • Лимит: {limit_val} мин/день"
+            preview_meta.value = f"{cat_val} • {detected.upper()} • Старт с 0 мин • Лимит: {limit_val} мин/день"
             preview_icon.name = selected_icon["value"]
             preview_icon.color = colors["WEB_BLUE"] if detected == "web" else colors["ACCENT"]
             preview_card.update()
@@ -201,7 +200,9 @@ class AddAppDialogMixin:
                             tooltip=icon,
                             on_click=lambda e, i=icon: set_icon(i),
                         ),
-                        bgcolor=colors["ACCENT"] + "28" if is_sel else colors["SURFACE_VARIANT"] + "30",
+                        bgcolor=GlassMorphism._apply_opacity(colors["ACCENT"], 0.22)
+                        if is_sel
+                        else GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.55),
                         border=ft.border.all(1.5, colors["ACCENT"]) if is_sel else None,
                         border_radius=10,
                     )
@@ -229,15 +230,11 @@ class AddAppDialogMixin:
             try:
                 file_picker.pick_files(allow_multiple=False)
             except Exception:
-                self.core.page.show_snack_bar(
-                    ft.SnackBar(content=ft.Text("Не удалось открыть проводник. Введите путь вручную."), action="OK")
-                )
+                self.core.show_toast("Не удалось открыть проводник. Введите путь вручную.")
 
         def add_app(_):
             if not (app_name.value or "").strip() or not (app_url.value or "").strip():
-                self.core.page.show_snack_bar(
-                    ft.SnackBar(content=ft.Text("❌ Заполните название и путь/URL приложения"), action="OK")
-                )
+                self.core.show_toast("❌ Заполните название и путь/URL приложения")
                 return
 
             clean_name = app_name.value.strip()
@@ -262,7 +259,6 @@ class AddAppDialogMixin:
             if add_to_fav_switch.value:
                 self.core.app_manager.add_to_favorites(new_app)
 
-            # Регистрируем приложение в плагине Session Tracker если включено
             if enable_tracker_switch.value and hasattr(self.core.plugin_manager, "get_plugin_instance"):
                 tracker = self.core.plugin_manager.get_plugin_instance("session_tracker_plugin")
                 if tracker and hasattr(tracker, "data"):
@@ -273,6 +269,7 @@ class AddAppDialogMixin:
                     tracker.data.setdefault("apps", {})[clean_pkg] = {
                         "name": clean_name,
                         "category": new_app["category"],
+                        "total_seconds": 0,
                         "month_minutes": 0,
                         "week_minutes": 0,
                         "today_minutes": 0,
@@ -284,9 +281,7 @@ class AddAppDialogMixin:
             self.core.update_main_content()
             self.core.update_sidebar()
             self.core.page.close(dialog)
-            self.core.page.show_snack_bar(
-                ft.SnackBar(content=ft.Text(f"✅ Приложение «{clean_name}» успешно добавлено"), action="OK")
-            )
+            self.core.show_toast(f"✅ Приложение «{clean_name}» успешно добавлено (трекер с 0 мин)")
 
         dialog = ft.AlertDialog(
             title=ft.Row(
@@ -320,7 +315,7 @@ class AddAppDialogMixin:
                             [
                                 ft.Row([add_to_fav_switch, ft.Text("Добавить в Избранное", size=12)]),
                                 ft.Container(width=16),
-                                ft.Row([enable_tracker_switch, ft.Text("Отслеживать в Session Tracker", size=12)]),
+                                ft.Row([enable_tracker_switch, ft.Text("Отслеживать в Session Tracker (старт с 0)", size=12)]),
                             ]
                         ),
                         ft.Divider(color=colors["OUTLINE"], height=8),

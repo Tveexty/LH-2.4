@@ -1,74 +1,72 @@
+# [file name]: encryption_manager.py
 import base64
-import os
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import hashlib
 import json
+
+try:
+    from cryptography.fernet import Fernet
+except ImportError:
+    Fernet = None
+
 
 class EncryptionManager:
     def __init__(self):
-        # Ключ шифрования по умолчанию
-        self.default_key = b'launcher_hab_encryption_key_2024_secure_'
-    
-    def generate_key_from_password(self, password: str, salt: bytes = None) -> tuple:
-        """Генерация ключа из пароля"""
+        # Формируем строго валидный 32-байтовый URL-safe base64 ключ для Fernet (44 символа base64)
+        raw_seed = b"launcher_hab_encryption_key_2024_secure_v2_4"
+        self.default_key = base64.urlsafe_b64encode(hashlib.sha256(raw_seed).digest())
+        self._cipher = Fernet(self.default_key) if Fernet is not None else None
+
+    def generate_key_from_password(self, password: str) -> bytes:
+        """Генерация валидного 32-байтового ключа Fernet из пароля."""
+        digest = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            b"launcher_hab_salt_2024",
+            100000,
+            dklen=32,
+        )
+        return base64.urlsafe_b64encode(digest)
+
+    def encrypt_data(self, data) -> str:
+        """Шифрование данных с защитой от потери настроек."""
         try:
-            if salt is None:
-                salt = os.urandom(16)
-            kdf = PBKDF2HMAC(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=salt,
-                iterations=100000,
-            )
-            key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-            return key, salt
-        except Exception as e:
-            print(f"Ошибка генерации ключа: {e}")
-            return None, None
-    
-    def encrypt_data(self, data: str, key: bytes = None) -> dict:
-        """Шифрование данных"""
-        try:
-            if key is None:
-                key = self.default_key
-            fernet = Fernet(key)
-            encrypted_data = fernet.encrypt(data.encode())
-            return {
-                'encrypted': base64.urlsafe_b64encode(encrypted_data).decode(),
-                'timestamp': self._get_timestamp()
-            }
+            json_data = json.dumps(data, ensure_ascii=False)
+            if self._cipher is not None:
+                encrypted_data = self._cipher.encrypt(json_data.encode("utf-8"))
+                return base64.urlsafe_b64encode(encrypted_data).decode("utf-8")
+            return base64.urlsafe_b64encode(json_data.encode("utf-8")).decode("utf-8")
         except Exception as e:
             print(f"Ошибка шифрования: {e}")
-            return None
-    
-    def decrypt_data(self, encrypted_data: dict, key: bytes = None) -> str:
-        """Дешифрование данных"""
+            return ""
+
+    def decrypt_data(self, encrypted_data: str):
+        """Дешифрование данных."""
         try:
-            if key is None:
-                key = self.default_key
-            fernet = Fernet(key)
-            decrypted_data = fernet.decrypt(base64.urlsafe_b64decode(encrypted_data['encrypted']))
-            return decrypted_data.decode()
+            if not encrypted_data:
+                return None
+            decoded_data = base64.urlsafe_b64decode(encrypted_data.encode("utf-8"))
+            if self._cipher is not None:
+                decrypted_data = self._cipher.decrypt(decoded_data)
+                return json.loads(decrypted_data.decode("utf-8"))
+            return json.loads(decoded_data.decode("utf-8"))
         except Exception as e:
             print(f"Ошибка дешифрования: {e}")
             return None
-    
-    def _get_timestamp(self):
-        """Получить текущую временную метку"""
-        from datetime import datetime
-        return datetime.now().isoformat()
-    
-    def encrypt_settings(self, settings_data):
-        """Шифрование настроек"""
-        if isinstance(settings_data, dict):
-            return self.encrypt_data(json.dumps(settings_data))
-        return settings_data
-    
-    def decrypt_settings(self, encrypted_settings):
-        """Дешифрование настроек"""
-        if isinstance(encrypted_settings, dict) and 'encrypted' in encrypted_settings:
-            decrypted = self.decrypt_data(encrypted_settings)
-            if decrypted:
-                return json.loads(decrypted)
+
+    def encrypt_settings(self, settings_dict: dict) -> dict:
+        """Шифрование настроек. Если шифрование недоступно — сохраняет открытый словарь (без потери данных)."""
+        if not isinstance(settings_dict, dict):
+            return {}
+        encrypted = self.encrypt_data(settings_dict)
+        if encrypted:
+            return {"encrypted": True, "version": "2.4", "data": encrypted}
+        return settings_dict
+
+    def decrypt_settings(self, encrypted_settings: dict) -> dict:
+        """Дешифрование настроек с поддержкой как зашифрованного, так и обычного JSON."""
+        if not isinstance(encrypted_settings, dict):
+            return {}
+        if "encrypted" in encrypted_settings and encrypted_settings.get("data"):
+            decrypted = self.decrypt_data(encrypted_settings["data"])
+            return decrypted if isinstance(decrypted, dict) else {}
         return encrypted_settings

@@ -3,7 +3,6 @@ import flet as ft
 import threading
 import time
 import os
-import uuid
 from datetime import datetime
 from .theme_manager import ThemeManager
 from .app_manager import AppManager
@@ -24,10 +23,14 @@ except ImportError:
 
         def create_plugin_ui(self, colors):
             return ft.Container(
-                content=ft.Column([
-                    ft.Icon("extension", size=48, color=colors["ON_SURFACE_VARIANT"]),
-                    ft.Text("Плагины недоступны", size=16, weight=ft.FontWeight.BOLD),
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10),
+                content=ft.Column(
+                    [
+                        ft.Icon("extension", size=48, color=colors["ON_SURFACE_VARIANT"]),
+                        ft.Text("Плагины недоступны", size=16, weight=ft.FontWeight.BOLD),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=10,
+                ),
                 padding=40,
                 alignment=ft.alignment.center,
             )
@@ -83,8 +86,8 @@ class UIManagerCore:
         self.active_section = "apps"  # "apps" | "tracker"
         self.current_filter = "all"
         self.filter_dialog_open = False
-        self.auto_update_enabled = True
-        self.system_notifications_enabled = True
+        self.auto_update_enabled = self.theme_manager.auto_update_enabled
+        self.system_notifications_enabled = self.theme_manager.system_notifications_enabled
         self.volume_slider_visible = False
         self.search_history = self.load_search_history()
 
@@ -95,6 +98,33 @@ class UIManagerCore:
         self.loading_progress = None
 
         self.setup_hotkeys()
+
+    def show_toast(self, message: str, title: str = None):
+        """Универсальный метод показа уведомления в современном Flet (page.open вместо удаленного show_snack_bar)."""
+        if not hasattr(self, "page") or not self.page:
+            return
+        try:
+            content = (
+                ft.Column(
+                    [
+                        ft.Text(title, weight=ft.FontWeight.BOLD, size=13),
+                        ft.Text(message, size=12),
+                    ],
+                    tight=True,
+                    spacing=2,
+                )
+                if title
+                else ft.Text(message, size=13)
+            )
+            sb = ft.SnackBar(content=content, action="OK", duration=2800)
+            if hasattr(self.page, "open"):
+                self.page.open(sb)
+            else:
+                self.page.snack_bar = sb
+                sb.open = True
+                self.page.update()
+        except Exception:
+            logger.exception("Не удалось показать SnackBar")
 
     def setup_hotkeys(self):
         try:
@@ -112,6 +142,9 @@ class UIManagerCore:
             class _FallbackPluginManager:
                 def set_context(self, _context):
                     return None
+
+                def get_launchable_plugin_apps(self):
+                    return []
 
                 def create_plugin_ui(self, colors):
                     return ft.Container(
@@ -136,6 +169,15 @@ class UIManagerCore:
 
             return _FallbackAudioController()
 
+    def get_all_launchable_items(self):
+        """Возвращает все приложения + активные плагины (чтобы плагины были в списке запуска)."""
+        base_apps = self.app_manager.all_apps + self.app_manager.custom_apps
+        if getattr(self.theme_manager, "show_plugins_in_grid", True) and hasattr(
+            self.plugin_manager, "get_launchable_plugin_apps"
+        ):
+            return base_apps + self.plugin_manager.get_launchable_plugin_apps()
+        return base_apps
+
     def initialize_ui(self):
         self.setup_page()
         self.create_ui_elements()
@@ -150,7 +192,7 @@ class UIManagerCore:
         self.page.padding = 0
         self.page.spacing = 0
         self.page.theme_mode = ft.ThemeMode.DARK
-        self.page.bgcolor = "#16181d"
+        self.page.bgcolor = "#0d111a"
 
         try:
             self.page.theme = ft.Theme(
@@ -201,9 +243,9 @@ class UIManagerCore:
             ),
             right=24,
             bottom=24,
-            bgcolor=GlassMorphism._apply_opacity(self.get_colors()["SURFACE"], 0.75),
+            bgcolor=GlassMorphism._apply_opacity(self.get_colors()["SURFACE"], 0.85),
             blur=GlassMorphism._make_blur(14),
-            border=ft.border.all(1, GlassMorphism._apply_opacity(self.get_colors()["ON_SURFACE"], 0.16)),
+            border=ft.border.all(1, GlassMorphism._apply_opacity(self.get_colors()["ON_SURFACE"], 0.12)),
             border_radius=16,
             padding=6,
             shadow=ft.BoxShadow(blur_radius=14, color=self.get_colors()["GLASS_SHADOW"], offset=ft.Offset(0, 4)),
@@ -218,8 +260,16 @@ class UIManagerCore:
             tick_counter = 0
             while True:
                 self.update_time()
+                # Посекундный тик для запущенных приложений в Session Tracker
+                if hasattr(self.plugin_manager, "notify_second_tick"):
+                    has_active = self.plugin_manager.notify_second_tick()
+                    if has_active and tick_counter % 3 == 0:
+                        try:
+                            self.update_main_content()
+                            self.update_sidebar()
+                        except Exception:
+                            pass
                 tick_counter += 1
-                # Раз в 60 секунд вызываем фоновый тик плагинов (Game & App Session Tracker)
                 if tick_counter >= 60:
                     tick_counter = 0
                     if hasattr(self.plugin_manager, "notify_tick"):
@@ -242,18 +292,24 @@ class UIManagerCore:
         threading.Thread(target=backup_timer, daemon=True).start()
 
     def update_time(self):
-        """Обновление времени и даты с поддержкой 6 стилей часов (v2.4)."""
+        """Обновление времени и даты с поддержкой вертикальных часов Android 14 и 8 стилей."""
         if hasattr(self.panels, "current_time_text") and self.panels.current_time_text:
             now = datetime.now()
-            clock_style = getattr(self.theme_manager, "clock_style", "standard")
+            clock_style = getattr(self.theme_manager, "clock_style", "android_vertical")
             show_sec = getattr(self.theme_manager, "show_seconds", True)
             show_weekday = getattr(self.theme_manager, "show_weekday", True)
             is_12h = getattr(self.theme_manager, "time_format", "24") == "12"
 
-            if clock_style == "stacked":
-                time_str = now.strftime("%I\n%M" if is_12h else "%H\n%M")
-            elif clock_style == "minimal" or clock_style == "pill_glass":
+            hours_str = now.strftime("%I" if is_12h else "%H")
+            mins_str = now.strftime("%M")
+            secs_str = now.strftime("%S")
+
+            if clock_style in ("android_vertical", "stacked"):
+                time_str = f"{hours_str}\n{mins_str}"
+            elif clock_style in ("minimal", "pill_glass"):
                 time_str = now.strftime("%I:%M %p" if is_12h else "%H:%M")
+            elif clock_style == "split_flip":
+                time_str = f"[{hours_str}] : [{mins_str}]" + (f" : [{secs_str}]" if show_sec else "")
             elif clock_style == "cyber_mono":
                 fmt = "%I : %M : %S" if (is_12h and show_sec) else ("%H : %M : %S" if show_sec else "%H : %M")
                 time_str = f"[ {now.strftime(fmt)} ]"
@@ -288,9 +344,24 @@ class UIManagerCore:
                     self.theme_manager, "date_color", self.get_colors()["ON_SURFACE_VARIANT"]
                 )
 
+            # Обновляем крупный вертикальный виджет часов Android 14 (если он включен)
+            if hasattr(self.panels, "android_clock_hours") and self.panels.android_clock_hours:
+                self.panels.android_clock_hours.value = hours_str
+                self.panels.android_clock_hours.color = getattr(
+                    self.theme_manager, "time_color", self.get_colors()["ON_SURFACE"]
+                )
+            if hasattr(self.panels, "android_clock_minutes") and self.panels.android_clock_minutes:
+                self.panels.android_clock_minutes.value = mins_str
+                self.panels.android_clock_minutes.color = self.get_colors()["ACCENT"]
+            if hasattr(self.panels, "android_clock_date") and self.panels.android_clock_date:
+                self.panels.android_clock_date.value = f"{date_str}" + (f" • {secs_str} сек" if show_sec else "")
+
             self.update_floating_hud_data()
-            if hasattr(self, "page"):
-                self.page.update()
+            if hasattr(self, "page") and self.page:
+                try:
+                    self.page.update()
+                except Exception:
+                    pass
 
     def switch_section(self, section_name: str):
         """Плавное переключение между разделами ('apps' <-> 'tracker') с анимацией."""
@@ -313,7 +384,10 @@ class UIManagerCore:
     def update_devices_header(self):
         if hasattr(self.panels, "devices_container") and self.panels.devices_container:
             self.panels.devices_container.content = self.system_monitor.create_devices_header(self.get_colors())
-            self.page.update()
+            try:
+                self.page.update()
+            except Exception:
+                pass
 
     def apply_initial_theme(self):
         self.theme_manager.apply_theme(self.page, self.theme_manager.current_theme)
@@ -329,13 +403,13 @@ class UIManagerCore:
 
         if self.header:
             self.header.bgcolor = (
-                GlassMorphism._apply_opacity(colors["SURFACE"], 0.82)
+                GlassMorphism._apply_opacity(colors["SURFACE"], 0.86)
                 if self.theme_manager.glass_effect_enabled
                 else colors["SURFACE"]
             )
         if self.sidebar:
             self.sidebar.bgcolor = (
-                GlassMorphism._apply_opacity(colors["SURFACE"], 0.72)
+                GlassMorphism._apply_opacity(colors["SURFACE"], 0.78)
                 if self.theme_manager.glass_effect_enabled
                 else colors["SURFACE"]
             )
@@ -360,30 +434,37 @@ class UIManagerCore:
             self.page.update()
 
     def launch_app(self, app):
-        """Запуск приложения + уведомление плагина Game & App Session Tracker."""
+        """
+        Запуск приложения или плагина + автоматический старт таймера в Game & App Session Tracker.
+        """
+        if app.get("type") == "plugin":
+            plugin_id = app.get("plugin_id") or app.get("package")
+            if plugin_id == "session_tracker_plugin":
+                self.switch_section("tracker")
+                self.show_toast("Открыт раздел «Трекер времени»", "Game & App Session Tracker")
+            elif hasattr(self.plugin_manager, "open_plugin_window"):
+                self.plugin_manager.open_plugin_window(plugin_id)
+            return
+
         success, message = self.app_manager.launch_app(app)
+        # Запускаем таймер сессии с 0 при клике на запуск приложения
         if hasattr(self.plugin_manager, "notify_app_launched"):
             self.plugin_manager.notify_app_launched(app)
+
+        if getattr(self.theme_manager, "launch_behavior", "keep") == "minimize" and success:
+            try:
+                self.page.window_minimized = True
+            except Exception:
+                pass
+
         self.update_main_content()
         self.update_sidebar()
         if self.system_notifications_enabled:
-            self.show_system_notification("Запуск приложения", message)
+            self.show_system_notification("Запуск и старт таймера", f"{message} • Таймер сессии запущен")
 
     def show_system_notification(self, title, message):
         if self.system_notifications_enabled:
-            self.page.show_snack_bar(
-                ft.SnackBar(
-                    content=ft.Column(
-                        [
-                            ft.Text(title, weight=ft.FontWeight.BOLD),
-                            ft.Text(message, size=12),
-                        ],
-                        tight=True,
-                    ),
-                    action="OK",
-                    duration=3000,
-                )
-            )
+            self.show_toast(message, title=title)
 
     def toggle_volume_slider(self, e):
         self.volume_slider_visible = not self.volume_slider_visible
@@ -411,7 +492,7 @@ class UIManagerCore:
             self.update_main_content()
             return
 
-        all_apps = self.app_manager.all_apps + self.app_manager.custom_apps
+        all_apps = self.get_all_launchable_items()
         if hasattr(self.theme_manager, "search_cache_enabled") and self.theme_manager.search_cache_enabled:
             results = self.search_cache.get_search_results(query, all_apps)
         else:
@@ -507,7 +588,7 @@ class UIManagerCore:
         self.update_header()
         self.update_main_content()
         self.update_sidebar()
-        self.page.show_snack_bar(ft.SnackBar(content=ft.Text(f"Тема применена: {theme_name}"), action="OK"))
+        self.show_toast(f"✅ Тема применена и сохранена: {theme_name}")
 
     def toggle_glass_effect(self):
         enabled = self.theme_manager.toggle_glass_effect()
@@ -515,34 +596,36 @@ class UIManagerCore:
         self.update_main_content()
         self.update_sidebar()
         message = "Эффект прозрачного стекла включен" if enabled else "Эффект прозрачного стекла выключен"
-        self.page.show_snack_bar(ft.SnackBar(content=ft.Text(message), action="OK"))
+        self.show_toast(message)
 
     def set_glass_intensity(self, intensity):
         self.theme_manager.set_glass_intensity(intensity)
         self.update_main_content()
         self.update_sidebar()
         intensity_names = {"light": "Слабая", "medium": "Средняя", "strong": "Сильная"}
-        self.page.show_snack_bar(
-            ft.SnackBar(content=ft.Text(f"Интенсивность стекла: {intensity_names[intensity]}"), action="OK")
-        )
+        self.show_toast(f"Интенсивность стекла: {intensity_names.get(intensity, intensity)}")
 
     def toggle_smooth_animations(self):
         enabled = self.theme_manager.toggle_smooth_animations()
         message = "Плавные анимации включены" if enabled else "Плавные анимации выключены"
-        self.page.show_snack_bar(ft.SnackBar(content=ft.Text(message), action="OK"))
+        self.show_toast(message)
 
     def toggle_android_animations(self):
         enabled = self.theme_manager.toggle_android_animations()
         message = "Android-анимации включены" if enabled else "Android-анимации выключены"
-        self.page.show_snack_bar(ft.SnackBar(content=ft.Text(message), action="OK"))
+        self.show_toast(message)
 
     def toggle_auto_update(self, e):
-        self.auto_update_enabled = e.control.value
+        self.auto_update_enabled = bool(e.control.value)
+        self.theme_manager.auto_update_enabled = self.auto_update_enabled
+        self.theme_manager.save_settings()
         if self.auto_update_enabled:
             self.show_system_notification("Автообновление включено", "Интерфейс будет обновляться автоматически")
 
     def toggle_system_notifications(self, e):
-        self.system_notifications_enabled = e.control.value
+        self.system_notifications_enabled = bool(e.control.value)
+        self.theme_manager.system_notifications_enabled = self.system_notifications_enabled
+        self.theme_manager.save_settings()
         if self.system_notifications_enabled:
             self.show_system_notification("Уведомления включены", "Вы будете получать уведомления о действиях")
 
@@ -550,20 +633,20 @@ class UIManagerCore:
         self.search_cache.invalidate_search_cache()
         self.update_main_content()
         self.update_sidebar()
-        self.page.show_snack_bar(ft.SnackBar(content=ft.Text("✅ Список приложений обновлен"), action="OK"))
+        self.show_toast("✅ Список приложений и плагинов обновлен")
 
     def reset_favorites(self):
         self.app_manager.favorite_apps = []
         self.app_manager.save_favorites()
         self.update_main_content()
-        self.page.show_snack_bar(ft.SnackBar(content=ft.Text("✅ Избранное сброшено"), action="OK"))
+        self.show_toast("✅ Избранное сброшено")
 
     def clear_manual_paths(self):
         self.app_manager.manual_paths = {}
         self.app_manager.save_manual_paths()
         self.update_main_content()
         self.update_sidebar()
-        self.page.show_snack_bar(ft.SnackBar(content=ft.Text("✅ Ручные пути очищены"), action="OK"))
+        self.show_toast("✅ Ручные пути очищены")
 
     def show_settings(self, e):
         self.dialogs.show_settings(e)
@@ -599,23 +682,20 @@ class UIManagerCore:
     def create_backup_now(self, e=None):
         backup_path = self.backup_manager.create_backup()
         if backup_path:
-            self.page.show_snack_bar(
-                ft.SnackBar(content=ft.Text(f"✅ Резервная копия создана: {os.path.basename(backup_path)}"), action="OK")
-            )
+            self.show_toast(f"✅ Резервная копия создана: {os.path.basename(backup_path)}")
         else:
-            self.page.show_snack_bar(ft.SnackBar(content=ft.Text("❌ Ошибка создания резервной копии"), action="OK"))
+            self.show_toast("❌ Ошибка создания резервной копии")
 
     def restore_from_backup(self, backup_path):
         if self.backup_manager.restore_backup(backup_path):
-            self.page.show_snack_bar(
-                ft.SnackBar(content=ft.Text("✅ Настройки восстановлены из резервной копии"), action="OK")
-            )
+            self.show_toast("✅ Настройки восстановлены из резервной копии")
             self.theme_manager.load_settings()
             self.apply_initial_theme()
+            self.update_header()
+            self.update_main_content()
+            self.update_sidebar()
         else:
-            self.page.show_snack_bar(
-                ft.SnackBar(content=ft.Text("❌ Ошибка восстановления из резервной копии"), action="OK")
-            )
+            self.show_toast("❌ Ошибка восстановления из резервной копии")
 
     def get_backup_list(self):
         return self.backup_manager.get_backup_list()
@@ -665,7 +745,7 @@ class UIManagerCore:
         self.save_search_history()
 
     def get_apps_count(self):
-        return len(self.app_manager.all_apps + self.app_manager.custom_apps)
+        return len(self.get_all_launchable_items())
 
     def get_favorites_count(self):
         return len(self.app_manager.favorite_apps)
