@@ -282,18 +282,25 @@ class UIPanels:
             on_click=lambda e: self.core.toggle_floating_hud(),
         )
 
+        # Всегда активный Dynamic Island 2.6 в центре верхней панели
+        island_capsule = (
+            self.core.dynamic_island.create_header_capsule(colors)
+            if hasattr(self.core, "dynamic_island") and self.core.dynamic_island
+            else ft.Container()
+        )
+
         header_content = [
             ft.Row(
                 [
                     workspace_button,
-                    ft.Text("Launcher Hab 2.5", size=21, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
-                    ft.Container(width=10),
+                    ft.Text("Launcher Hab 2.6", size=20, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
+                    ft.Container(width=6),
                     section_switcher,
                 ],
-                spacing=8,
-                expand=True,
+                spacing=6,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
+            ft.Container(expand=True, alignment=ft.alignment.center, content=island_capsule),
             self.devices_container,
             self.clock_container,
             plugins_button,
@@ -303,7 +310,7 @@ class UIPanels:
                 icon="settings",
                 icon_color=colors["ON_SURFACE"],
                 on_click=self.core.show_settings,
-                tooltip="Настройки (v2.5)",
+                tooltip="Настройки Android UI (v2.6)",
             ),
         ]
 
@@ -753,7 +760,9 @@ class UIPanels:
         )
 
     def create_main_content(self):
-        """Оборачивает основной контент в ft.AnimatedSwitcher для плавной анимации переходов между разделами."""
+        """
+        Оборачивает основной контент в ft.AnimatedSwitcher + GestureDetector (ПКМ = Назад для управления одной рукой).
+        """
         inner = self.create_main_content_internal()
         self.animated_switcher = ft.AnimatedSwitcher(
             content=inner,
@@ -763,8 +772,12 @@ class UIPanels:
             switch_in_curve=ft.AnimationCurve.EASE_OUT_CUBIC,
             switch_out_curve=ft.AnimationCurve.EASE_IN_CUBIC,
         )
-        return ft.Container(
+        gesture_wrapper = ft.GestureDetector(
             content=self.animated_switcher,
+            on_secondary_tap_up=lambda e: self.core.handle_right_click_back(e),
+        )
+        return ft.Container(
+            content=gesture_wrapper,
             expand=True,
             padding=12,
             margin=0,

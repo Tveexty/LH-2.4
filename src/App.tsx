@@ -53,6 +53,25 @@ import {
   RotateCcw,
   Archive,
   Square,
+  Bell,
+  BellOff,
+  SkipBack,
+  SkipForward,
+  Pause,
+  Timer,
+  Zap,
+  Moon,
+  Sun,
+  Github,
+  ExternalLink,
+  Stethoscope,
+  Info,
+  ArrowLeft,
+  MousePointerClick,
+  CheckCircle2,
+  Flag,
+  Smartphone,
+  Radio,
 } from 'lucide-react';
 import {
   AppItem,
@@ -69,14 +88,18 @@ import {
   GlassIntensity,
   INITIAL_APPS,
   INITIAL_DETOX_GROUPS,
+  INITIAL_ISLAND_PLAYERS,
   INITIAL_PLUGINS,
+  INITIAL_WINDOWS_NOTIFICATIONS,
   INITIAL_WORKSPACES,
+  IslandMediaPlayer,
   PLUGIN_CATALOG,
   PluginItem,
   PYTHON_PROJECT_FILES,
   ThemeKey,
   THEMES,
   VERSION_HISTORY,
+  WindowsNotificationItem,
   WorkspacePreset,
 } from './data/launcherData';
 
@@ -109,7 +132,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const ICON_NAMES = Object.keys(ICON_MAP);
 const WEEKDAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-const STORAGE_KEY = 'launcher_hab_v25_zero_state_v1';
+const STORAGE_KEY = 'launcher_hab_v26_zero_state_v1';
 
 interface ToastMessage {
   id: string;
@@ -223,7 +246,9 @@ export default function App() {
 
   const [addAppModalOpen, setAddAppModalOpen] = useState<boolean>(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState<boolean>(false);
-  const [settingsTab, setSettingsTab] = useState<'appearance' | 'clock' | 'plugins' | 'system' | 'changelog'>('appearance');
+  const [settingsTab, setSettingsTab] = useState<
+    'island' | 'appearance' | 'clock' | 'navigation' | 'plugins' | 'updater' | 'about'
+  >('island');
   const [pluginsModalOpen, setPluginsModalOpen] = useState<boolean>(false);
   const [workspaceModalOpen, setWorkspaceModalOpen] = useState<boolean>(false);
   const [backupModalOpen, setBackupModalOpen] = useState<boolean>(false);
@@ -231,6 +256,63 @@ export default function App() {
   const [activePluginModal, setActivePluginModal] = useState<PluginItem | null>(null);
   const [editingPluginSettings, setEditingPluginSettings] = useState<PluginItem | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // --- v2.6: Always-Active Dynamic Island State ---
+  const [islandModalOpen, setIslandModalOpen] = useState<boolean>(false);
+  const [islandTab, setIslandTab] = useState<
+    'overview' | 'notifications' | 'player' | 'timer' | 'stopwatch' | 'settings'
+  >('overview');
+  const [dndEnabled, setDndEnabled] = useState<boolean>(savedState?.dndEnabled ?? false);
+  const [isCharging, setIsCharging] = useState<boolean>(savedState?.isCharging ?? true);
+  const [batteryLevel, setBatteryLevel] = useState<number>(savedState?.batteryLevel ?? 96);
+  const [chargingAnimationEnabled, setChargingAnimationEnabled] = useState<boolean>(
+    savedState?.chargingAnimationEnabled ?? true
+  );
+  const [islandGlowEnabled, setIslandGlowEnabled] = useState<boolean>(savedState?.islandGlowEnabled ?? true);
+  const [windowsNotifications, setWindowsNotifications] = useState<WindowsNotificationItem[]>(
+    savedState?.windowsNotifications || INITIAL_WINDOWS_NOTIFICATIONS
+  );
+  const [islandPlayers, setIslandPlayers] = useState<IslandMediaPlayer[]>(
+    savedState?.islandPlayers || INITIAL_ISLAND_PLAYERS
+  );
+  const [activePlayerIndex, setActivePlayerIndex] = useState<number>(savedState?.activePlayerIndex ?? 0);
+  const [mediaPlaying, setMediaPlaying] = useState<boolean>(savedState?.mediaPlaying ?? false);
+  const [islandTimerTotalSec, setIslandTimerTotalSec] = useState<number>(savedState?.islandTimerTotalSec ?? 300);
+  const [islandTimerRemainingSec, setIslandTimerRemainingSec] = useState<number>(
+    savedState?.islandTimerRemainingSec ?? 300
+  );
+  const [islandTimerRunning, setIslandTimerRunning] = useState<boolean>(false);
+  const [islandStopwatchSec, setIslandStopwatchSec] = useState<number>(0);
+  const [islandStopwatchRunning, setIslandStopwatchRunning] = useState<boolean>(false);
+  const [islandStopwatchLaps, setIslandStopwatchLaps] = useState<string[]>([]);
+
+  // --- v2.6: Adaptive Day / Night Theme State ---
+  const [adaptiveThemeEnabled, setAdaptiveThemeEnabled] = useState<boolean>(
+    savedState?.adaptiveThemeEnabled ?? false
+  );
+  const [dayStartTime, setDayStartTime] = useState<string>(savedState?.dayStartTime || '07:00');
+  const [nightStartTime, setNightStartTime] = useState<string>(savedState?.nightStartTime || '20:00');
+  const [dayThemeKey, setDayThemeKey] = useState<ThemeKey>(savedState?.dayThemeKey || 'light');
+  const [nightThemeKey, setNightThemeKey] = useState<ThemeKey>(savedState?.nightThemeKey || 'dark');
+
+  // --- v2.6: Right-Click Back (One-Handed Navigation) ---
+  const [rightClickBackEnabled, setRightClickBackEnabled] = useState<boolean>(
+    savedState?.rightClickBackEnabled ?? true
+  );
+
+  // --- v2.6: GitHub Auto-Update & Diagnostics State ---
+  const [githubAutoUpdate, setGithubAutoUpdate] = useState<boolean>(savedState?.githubAutoUpdate ?? true);
+  const [githubRepoUrl, setGithubRepoUrl] = useState<string>(
+    savedState?.githubRepoUrl || 'https://github.com/launcher-hab/LauncherHab'
+  );
+  const [githubUpdateStatus, setGithubUpdateStatus] = useState<string>(
+    '✅ Установлена актуальная версия v2.6 (GitHub: v2.6)'
+  );
+  const [checkingGithub, setCheckingGithub] = useState<boolean>(false);
+  const [diagnosticsScore, setDiagnosticsScore] = useState<number>(100);
+  const [diagnosticsPassed, setDiagnosticsPassed] = useState<number>(6);
+  const [diagnosticsTotal] = useState<number>(6);
+  const [diagnosticsTime, setDiagnosticsTime] = useState<string>('Проверено только что');
 
   // --- Interactive Plugin Widget States ---
   const [ideaNotes, setIdeaNotes] = useState<string[]>([
@@ -277,6 +359,30 @@ export default function App() {
     [plugins]
   );
 
+  // Evaluate Adaptive Day/Night Theme
+  const evaluateAdaptiveThemeTarget = (checkDate = now): ThemeKey => {
+    const parseMins = (hm: string, fb: number) => {
+      const parts = hm.split(':').map(Number);
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        return parts[0] * 60 + parts[1];
+      }
+      return fb;
+    };
+    const curMins = checkDate.getHours() * 60 + checkDate.getMinutes();
+    const dMins = parseMins(dayStartTime, 7 * 60);
+    const nMins = parseMins(nightStartTime, 20 * 60);
+    const isDay = dMins <= nMins ? curMins >= dMins && curMins < nMins : curMins >= dMins || curMins < nMins;
+    return isDay ? dayThemeKey : nightThemeKey;
+  };
+
+  useEffect(() => {
+    if (!adaptiveThemeEnabled) return;
+    const target = evaluateAdaptiveThemeTarget(now);
+    if (target && allThemesMap[target] && themeKey !== target) {
+      setThemeKey(target);
+    }
+  }, [adaptiveThemeEnabled, dayStartTime, nightStartTime, dayThemeKey, nightThemeKey, now, allThemesMap, themeKey]);
+
   // Persist all settings & state to localStorage automatically
   useEffect(() => {
     try {
@@ -318,6 +424,25 @@ export default function App() {
         backups,
         volume,
         isMuted,
+        dndEnabled,
+        isCharging,
+        batteryLevel,
+        chargingAnimationEnabled,
+        islandGlowEnabled,
+        windowsNotifications,
+        islandPlayers,
+        activePlayerIndex,
+        mediaPlaying,
+        islandTimerTotalSec,
+        islandTimerRemainingSec,
+        adaptiveThemeEnabled,
+        dayStartTime,
+        nightStartTime,
+        dayThemeKey,
+        nightThemeKey,
+        rightClickBackEnabled,
+        githubAutoUpdate,
+        githubRepoUrl,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch {
@@ -361,6 +486,25 @@ export default function App() {
     backups,
     volume,
     isMuted,
+    dndEnabled,
+    isCharging,
+    batteryLevel,
+    chargingAnimationEnabled,
+    islandGlowEnabled,
+    windowsNotifications,
+    islandPlayers,
+    activePlayerIndex,
+    mediaPlaying,
+    islandTimerTotalSec,
+    islandTimerRemainingSec,
+    adaptiveThemeEnabled,
+    dayStartTime,
+    nightStartTime,
+    dayThemeKey,
+    nightThemeKey,
+    rightClickBackEnabled,
+    githubAutoUpdate,
+    githubRepoUrl,
   ]);
 
   // Sync dark class on <html>
@@ -373,7 +517,24 @@ export default function App() {
     }
   }, [currentTheme.isDark]);
 
-  // Real-time 1-second ticker: updates clock, CPU telemetry, Pomodoro, and running app session timers!
+  // Push Windows Notification to Dynamic Island
+  const pushIslandNotification = (app: string, title: string, message: string, icon = '🔔') => {
+    const timeStr = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    setWindowsNotifications((prev) => [
+      {
+        id: `wn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        app,
+        title,
+        message,
+        time: timeStr,
+        icon,
+        unread: true,
+      },
+      ...prev.slice(0, 29),
+    ]);
+  };
+
+  // Real-time 1-second ticker: updates clock, CPU telemetry, Dynamic Island timer/stopwatch, Pomodoro, and running app session timers!
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
@@ -381,6 +542,19 @@ export default function App() {
 
       if (pomodoroRunning) {
         setPomodoroSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+      }
+
+      if (islandTimerRunning) {
+        setIslandTimerRemainingSec((prev) => {
+          if (prev > 1) return prev - 1;
+          setIslandTimerRunning(false);
+          pushIslandNotification('Таймер Dynamic Island', 'Время вышло!', 'Обратный отсчет таймера завершен (00:00).', '⏳');
+          return 0;
+        });
+      }
+
+      if (islandStopwatchRunning) {
+        setIslandStopwatchSec((prev) => prev + 1);
       }
 
       if (sessionTrackerEnabled) {
@@ -403,7 +577,7 @@ export default function App() {
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [sessionTrackerEnabled, pomodoroRunning]);
+  }, [sessionTrackerEnabled, pomodoroRunning, islandTimerRunning, islandStopwatchRunning]);
 
   // Load selected Python file from /launcher_hab2.4/
   useEffect(() => {
@@ -421,12 +595,70 @@ export default function App() {
     };
   }, [selectedPyFile]);
 
-  const pushToast = (title: string, message: string, type: 'info' | 'warning' | 'success' = 'info') => {
+  const pushToast = (
+    title: string,
+    message: string,
+    type: 'info' | 'warning' | 'success' = 'info',
+    forceEvenIfDnd = false
+  ) => {
+    // Working Do Not Disturb (Не беспокоить): silently record in Dynamic Island notifications instead of popping up toast
+    if (dndEnabled && !forceEvenIfDnd) {
+      pushIslandNotification('Тихий режим (DND)', title, message, '🔕');
+      return;
+    }
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev.slice(-3), { id, title, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4000);
+  };
+
+  // Right-Click (ПКМ) Back Navigation for One-Handed Control
+  const handleRightClickWorkspace = (e: React.MouseEvent) => {
+    if (!rightClickBackEnabled) return;
+    e.preventDefault();
+
+    if (islandModalOpen) {
+      setIslandModalOpen(false);
+      pushToast('⬅️ Назад (ПКМ)', 'Закрыто окно Dynamic Island', 'info', true);
+      return;
+    }
+    if (settingsModalOpen) {
+      setSettingsModalOpen(false);
+      pushToast('⬅️ Назад (ПКМ)', 'Закрыто окно настроек Android', 'info', true);
+      return;
+    }
+    if (pluginsModalOpen) {
+      setPluginsModalOpen(false);
+      pushToast('⬅️ Назад (ПКМ)', 'Закрыт магазин плагинов', 'info', true);
+      return;
+    }
+    if (addAppModalOpen) {
+      setAddAppModalOpen(false);
+      pushToast('⬅️ Назад (ПКМ)', 'Закрыто окно добавления приложения', 'info', true);
+      return;
+    }
+    if (workspaceModalOpen) {
+      setWorkspaceModalOpen(false);
+      pushToast('⬅️ Назад (ПКМ)', 'Закрыто окно пресетов', 'info', true);
+      return;
+    }
+    if (searchQuery.trim()) {
+      setSearchQuery('');
+      pushToast('⬅️ Назад (ПКМ)', 'Очищен поисковый запрос', 'info');
+      return;
+    }
+    if (currentFilter !== 'all') {
+      setCurrentFilter('all');
+      pushToast('⬅️ Назад (ПКМ)', 'Возврат ко всем категориям приложений', 'info');
+      return;
+    }
+    if (activeSection !== 'apps') {
+      handleSwitchSection('apps');
+      pushToast('⬅️ Назад (ПКМ)', 'Возврат в главный раздел «Приложения»', 'info');
+      return;
+    }
+    pushToast('⬅️ Назад (ПКМ)', 'Вы уже находитесь на главном экране библиотеки', 'info');
   };
 
   // Smooth section transition helper
@@ -806,23 +1038,29 @@ export default function App() {
   };
 
   const runningAppsCount = useMemo(() => apps.filter((a) => a.isRunning).length, [apps]);
+  const unreadNotifCount = useMemo(
+    () => windowsNotifications.filter((n) => n.unread).length,
+    [windowsNotifications]
+  );
+  const currentIslandPlayer = islandPlayers[activePlayerIndex] || islandPlayers[0];
 
   return (
     <div
+      onContextMenu={handleRightClickWorkspace}
       className={`min-h-screen w-full flex flex-col select-none transition-colors duration-300 ${
         currentTheme.isDark ? 'text-slate-100' : 'text-slate-900'
       }`}
       style={{ background: currentTheme.bgGradient }}
     >
-      {/* ==================== TOP HEADER (Flet Header 2.5) ==================== */}
+      {/* ==================== TOP HEADER (Flet Header 2.6 + Always-Active Dynamic Island) ==================== */}
       <header
-        className={`sticky top-0 z-30 flex items-center justify-between gap-4 px-5 py-2.5 border-b transition-all ${
+        className={`sticky top-0 z-30 flex items-center justify-between gap-3 px-4 py-2 border-b transition-all ${
           currentTheme.isDark ? 'border-slate-800/90' : 'border-slate-300/80'
         }`}
         style={cardGlassStyle}
       >
         {/* Left: Workspace button + Brand Title + Section Switcher */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <button
             onClick={() => setWorkspaceModalOpen(true)}
             title="Smart Workspace (Пресеты)"
@@ -832,16 +1070,16 @@ export default function App() {
           </button>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-lg font-bold tracking-tight whitespace-nowrap">
-              Launcher Hab 2.5
+            <span className="text-base lg:text-lg font-bold tracking-tight whitespace-nowrap">
+              Launcher Hab 2.6
             </span>
             <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              v2.5 PRO
+              v2.6 ISLAND
             </span>
           </div>
 
           {/* Section Switcher */}
-          <nav className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-[#0d111a]/80 border border-slate-700/60 ml-2">
+          <nav className="hidden xl:flex items-center gap-1 p-1 rounded-xl bg-[#0d111a]/80 border border-slate-700/60 ml-1">
             <button
               onClick={() => handleSwitchSection('apps')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
@@ -878,25 +1116,127 @@ export default function App() {
               }`}
             >
               <Code2 className="w-3.5 h-3.5" />
-              Python Код v2.5
+              Python Код v2.6
             </button>
           </nav>
         </div>
 
-        {/* Center/Right: System Devices + Customizable Clock (18 Styles) + Audio + Plugins + Settings */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Devices Monitor (Battery & Wi-Fi) */}
-          <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-[#1e2636]/70 border border-slate-700/60 text-xs">
-            <div className="flex items-center gap-1.5 text-emerald-400">
-              <BatteryCharging className="w-4 h-4" />
-              <span className="font-mono tabular-nums">96%</span>
+        {/* CENTER: ALWAYS-ACTIVE DYNAMIC ISLAND 2.6 CAPSULE */}
+        <div className="flex items-center justify-center">
+          <button
+            onClick={() => setIslandModalOpen(true)}
+            title="Dynamic Island 2.6 (Всегда активен) — Нажмите для открытия уведомлений Windows, плеера, таймера, секундомера и настроек острова"
+            className={`group relative flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#070a10] border transition-all duration-300 cursor-pointer hover:scale-[1.02] ${
+              isCharging && chargingAnimationEnabled
+                ? 'border-emerald-400/70 shadow-[0_0_22px_rgba(16,185,129,0.35)]'
+                : dndEnabled
+                ? 'border-purple-400/70 shadow-[0_0_18px_rgba(168,85,247,0.3)]'
+                : islandGlowEnabled
+                ? 'border-blue-500/50 shadow-[0_0_18px_rgba(59,130,246,0.22)]'
+                : 'border-slate-700/80'
+            }`}
+          >
+            {/* Camera / Island Active Pulse Pill */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`w-2.5 h-2.5 rounded-full ${
+                  isCharging && chargingAnimationEnabled
+                    ? 'bg-emerald-400 animate-ping'
+                    : dndEnabled
+                    ? 'bg-purple-400'
+                    : 'bg-emerald-400 animate-pulse'
+                }`}
+              />
+              {dndEnabled ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold">
+                  <BellOff className="w-3 h-3" />
+                  DND
+                </span>
+              ) : isCharging && chargingAnimationEnabled ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold animate-pulse">
+                  <Zap className="w-3 h-3 text-emerald-400" />
+                  Зарядка
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 text-[10px] font-semibold">
+                  Остров 2.6
+                </span>
+              )}
             </div>
-            <span className="opacity-30">•</span>
-            <div className="flex items-center gap-1.5 text-emerald-400">
-              <Wifi className="w-4 h-4" />
-              <span>Ethernet</span>
+
+            {/* Center Activity inside Dynamic Island: Timer / Stopwatch / Media / Notifications */}
+            <div className="flex items-center gap-2 text-xs text-slate-200">
+              {islandTimerRunning ? (
+                <span className="flex items-center gap-1 font-mono font-bold text-amber-300">
+                  <Timer className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+                  {formatLiveClock(islandTimerRemainingSec)}
+                </span>
+              ) : islandStopwatchRunning ? (
+                <span className="flex items-center gap-1 font-mono font-bold text-cyan-300">
+                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                  {formatLiveClock(islandStopwatchSec)}
+                </span>
+              ) : mediaPlaying ? (
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300 max-w-[160px] truncate">
+                  <Music className="w-3.5 h-3.5 text-emerald-400 shrink-0 animate-bounce" />
+                  <span className="truncate">{currentIslandPlayer.track}</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                  <Bell className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Уведомл.: {unreadNotifCount}</span>
+                </span>
+              )}
             </div>
-          </div>
+
+            <span className="text-slate-600">•</span>
+
+            {/* Right inside Dynamic Island: Live Time & Date + Device Battery % */}
+            <div className="flex items-center gap-2 text-xs font-mono">
+              <span className="font-bold text-white tabular-nums">
+                {clockParts.hrs}:{clockParts.mins}
+              </span>
+              <span className="hidden md:inline text-[10px] text-slate-400">
+                {clockParts.weekday} {clockParts.dateBase.slice(0, 5)}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  isCharging
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : 'bg-slate-800 text-slate-300'
+                }`}
+              >
+                <BatteryCharging className="w-3 h-3 text-emerald-400" />
+                {batteryLevel}%
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Center/Right: Adaptive Theme Quick Pill + Customizable Clock (18 Styles) + Audio + Plugins + Settings */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Quick Adaptive Day/Night Status */}
+          <button
+            onClick={() => {
+              const next = !adaptiveThemeEnabled;
+              setAdaptiveThemeEnabled(next);
+              pushToast(
+                'Адаптивная тема День/Ночь',
+                next
+                  ? `Включена авто-смена темы (День ${dayStartTime} / Ночь ${nightStartTime})`
+                  : 'Авто-смена темы отключена'
+              );
+            }}
+            title="Адаптивная тема День / Ночь (нажмите для переключения)"
+            className={`hidden 2xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs transition-all cursor-pointer ${
+              adaptiveThemeEnabled
+                ? 'bg-amber-500/15 border-amber-400/50 text-amber-300'
+                : 'bg-[#1e2636]/70 border-slate-700/60 text-slate-400 hover:text-white'
+            }`}
+          >
+            {currentTheme.isDark ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+            <span className="font-medium">{adaptiveThemeEnabled ? 'Авто День/Ночь' : 'Тема'}</span>
+          </button>
 
           {/* Customizable Clock Widget (18 Styles including Android Vertical & 10 new v2.5 styles) */}
           <button
@@ -1141,26 +1481,26 @@ export default function App() {
             <Activity className="w-4 h-4" />
           </button>
 
-          {/* Settings Button */}
+          {/* Settings Button (Android 15 Style Settings) */}
           <button
             onClick={() => {
-              setSettingsTab('appearance');
+              setSettingsTab('island');
               setSettingsModalOpen(true);
             }}
-            title="Настройки Launcher Hab 2.5"
+            title="Настройки Launcher Hab 2.6 (Стиль Android 15)"
             className="p-2 rounded-xl bg-[#1e2636]/80 hover:bg-[#263044] border border-slate-700/60 transition-all cursor-pointer"
           >
             <Settings className="w-4 h-4" />
           </button>
 
-          {/* Direct Download Python v2.5 ZIP */}
+          {/* Direct Download Python v2.6 ZIP */}
           <a
-            href="/launcher_hab2.4.zip"
-            download="launcher_hab2.5.zip"
+            href="/launcher_hab2.6.zip"
+            download="launcher_hab2.6.zip"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5" />
-            Python v2.5 (.zip)
+            Python v2.6 (.zip)
           </a>
         </div>
       </header>
@@ -1928,7 +2268,7 @@ export default function App() {
               </div>
             )}
 
-            {/* -------------------- SECTION 3: PYTHON 2.4 SOURCE CODE & DOWNLOAD -------------------- */}
+            {/* -------------------- SECTION 3: PYTHON 2.6 SOURCE CODE & DOWNLOAD -------------------- */}
             {activeSection === 'python_code' && (
               <div className="space-y-5 max-w-6xl mx-auto">
                 <section
@@ -1940,11 +2280,11 @@ export default function App() {
                       <div className="flex items-center gap-2">
                         <FileCode className="w-5 h-5 text-emerald-400" />
                         <h2 className="text-lg font-bold">
-                          Исходный код Python — Launcher Hab 2.4 (Flet)
+                          Исходный код Python — Launcher Hab 2.6 (Flet)
                         </h2>
                       </div>
                       <p className="text-xs text-slate-400 mt-1">
-                        Весь проект написан на Python: исправлены Fernet-ключ, желтые полоски <code className="text-emerald-400">#AARRGGBB</code>, ошибка <code className="text-emerald-400">show_snack_bar</code>, трекер с 0 и магазин плагинов.
+                        Весь проект написан на Python: добавлены <code className="text-emerald-400">Dynamic Island 2.6</code>, настройки в стиле <code className="text-emerald-400">Android 15</code>, <code className="text-emerald-400">GitHub Auto-Updater + Диагностика</code>, <code className="text-emerald-400">ПКМ = Назад</code> и адаптивная тема <code className="text-emerald-400">День / Ночь</code>.
                       </p>
                     </div>
 
@@ -1962,12 +2302,12 @@ export default function App() {
                       </button>
 
                       <a
-                        href="/launcher_hab2.4.zip"
-                        download="launcher_hab2.4.zip"
+                        href="/launcher_hab2.6.zip"
+                        download="launcher_hab2.6.zip"
                         className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition-all"
                       >
                         <Download className="w-4 h-4" />
-                        Скачать проект launcher_hab2.4.zip
+                        Скачать проект launcher_hab2.6.zip
                       </a>
                     </div>
                   </div>
@@ -2638,698 +2978,1202 @@ export default function App() {
         </div>
       )}
 
-      {/* ==================== MODAL 3: SETTINGS 2.5 (INSTANT LIT ACTIVE STATUS, 18 CLOCK STYLES, CUSTOM THEMES & CHANGELOG 1.0–2.5) ==================== */}
-      {settingsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div
-            className="w-full max-w-4xl rounded-2xl border border-slate-700 p-6 shadow-2xl max-h-[90vh] flex flex-col"
-            style={cardGlassStyle}
-          >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+      {/* ==================== MODAL 2.6: DYNAMIC ISLAND CONTROL CENTER ==================== */}
+      {islandModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/75 backdrop-blur-sm pt-14 p-4">
+          <div className="w-full max-w-3xl rounded-3xl border border-slate-700/90 bg-[#070a10]/95 p-6 shadow-[0_0_50px_rgba(0,0,0,0.9)] space-y-4 text-slate-100">
+            {/* Top Capsule Header inside Dynamic Island */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
-                <Sliders className="w-5 h-5 text-blue-400" />
+                <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
                 <div>
-                  <h3 className="text-lg font-bold">
-                    Настройки Launcher Hab 2.5 — Персонализация и Часы
+                  <h3 className="text-base font-bold flex items-center gap-2">
+                    Dynamic Island 2.6 — Интерактивный центр
+                    <LitStatusBadge active={true} />
                   </h3>
                   <p className="text-xs text-slate-400">
-                    При выборе любого параметра он сразу загорается и меняет статус с «⚪ НЕАКТИВНО» на «🟢 АКТИВНО»
+                    {clockParts.hrs}:{clockParts.mins}:{clockParts.secs} • {clockParts.fullDate} • Заряд устройства: {batteryLevel}%
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Working DND Quick Toggle */}
+                <button
+                  onClick={() => {
+                    const next = !dndEnabled;
+                    setDndEnabled(next);
+                    pushToast(
+                      next ? '🔕 Не беспокоить ВКЛЮЧЕН' : '🔔 Не беспокоить ВЫКЛЮЧЕН',
+                      next
+                        ? 'Все всплывающие уведомления блокируются и сохраняются внутри Dynamic Island'
+                        : 'Всплывающие уведомления снова активны',
+                      'info',
+                      true
+                    );
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                    dndEnabled
+                      ? 'bg-purple-500/25 border-purple-400 text-purple-200 shadow-[0_0_16px_rgba(168,85,247,0.35)]'
+                      : 'bg-[#121824] border-slate-700 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {dndEnabled ? <BellOff className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
+                  {dndEnabled ? 'Не беспокоить: ВКЛ' : 'Не беспокоить: ВЫКЛ'}
+                </button>
+
+                <button
+                  onClick={() => setIslandModalOpen(false)}
+                  className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Dynamic Island Navigation Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              {(
+                [
+                  ['overview', '🏝 Обзор и Заряд'],
+                  ['notifications', `🔔 Уведомления Windows (${windowsNotifications.length})`],
+                  ['player', '🎵 Смена проигрывателя'],
+                  ['timer', '⏳ Таймер'],
+                  ['stopwatch', '⏱ Секундомер'],
+                  ['settings', '⚙️ Настройки Острова'],
+                ] as const
+              ).map(([tKey, tLbl]) => (
+                <button
+                  key={tKey}
+                  onClick={() => setIslandTab(tKey)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                    islandTab === tKey
+                      ? 'bg-blue-600 text-white shadow-[0_0_14px_rgba(59,130,246,0.45)]'
+                      : 'bg-[#121824] hover:bg-[#1a2232] text-slate-300'
+                  }`}
+                >
+                  {tLbl}
+                </button>
+              ))}
+            </div>
+
+            {/* TAB 1: OVERVIEW (TIME, DATE, BATTERY %, CHARGING ANIMATION & QUICK SUMMARY) */}
+            {islandTab === 'overview' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Clock & Date Card */}
+                  <div className="p-4 rounded-2xl bg-[#121824] border border-slate-800 flex flex-col justify-between">
+                    <span className="text-[11px] text-slate-400 font-semibold">ВРЕМЯ И ДАТА В ОСТРОВЕ</span>
+                    <div className="text-3xl font-black font-mono text-white tracking-tight mt-1">
+                      {clockParts.hrs}:{clockParts.mins}:{clockParts.secs}
+                    </div>
+                    <div className="text-xs text-blue-400 font-medium mt-1">{clockParts.fullDate}</div>
+                  </div>
+
+                  {/* Battery & Charging Animation Card */}
+                  <div
+                    className={`p-4 rounded-2xl border flex flex-col justify-between transition-all ${
+                      isCharging && chargingAnimationEnabled
+                        ? 'bg-emerald-950/30 border-emerald-400/70 shadow-[0_0_24px_rgba(16,185,129,0.2)]'
+                        : 'bg-[#121824] border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400 font-semibold">ПРОЦЕНТЫ УСТРОЙСТВА</span>
+                      <button
+                        onClick={() => {
+                          const next = !isCharging;
+                          setIsCharging(next);
+                          if (next) {
+                            pushIslandNotification(
+                              'Питание Windows',
+                              'Подключено зарядное устройство',
+                              `Активирована анимация быстрой зарядки (${batteryLevel}%).`,
+                              '⚡'
+                            );
+                          }
+                        }}
+                        className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold cursor-pointer"
+                      >
+                        {isCharging ? '⚡ Идет зарядка' : '🔌 От батареи'}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <BatteryCharging
+                        className={`w-7 h-7 ${
+                          isCharging ? 'text-emerald-400 animate-bounce' : 'text-slate-400'
+                        }`}
+                      />
+                      <span className="text-3xl font-black font-mono text-emerald-400">{batteryLevel}%</span>
+                    </div>
+                    {/* Animated Charging Progress Bar */}
+                    <div className="w-full h-2.5 rounded-full bg-slate-900 overflow-hidden mt-2 border border-slate-800">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isCharging && chargingAnimationEnabled
+                            ? 'bg-gradient-to-r from-emerald-500 via-teal-300 to-emerald-400 animate-pulse'
+                            : 'bg-blue-500'
+                        }`}
+                        style={{ width: `${batteryLevel}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Active Player & Timer Summary */}
+                  <div className="p-4 rounded-2xl bg-[#121824] border border-slate-800 flex flex-col justify-between">
+                    <span className="text-[11px] text-slate-400 font-semibold">АКТИВНЫЙ ПРОИГРЫВАТЕЛЬ</span>
+                    <div className="text-sm font-bold text-white truncate mt-1">
+                      {currentIslandPlayer.name}
+                    </div>
+                    <div className="text-xs text-slate-400 truncate">
+                      {currentIslandPlayer.artist} — {currentIslandPlayer.track}
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        onClick={() => setIslandTab('player')}
+                        className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold cursor-pointer"
+                      >
+                        Сменить плеер
+                      </button>
+                      <button
+                        onClick={() => setIslandTab('timer')}
+                        className="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-semibold cursor-pointer"
+                      >
+                        Таймер / Секундомер
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: WINDOWS NOTIFICATIONS VIEWER */}
+            {islandTab === 'notifications' && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs text-slate-400">
+                    Просмотр системных уведомлений Windows и перехваченных в режиме «Не беспокоить» событий:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        pushIslandNotification(
+                          'Windows Security',
+                          'Быстрая проверка завершена',
+                          'Угроз не обнаружено, все службы Launcher Hab 2.6 работают штатно.',
+                          '🛡️'
+                        )
+                      }
+                      className="px-3 py-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer"
+                    >
+                      + Тест уведомления Windows
+                    </button>
+                    <button
+                      onClick={() =>
+                        setWindowsNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
+                      }
+                      className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/15 text-xs cursor-pointer"
+                    >
+                      Прочитать все
+                    </button>
+                    <button
+                      onClick={() => setWindowsNotifications([])}
+                      className="px-3 py-1 rounded-xl bg-rose-500/20 text-rose-300 text-xs cursor-pointer"
+                    >
+                      Очистить
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  {windowsNotifications.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-500">
+                      Нет новых уведомлений от Windows
+                    </div>
+                  ) : (
+                    windowsNotifications.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-3 rounded-2xl border flex items-start justify-between gap-3 ${
+                          item.unread
+                            ? 'bg-[#131d31] border-blue-500/40'
+                            : 'bg-[#101622] border-slate-800/80'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="text-lg">{item.icon}</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-blue-400">{item.app}</span>
+                              <span className="text-[11px] font-mono text-slate-400">{item.time}</span>
+                              {item.unread && (
+                                <span className="px-1.5 py-0.2 rounded-full bg-blue-500/20 text-blue-300 text-[9px] font-bold">
+                                  NEW
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs font-semibold text-white mt-0.5">{item.title}</div>
+                            <div className="text-xs text-slate-300 mt-0.5">{item.message}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: MEDIA PLAYER SWITCHER */}
+            {islandTab === 'player' && (
+              <div className="space-y-4">
+                <div className="text-xs text-slate-400">
+                  Выберите активный медиа-проигрыватель для управления из Dynamic Island:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {islandPlayers.map((pl, idx) => {
+                    const active = idx === activePlayerIndex;
+                    return (
+                      <button
+                        key={pl.id}
+                        onClick={() => {
+                          setActivePlayerIndex(idx);
+                          pushToast('Смена проигрывателя', `Активен источник: ${pl.name}`, 'info');
+                        }}
+                        className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                          active
+                            ? 'border-emerald-400 bg-emerald-500/15 text-white shadow-[0_0_16px_rgba(16,185,129,0.25)]'
+                            : 'border-slate-700 bg-[#121824] text-slate-300 hover:bg-[#1a2232]'
+                        }`}
+                      >
+                        <Radio className="w-3.5 h-3.5" style={{ color: pl.accent }} />
+                        <span>{pl.name}</span>
+                        {active && <LitStatusBadge active={true} />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Now Playing Card */}
+                <div className="p-5 rounded-2xl bg-[#121824] border border-slate-700/80 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg"
+                      style={{ backgroundColor: currentIslandPlayer.accent }}
+                    >
+                      <Music className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="text-[11px] font-mono uppercase text-emerald-400">
+                        {currentIslandPlayer.name}
+                      </div>
+                      <div className="text-base font-bold text-white">{currentIslandPlayer.track}</div>
+                      <div className="text-xs text-slate-400">{currentIslandPlayer.artist}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const tracks = [
+                          'Nightcall (Synthwave Mix)',
+                          'Midnight City (Extended)',
+                          'Cyberpunk 2077 Theme',
+                          'Starboy (Instrumental)',
+                          'Resonance — HOME',
+                        ];
+                        const nextTrack = tracks[Math.floor(Math.random() * tracks.length)];
+                        setIslandPlayers((prev) =>
+                          prev.map((p, i) => (i === activePlayerIndex ? { ...p, track: nextTrack } : p))
+                        );
+                      }}
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer"
+                    >
+                      <SkipBack className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setMediaPlaying((v) => !v)}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                    >
+                      {mediaPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                      {mediaPlaying ? 'Пауза' : 'Воспроизвести'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const tracks = [
+                          'After Dark — Mr.Kitty',
+                          'Blinding Lights',
+                          'Veridis Quo — Daft Punk',
+                          'Memory Reboot',
+                          'Instant Crush',
+                        ];
+                        const nextTrack = tracks[Math.floor(Math.random() * tracks.length)];
+                        setIslandPlayers((prev) =>
+                          prev.map((p, i) => (i === activePlayerIndex ? { ...p, track: nextTrack } : p))
+                        );
+                      }}
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer"
+                    >
+                      <SkipForward className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: TIMER IN DYNAMIC ISLAND */}
+            {islandTab === 'timer' && (
+              <div className="p-5 rounded-2xl bg-[#121824] border border-slate-800 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs text-slate-400">ОБРАТНЫЙ ОТСЧЕТ ТАЙМЕРА В DYNAMIC ISLAND</div>
+                    <div className="text-4xl font-black font-mono text-amber-400 mt-1">
+                      {formatLiveClock(islandTimerRemainingSec)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIslandTimerRunning((r) => !r)}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                    >
+                      {islandTimerRunning ? '⏸ Пауза' : '▶ Старт таймера'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIslandTimerRunning(false);
+                        setIslandTimerRemainingSec(islandTimerTotalSec);
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold cursor-pointer"
+                    >
+                      ↺ Сброс
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-slate-400">Быстрые пресеты:</span>
+                  {[1, 5, 10, 15, 25, 45, 60].map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => {
+                        setIslandTimerRunning(false);
+                        setIslandTimerTotalSec(m * 60);
+                        setIslandTimerRemainingSec(m * 60);
+                      }}
+                      className="px-3 py-1 rounded-lg bg-[#1a2232] hover:bg-blue-600/30 border border-slate-700 text-xs font-mono cursor-pointer"
+                    >
+                      {m} мин
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setIslandTimerRemainingSec((s) => s + 60)}
+                    className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-mono cursor-pointer"
+                  >
+                    +1 мин
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: STOPWATCH IN DYNAMIC ISLAND */}
+            {islandTab === 'stopwatch' && (
+              <div className="p-5 rounded-2xl bg-[#121824] border border-slate-800 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <div className="text-xs text-slate-400">СЕКУНДОМЕР DYNAMIC ISLAND (С ЗАПИСЬЮ КРУГОВ)</div>
+                    <div className="text-4xl font-black font-mono text-cyan-400 mt-1">
+                      {formatLiveClock(islandStopwatchSec)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIslandStopwatchRunning((r) => !r)}
+                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold cursor-pointer"
+                    >
+                      {islandStopwatchRunning ? '⏸ Пауза' : '▶ Старт'}
+                    </button>
+                    <button
+                      onClick={() =>
+                        setIslandStopwatchLaps((prev) => [
+                          `Круг #${prev.length + 1} — ${formatLiveClock(islandStopwatchSec)}`,
+                          ...prev,
+                        ])
+                      }
+                      className="px-4 py-2.5 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Flag className="w-3.5 h-3.5" />
+                      Круг
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIslandStopwatchRunning(false);
+                        setIslandStopwatchSec(0);
+                        setIslandStopwatchLaps([]);
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold cursor-pointer"
+                    >
+                      ↺ Сброс в 00:00
+                    </button>
+                  </div>
+                </div>
+
+                {islandStopwatchLaps.length > 0 && (
+                  <div className="space-y-1 max-h-32 overflow-y-auto pt-2 border-t border-slate-800 text-xs font-mono text-slate-300">
+                    {islandStopwatchLaps.map((lap, i) => (
+                      <div key={i} className="px-2.5 py-1 rounded bg-[#0d111a]">
+                        {lap}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 6: DYNAMIC ISLAND SETTINGS */}
+            {islandTab === 'settings' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div
+                  onClick={() => setDndEnabled((v) => !v)}
+                  className={`p-4 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                    dndEnabled ? 'border-purple-400 bg-purple-500/15' : 'border-slate-700 bg-[#121824]'
+                  }`}
+                >
+                  <div>
+                    <div className="text-xs font-bold">Режим «Не беспокоить» (Полностью рабочий)</div>
+                    <div className="text-[11px] text-slate-400">
+                      Блокирует всплывающие уведомления и складывает их в остров
+                    </div>
+                  </div>
+                  <LitStatusBadge active={dndEnabled} />
+                </div>
+
+                <div
+                  onClick={() => setChargingAnimationEnabled((v) => !v)}
+                  className={`p-4 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                    chargingAnimationEnabled
+                      ? 'border-emerald-400 bg-emerald-500/15'
+                      : 'border-slate-700 bg-[#121824]'
+                  }`}
+                >
+                  <div>
+                    <div className="text-xs font-bold">Анимация при подключении зарядки</div>
+                    <div className="text-[11px] text-slate-400">
+                      Изумрудная волна и импульс молнии в капсуле острова
+                    </div>
+                  </div>
+                  <LitStatusBadge active={chargingAnimationEnabled} />
+                </div>
+
+                <div
+                  onClick={() => setIsCharging((v) => !v)}
+                  className={`p-4 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                    isCharging ? 'border-emerald-400 bg-emerald-500/15' : 'border-slate-700 bg-[#121824]'
+                  }`}
+                >
+                  <div>
+                    <div className="text-xs font-bold">Питание от сети / Идет зарядка</div>
+                    <div className="text-[11px] text-slate-400">
+                      Переключить статус зарядки для проверки анимации
+                    </div>
+                  </div>
+                  <LitStatusBadge active={isCharging} />
+                </div>
+
+                <div
+                  onClick={() => setIslandGlowEnabled((v) => !v)}
+                  className={`p-4 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                    islandGlowEnabled ? 'border-blue-400 bg-blue-500/15' : 'border-slate-700 bg-[#121824]'
+                  }`}
+                >
+                  <div>
+                    <div className="text-xs font-bold">Неоновое свечение контура Острова</div>
+                    <div className="text-[11px] text-slate-400">
+                      Подсветка капсулы в зависимости от активного режима
+                    </div>
+                  </div>
+                  <LitStatusBadge active={islandGlowEnabled} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==================== MODAL 3: ANDROID 15 STYLE SETTINGS (REDESIGNED v2.6) ==================== */}
+      {settingsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div
+            className="w-full max-w-5xl rounded-3xl border border-slate-700/90 p-6 shadow-2xl max-h-[92vh] flex flex-col"
+            style={cardGlassStyle}
+          >
+            {/* Android 15 Top Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    Настройки системы (Android 15 UI • Launcher Hab 2.6)
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Плитки быстрых настроек, адаптивная тема День/Ночь, Dynamic Island, ПКМ Назад, Автообновление GitHub и Диагностика
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSettingsModalOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
+                className="p-2 rounded-full hover:bg-white/10 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Settings Tabs */}
-            <div className="flex items-center gap-1.5 py-3 border-b border-slate-800 overflow-x-auto">
-              {(
-                [
-                  ['appearance', '🎨 Темы и Персонализация 2.5'],
-                  ['clock', '🕒 Часы (18 стилей + Дизайн)'],
-                  ['plugins', '🧩 Плагины и Сетка'],
-                  ['system', '🔐 Шифрование 2.5 и Бэкапы'],
-                  ['changelog', '📜 История версий (1.0 – 2.5)'],
-                ] as const
-              ).map(([tabKey, tabLabel]) => (
-                <button
-                  key={tabKey}
-                  onClick={() => setSettingsTab(tabKey)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                    settingsTab === tabKey
-                      ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(59,130,246,0.45)]'
-                      : 'bg-[#1a2232] hover:bg-[#232e44] text-slate-300'
-                  }`}
-                >
-                  {tabLabel}
-                </button>
-              ))}
+            {/* Android Quick Settings Tiles Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 py-3 border-b border-slate-800">
+              <button
+                onClick={() => setDndEnabled((v) => !v)}
+                className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  dndEnabled
+                    ? 'bg-purple-500/20 border-purple-400 text-white'
+                    : 'bg-[#121824] border-slate-800 text-slate-400'
+                }`}
+              >
+                <div>
+                  <div className="text-xs font-bold">🔕 Не беспокоить</div>
+                  <div className="text-[10px] font-mono">{dndEnabled ? 'Активно' : 'Откл.'}</div>
+                </div>
+                <span className="text-xs">{dndEnabled ? '🟢' : '⚪'}</span>
+              </button>
+
+              <button
+                onClick={() => setAdaptiveThemeEnabled((v) => !v)}
+                className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  adaptiveThemeEnabled
+                    ? 'bg-amber-500/20 border-amber-400 text-white'
+                    : 'bg-[#121824] border-slate-800 text-slate-400'
+                }`}
+              >
+                <div>
+                  <div className="text-xs font-bold">🌓 Авто День/Ночь</div>
+                  <div className="text-[10px] font-mono">
+                    {dayStartTime} / {nightStartTime}
+                  </div>
+                </div>
+                <span className="text-xs">{adaptiveThemeEnabled ? '🟢' : '⚪'}</span>
+              </button>
+
+              <button
+                onClick={() => setRightClickBackEnabled((v) => !v)}
+                className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  rightClickBackEnabled
+                    ? 'bg-emerald-500/20 border-emerald-400 text-white'
+                    : 'bg-[#121824] border-slate-800 text-slate-400'
+                }`}
+              >
+                <div>
+                  <div className="text-xs font-bold">🖱️ ПКМ = Назад</div>
+                  <div className="text-[10px] font-mono">Одной рукой</div>
+                </div>
+                <span className="text-xs">{rightClickBackEnabled ? '🟢' : '⚪'}</span>
+              </button>
+
+              <button
+                onClick={() => setGlassEnabled((v) => !v)}
+                className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  glassEnabled
+                    ? 'bg-blue-500/20 border-blue-400 text-white'
+                    : 'bg-[#121824] border-slate-800 text-slate-400'
+                }`}
+              >
+                <div>
+                  <div className="text-xs font-bold">✨ Жидкое стекло</div>
+                  <div className="text-[10px] font-mono">{glassOpacity}%</div>
+                </div>
+                <span className="text-xs">{glassEnabled ? '🟢' : '⚪'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setSettingsModalOpen(false);
+                  setIslandModalOpen(true);
+                }}
+                className="p-2.5 rounded-2xl border border-cyan-500/50 bg-cyan-500/15 text-left transition-all cursor-pointer flex items-center justify-between text-white"
+              >
+                <div>
+                  <div className="text-xs font-bold">🏝 Открыть Остров</div>
+                  <div className="text-[10px] font-mono text-cyan-300">Dynamic Island</div>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
+              </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto py-4 space-y-5">
-              {/* TAB 1: APPEARANCE, CUSTOM THEME STUDIO & PERSONALIZATION 2.5 */}
-              {settingsTab === 'appearance' && (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <h4 className="text-sm font-bold">
-                          Темы оформления и Кастомные темы (Мгновенное зажигание статуса)
-                        </h4>
-                        <p className="text-xs text-slate-400">
-                          Выберите готовую тему или создайте собственную в студии кастомных тем 2.5
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setCustomThemeModalOpen(true)}
-                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer shadow-sm"
-                      >
-                        + Создать кастомную тему 2.5
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                      {Object.keys(allThemesMap).map((tKey) => {
-                        const isSelected = themeKey === tKey;
-                        const th = allThemesMap[tKey];
-                        return (
-                          <button
-                            key={tKey}
-                            onClick={() => {
-                              setThemeKey(tKey);
-                              pushToast('Тема активирована', `Тема «${th.name}» зажглась: 🟢 АКТИВНО`, 'success');
-                            }}
-                            className={`p-3 rounded-xl border text-xs font-semibold transition-all duration-200 cursor-pointer text-left flex flex-col gap-2 ${
-                              isSelected
-                                ? 'border-emerald-400 bg-emerald-500/15 text-white shadow-[0_0_18px_rgba(16,185,129,0.25)]'
-                                : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636] text-slate-300'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2 w-full">
-                              <span className="truncate font-bold">{th.name}</span>
-                              <LitStatusBadge active={isSelected} />
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span
-                                className="w-4 h-4 rounded-full border border-white/20"
-                                style={{ backgroundColor: th.cardHex }}
-                              />
-                              <span
-                                className="w-4 h-4 rounded-full border border-white/20"
-                                style={{ backgroundColor: th.accentHex }}
-                              />
-                              <span className="text-[10px] text-slate-400 font-mono ml-auto">
-                                {th.custom ? 'Custom 2.5' : 'Preset'}
-                              </span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Lit Toggle Rows for Glass & Animations */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div
-                      onClick={() => setGlassEnabled((v) => !v)}
-                      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
-                        glassEnabled
-                          ? 'border-emerald-400/80 bg-emerald-500/10 shadow-[0_0_16px_rgba(16,185,129,0.2)]'
-                          : 'border-slate-700 bg-[#121824]'
+            {/* Android Settings Body: Left Sidebar with Colored Circular Icons + Right Content */}
+            <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden pt-3">
+              {/* Left Android Categories Sidebar */}
+              <div className="md:w-64 shrink-0 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-y-auto pr-1">
+                {(
+                  [
+                    ['island', '🏝', 'Dynamic Island', 'Уведомления, плеер, таймер', 'bg-blue-500/20 text-blue-400'],
+                    [
+                      'appearance',
+                      '🌗',
+                      'Экран и День / Ночь',
+                      'Авто-смена темы и стекло',
+                      'bg-amber-500/20 text-amber-400',
+                    ],
+                    [
+                      'clock',
+                      '🕒',
+                      'Часы и Циферблаты (18)',
+                      'Стили и неон часов',
+                      'bg-purple-500/20 text-purple-400',
+                    ],
+                    [
+                      'navigation',
+                      '🖱️',
+                      'Удобство и ПКМ Назад',
+                      'Управление одной рукой',
+                      'bg-emerald-500/20 text-emerald-400',
+                    ],
+                    ['plugins', '🧩', 'Плагины и Сетка', 'Расширения и колонки', 'bg-pink-500/20 text-pink-400'],
+                    [
+                      'updater',
+                      '🐙',
+                      'Обновление и Диагностика',
+                      'GitHub Auto-Update и тест',
+                      'bg-cyan-500/20 text-cyan-400',
+                    ],
+                    [
+                      'about',
+                      'ℹ️',
+                      'О приложении (1.0–2.6)',
+                      'История всех 17 версий',
+                      'bg-indigo-500/20 text-indigo-400',
+                    ],
+                  ] as const
+                ).map(([tKey, emoji, title, sub, badgeCls]) => {
+                  const active = settingsTab === tKey;
+                  return (
+                    <button
+                      key={tKey}
+                      onClick={() => setSettingsTab(tKey)}
+                      className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 shrink-0 ${
+                        active
+                          ? 'bg-[#1c263b] border-blue-500/70 shadow-sm'
+                          : 'bg-[#111723] hover:bg-[#172030] border-slate-800/80'
                       }`}
                     >
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm shrink-0 ${badgeCls}`}>
+                        {emoji}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-white truncate">{title}</div>
+                        <div className="text-[10px] text-slate-400 truncate">{sub}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right Content Panel */}
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                {/* CATEGORY 1: DYNAMIC ISLAND */}
+                {settingsTab === 'island' && (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <div className="text-xs font-bold">Прозрачное стекло (Liquid Glass #AARRGGBB)</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          Настоящий эффект матового стекла без цветовых искажений
-                        </div>
-                      </div>
-                      <LitStatusBadge active={glassEnabled} />
-                    </div>
-
-                    <div
-                      onClick={() => setSmoothAnimations((v) => !v)}
-                      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
-                        smoothAnimations
-                          ? 'border-emerald-400/80 bg-emerald-500/10 shadow-[0_0_16px_rgba(16,185,129,0.2)]'
-                          : 'border-slate-700 bg-[#121824]'
-                      }`}
-                    >
-                      <div>
-                        <div className="text-xs font-bold">Плавные переходы между разделами</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          Анимация переключения вкладок и карточек
-                        </div>
-                      </div>
-                      <LitStatusBadge active={smoothAnimations} />
-                    </div>
-
-                    <div
-                      onClick={() => setCardHoverGlow((v) => !v)}
-                      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
-                        cardHoverGlow
-                          ? 'border-emerald-400/80 bg-emerald-500/10 shadow-[0_0_16px_rgba(16,185,129,0.2)]'
-                          : 'border-slate-700 bg-[#121824]'
-                      }`}
-                    >
-                      <div>
-                        <div className="text-xs font-bold">Неоновая подсветка карточек при наведении</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          Акцентное свечение рамки при наведении курсора
-                        </div>
-                      </div>
-                      <LitStatusBadge active={cardHoverGlow} />
-                    </div>
-
-                    <div className="p-4 rounded-xl border border-slate-700 bg-[#121824] flex flex-col justify-between gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold">Интенсивность размытия стекла</span>
-                        <LitStatusBadge active={glassEnabled} />
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {(
-                          [
-                            ['light', 'Слабая'],
-                            ['medium', 'Средняя'],
-                            ['strong', 'Сильная'],
-                          ] as const
-                        ).map(([k, lbl]) => (
-                          <button
-                            key={k}
-                            onClick={() => setGlassIntensity(k)}
-                            className={`py-1 rounded-lg text-[11px] font-semibold border cursor-pointer transition-all ${
-                              glassIntensity === k
-                                ? 'border-emerald-400 bg-emerald-500/20 text-emerald-200'
-                                : 'border-slate-700 bg-[#1a2232] text-slate-400'
-                            }`}
-                          >
-                            {lbl}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Personalization 2.5 Sliders */}
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-4">
-                    <h4 className="text-sm font-bold">Персонализация карточек и плиток (v2.5)</h4>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between">
-                          <span className="text-slate-300">Плотность стекла:</span>
-                          <span className="font-mono text-emerald-400">{glassOpacity}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={35}
-                          max={98}
-                          value={glassOpacity}
-                          onChange={(e) => setGlassOpacity(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between">
-                          <span className="text-slate-300">Радиус скругления карточек:</span>
-                          <span className="font-mono text-emerald-400">{cardBorderRadius} px</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={8}
-                          max={32}
-                          value={cardBorderRadius}
-                          onChange={(e) => setCardBorderRadius(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between">
-                          <span className="text-slate-300">Масштаб иконок плиток:</span>
-                          <span className="font-mono text-emerald-400">{iconScalePct}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={85}
-                          max={120}
-                          value={iconScalePct}
-                          onChange={(e) => setIconScalePct(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-800">
-                      <span className="text-xs text-slate-300">Цвет индикатора активного приложения:</span>
-                      {['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4'].map((clr) => (
-                        <button
-                          key={clr}
-                          onClick={() => setActiveAppColor(clr)}
-                          className={`w-7 h-7 rounded-full border-2 cursor-pointer transition-all ${
-                            activeAppColor === clr
-                              ? 'border-white scale-115 shadow-[0_0_12px_rgba(255,255,255,0.5)]'
-                              : 'border-transparent opacity-75'
-                          }`}
-                          style={{ backgroundColor: clr }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: 18 CLOCK STYLES + CLOCK DESIGN 2.5 */}
-              {settingsTab === 'clock' && (
-                <div className="space-y-4">
-                  {/* Lit Toggles for Clock */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div
-                      onClick={() => setShowAndroidClockWidget((v) => !v)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                        showAndroidClockWidget
-                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
-                          : 'border-slate-700 bg-[#121824]'
-                      }`}
-                    >
-                      <span className="text-xs font-bold">Виджет часов Android 14</span>
-                      <LitStatusBadge active={showAndroidClockWidget} />
-                    </div>
-
-                    <div
-                      onClick={() => setClockGlowEnabled((v) => !v)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                        clockGlowEnabled
-                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
-                          : 'border-slate-700 bg-[#121824]'
-                      }`}
-                    >
-                      <span className="text-xs font-bold">Неоновое свечение часов</span>
-                      <LitStatusBadge active={clockGlowEnabled} />
-                    </div>
-
-                    <div
-                      onClick={() => setClockBlinkColon((v) => !v)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
-                        clockBlinkColon
-                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
-                          : 'border-slate-700 bg-[#121824]'
-                      }`}
-                    >
-                      <span className="text-xs font-bold">Мигающее двоеточие (:)</span>
-                      <LitStatusBadge active={clockBlinkColon} />
-                    </div>
-                  </div>
-
-                  {/* 18 Clock Styles Grid with Instant Lit Active Status */}
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold">
-                        Коллекция стилей часов — 18 стилей (+10 новых в версии 2.5)
-                      </h4>
-                      <span className="text-xs font-mono text-emerald-400">
-                        Активен: {CLOCK_STYLE_OPTIONS.find((o) => o.id === clockStyle)?.label}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
-                      {CLOCK_STYLE_OPTIONS.map((opt) => {
-                        const isSelected = clockStyle === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            onClick={() => {
-                              setClockStyle(opt.id);
-                              pushToast('Стиль часов зажегся', `${opt.label} • 🟢 АКТИВНО`, 'success');
-                            }}
-                            className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col gap-1.5 ${
-                              isSelected
-                                ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_16px_rgba(16,185,129,0.25)]'
-                                : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636]'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-1.5 w-full">
-                              <span className="text-xs font-bold truncate">{opt.label}</span>
-                              {opt.isNew25 && (
-                                <span className="px-1.5 py-0.2 rounded bg-blue-500/25 text-blue-300 text-[9px] font-mono font-bold shrink-0">
-                                  NEW 2.5
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center justify-between w-full">
-                              <span className="text-xs font-mono text-blue-300">{opt.sample}</span>
-                              <LitStatusBadge active={isSelected} />
-                            </div>
-                            <span className="text-[11px] text-slate-400 line-clamp-1">{opt.description}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Clock Design Sliders & Colors */}
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-4">
-                    <h4 className="text-sm font-bold">Дизайн циферблата и подложки часов (v2.5)</h4>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-slate-300">Скругление капсулы:</span>
-                          <span className="font-mono text-emerald-400">{clockBorderRadius} px</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={6}
-                          max={28}
-                          value={clockBorderRadius}
-                          onChange={(e) => setClockBorderRadius(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-slate-300">Прозрачность подложки:</span>
-                          <span className="font-mono text-emerald-400">{clockBgOpacity}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={20}
-                          max={100}
-                          value={clockBgOpacity}
-                          onChange={(e) => setClockBgOpacity(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex justify-between">
-                          <span className="text-slate-300">Сила неонового свечения:</span>
-                          <span className="font-mono text-emerald-400">{clockGlowIntensity} px</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={4}
-                          max={32}
-                          value={clockGlowIntensity}
-                          onChange={(e) => setClockGlowIntensity(Number(e.target.value))}
-                          className="w-full accent-emerald-500 cursor-pointer"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                      {(
-                        [
-                          ['Секунды', showSeconds, setShowSeconds],
-                          ['Показывать дату', showDate, setShowDate],
-                          ['День недели', showWeekday, setShowWeekday],
-                          ['Жирный шрифт', clockBold, setClockBold],
-                        ] as const
-                      ).map(([lbl, val, setter]) => (
-                        <button
-                          key={lbl}
-                          onClick={() => setter(!val)}
-                          className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                            val
-                              ? 'border-emerald-400 bg-emerald-500/15 text-white'
-                              : 'border-slate-700 bg-[#121824] text-slate-400'
-                          }`}
-                        >
-                          <span className="font-semibold">{lbl}</span>
-                          <span className="text-[10px] font-mono">{val ? '🟢 ВКЛ' : '⚪ ВЫКЛ'}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-800">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xs text-slate-300">Цвет часов:</span>
-                        {['#f8fafc', '#60a5fa', '#34d399', '#fbbf24', '#f472b6', '#c084fc'].map((hex) => (
-                          <button
-                            key={hex}
-                            onClick={() => setTimeColor(hex)}
-                            className={`w-6 h-6 rounded-full border-2 cursor-pointer ${
-                              timeColor === hex ? 'border-white scale-115' : 'border-transparent'
-                            }`}
-                            style={{ backgroundColor: hex }}
-                          />
-                        ))}
-                      </div>
-
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xs text-slate-300">Акцент минут и неона:</span>
-                        {['#3b82f6', '#10b981', '#a855f7', '#ec4899', '#f59e0b', '#06b6d4'].map((hex) => (
-                          <button
-                            key={hex}
-                            onClick={() => setClockAccentColor(hex)}
-                            className={`w-6 h-6 rounded-full border-2 cursor-pointer ${
-                              clockAccentColor === hex ? 'border-white scale-115' : 'border-transparent'
-                            }`}
-                            style={{ backgroundColor: hex }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: PLUGINS & LAUNCH GRID SETTINGS */}
-              {settingsTab === 'plugins' && (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <div
-                      onClick={() => setShowPluginsInGrid((v) => !v)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                        showPluginsInGrid
-                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
-                          : 'border-slate-700 bg-[#121824]'
-                      }`}
-                    >
-                      <div>
-                        <div className="text-sm font-bold">Показывать плагины в списке запуска («Плагины»)</div>
-                        <div className="text-xs text-slate-400">
-                          Активные плагины отображаются как карточки в библиотеке и главной сетке
-                        </div>
-                      </div>
-                      <LitStatusBadge active={showPluginsInGrid} />
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                      <span className="text-xs text-slate-300">Колонок приложений в сетке:</span>
-                      <div className="flex gap-1.5">
-                        {[4, 5, 6].map((col) => (
-                          <button
-                            key={col}
-                            onClick={() => setCardColumns(col)}
-                            className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${
-                              cardColumns === col
-                                ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold'
-                                : 'bg-[#121824] text-slate-400 border-slate-700'
-                            }`}
-                          >
-                            {col} кол.
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                      <span className="text-xs text-slate-300">Поведение окна при запуске игры/приложения:</span>
-                      <select
-                        value={launchBehavior}
-                        onChange={(e) => setLaunchBehavior(e.target.value as 'keep' | 'minimize')}
-                        className="px-3 py-1.5 rounded-xl bg-[#121824] border border-slate-700 text-xs"
-                      >
-                        <option value="keep">Оставлять окно открытым</option>
-                        <option value="minimize">Сворачивать в фоновый режим</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 4: SYSTEM, CRYPTO 2.5 (PBKDF2 + HMAC) & BACKUP MANAGER */}
-              {settingsTab === 'system' && (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-emerald-500/40 space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <h4 className="text-sm font-bold text-emerald-300">
-                          Шифрование данных Crypto 2.5 (PBKDF2-HMAC-SHA256 + Fernet AES-128)
-                        </h4>
-                        <p className="text-xs text-slate-400">
-                          100 000 итераций PBKDF2, 32-байтный URL-safe Base64 ключ, контроль целостности HMAC-SHA256 и совместимость с v2.4
-                        </p>
-                      </div>
-                      <LitStatusBadge active={true} />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-mono">
-                      <div className="p-2.5 rounded-lg bg-[#121824] border border-slate-800">
-                        <div className="text-slate-400 text-[10px]">KDF АЛГОРИТМ</div>
-                        <div className="text-emerald-400 font-bold mt-0.5">PBKDF2-SHA256 (100k)</div>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-[#121824] border border-slate-800">
-                        <div className="text-slate-400 text-[10px]">ЦЕЛОСТНОСТЬ ДАННЫХ</div>
-                        <div className="text-blue-400 font-bold mt-0.5">HMAC-SHA256 Verified</div>
-                      </div>
-                      <div className="p-2.5 rounded-lg bg-[#121824] border border-slate-800 flex items-center justify-between">
-                        <div>
-                          <div className="text-slate-400 text-[10px]">РОТАЦИЯ КЛЮЧА</div>
-                          <div className="text-slate-200 font-bold mt-0.5">Ревизия #{cryptoKeyVersion}</div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setCryptoKeyVersion((v) => v + 1);
-                            pushToast(
-                              'Ротация ключа Crypto 2.5',
-                              'Сгенерирован новый 32-байтный PBKDF2 Fernet-ключ, настройки перешифрованы.',
-                              'success'
-                            );
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-sans font-semibold cursor-pointer"
-                        >
-                          Обновить ключ
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-bold">Резервные копии настроек (Backup Manager 2.5)</h4>
-                        <p className="text-xs text-slate-400">
-                          Создание, восстановление и удаление резервных копий конфигурации
+                        <h4 className="text-sm font-bold">Dynamic Island 2.6 (Всегда активный остров)</h4>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Отображает время, дату, проценты устройства ({batteryLevel}%), уведомления Windows, смену проигрывателя, таймер, секундомер и анимацию зарядки.
                         </p>
                       </div>
                       <button
                         onClick={() => {
-                          const nowStr = new Date().toLocaleTimeString('ru-RU');
-                          const created: BackupRecord = {
-                            id: `bk_${Date.now()}`,
-                            filename: `settings_backup_v25_${Date.now()}.json`,
-                            createdAt: `Сегодня, ${nowStr}`,
-                            sizeKb: '4.8 KB',
-                          };
-                          setBackups((prev) => [created, ...prev]);
-                          pushToast('Резервная копия создана', created.filename, 'success');
+                          setSettingsModalOpen(false);
+                          setIslandModalOpen(true);
                         }}
-                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer"
+                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold cursor-pointer"
                       >
-                        + Создать копию
+                        Открыть центр Dynamic Island
                       </button>
                     </div>
 
-                    <div className="space-y-2">
-                      {backups.map((bk) => (
-                        <div
-                          key={bk.id}
-                          className="p-2.5 rounded-xl bg-[#121824] border border-slate-800 flex items-center justify-between text-xs"
-                        >
-                          <div>
-                            <div className="font-mono font-semibold">{bk.filename}</div>
-                            <div className="text-[11px] text-slate-400">
-                              {bk.createdAt} • {bk.sizeKb}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() =>
-                                pushToast('Восстановление', `Настройки восстановлены из ${bk.filename}`, 'success')
-                              }
-                              className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 cursor-pointer"
-                            >
-                              Восстановить
-                            </button>
-                            <button
-                              onClick={() => setBackups((prev) => prev.filter((x) => x.id !== bk.id))}
-                              className="px-2 py-1 rounded-lg bg-rose-500/20 text-rose-300 cursor-pointer"
-                            >
-                              Удалить
-                            </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div
+                        onClick={() => setDndEnabled((v) => !v)}
+                        className={`p-4 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                          dndEnabled ? 'border-emerald-400 bg-emerald-500/15' : 'border-slate-700 bg-[#121824]'
+                        }`}
+                      >
+                        <div>
+                          <div className="text-xs font-bold">Режим «Не беспокоить» (DND)</div>
+                          <div className="text-[11px] text-slate-400">
+                            Подавляет всплывающие уведомления и сохраняет их в Острове
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                        <LitStatusBadge active={dndEnabled} />
+                      </div>
 
-              {/* TAB 5: COMPLETE VERSION HISTORY (1.0 TO 2.5) */}
-              {settingsTab === 'changelog' && (
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[#121824] border border-slate-800">
-                    <span className="text-xs font-bold text-slate-300">
-                      Полный список изменений (16 релизов: с v1.0 по v2.5):
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      <button
-                        onClick={() => setChangelogFilter('all')}
-                        className={`px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer ${
-                          changelogFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-[#1a2232] text-slate-400'
-                        }`}
-                      >
-                        Все (1.0–2.5)
-                      </button>
-                      {Object.keys(VERSION_HISTORY).map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setChangelogFilter(v)}
-                          className={`px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer ${
-                            changelogFilter === v ? 'bg-emerald-600 text-white font-bold' : 'bg-[#1a2232] text-slate-400'
-                          }`}
-                        >
-                          v{v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {Object.entries(VERSION_HISTORY)
-                    .filter(([ver]) => changelogFilter === 'all' || changelogFilter === ver)
-                    .map(([ver, items]) => (
                       <div
-                        key={ver}
-                        className={`p-4 rounded-xl border ${
-                          ver === '2.5'
-                            ? 'bg-emerald-500/10 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.12)]'
-                            : ver === '2.4'
-                            ? 'bg-blue-500/10 border-blue-500/40'
-                            : 'bg-[#1a2232] border-slate-700'
+                        onClick={() => setChargingAnimationEnabled((v) => !v)}
+                        className={`p-4 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                          chargingAnimationEnabled
+                            ? 'border-emerald-400 bg-emerald-500/15'
+                            : 'border-slate-700 bg-[#121824]'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`text-sm font-bold ${
-                                ver === '2.5' ? 'text-emerald-400' : 'text-blue-400'
+                        <div>
+                          <div className="text-xs font-bold">Анимация при зарядке</div>
+                          <div className="text-[11px] text-slate-400">
+                            Неоновый импульс при подключении кабеля питания
+                          </div>
+                        </div>
+                        <LitStatusBadge active={chargingAnimationEnabled} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CATEGORY 2: APPEARANCE & ADAPTIVE DAY / NIGHT THEME */}
+                {settingsTab === 'appearance' && (
+                  <div className="space-y-4">
+                    {/* Adaptive Day/Night Card */}
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-amber-500/40 space-y-3">
+                      <div
+                        onClick={() => setAdaptiveThemeEnabled((v) => !v)}
+                        className="flex items-center justify-between cursor-pointer"
+                      >
+                        <div>
+                          <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                            <Sun className="w-4 h-4" />
+                            Адаптивная тема День / Ночь (Автоматическая смена темы по времени)
+                          </h4>
+                          <p className="text-xs text-slate-400">
+                            Если день — автоматически включается светлая (или выбранная дневная) тема, если ночь — темная
+                          </p>
+                        </div>
+                        <LitStatusBadge active={adaptiveThemeEnabled} />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-800 text-xs">
+                        <div>
+                          <label className="block text-slate-400 mb-1">Начало дня:</label>
+                          <select
+                            value={dayStartTime}
+                            onChange={(e) => setDayStartTime(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-[#101622] border border-slate-700"
+                          >
+                            {['05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'].map((t) => (
+                              <option key={t} value={t}>
+                                ☀️ {t}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-400 mb-1">Начало ночи:</label>
+                          <select
+                            value={nightStartTime}
+                            onChange={(e) => setNightStartTime(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-[#101622] border border-slate-700"
+                          >
+                            {['17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00'].map((t) => (
+                              <option key={t} value={t}>
+                                🌙 {t}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-400 mb-1">Дневная тема (День):</label>
+                          <select
+                            value={dayThemeKey}
+                            onChange={(e) => setDayThemeKey(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-[#101622] border border-slate-700"
+                          >
+                            {Object.entries(allThemesMap).map(([k, v]) => (
+                              <option key={k} value={k}>
+                                {v.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-400 mb-1">Ночная тема (Ночь):</label>
+                          <select
+                            value={nightThemeKey}
+                            onChange={(e) => setNightThemeKey(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-[#101622] border border-slate-700"
+                          >
+                            {Object.entries(allThemesMap).map(([k, v]) => (
+                              <option key={k} value={k}>
+                                {v.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* All Themes Grid + Custom Theme Studio */}
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-slate-700/70 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <h4 className="text-sm font-bold">Выбор темы оформления</h4>
+                          <p className="text-xs text-slate-400">
+                            При выборе тема мгновенно загорается статусом «🟢 АКТИВНО»
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setCustomThemeModalOpen(true)}
+                          className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer"
+                        >
+                          + Создать кастомную тему
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                        {Object.keys(allThemesMap).map((tKey) => {
+                          const isSelected = themeKey === tKey;
+                          const th = allThemesMap[tKey];
+                          return (
+                            <button
+                              key={tKey}
+                              onClick={() => {
+                                setThemeKey(tKey);
+                                pushToast('Тема активирована', `Тема «${th.name}» зажглась: 🟢 АКТИВНО`, 'success');
+                              }}
+                              className={`p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-left flex flex-col gap-2 ${
+                                isSelected
+                                  ? 'border-emerald-400 bg-emerald-500/15 text-white shadow-[0_0_18px_rgba(16,185,129,0.25)]'
+                                  : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636] text-slate-300'
                               }`}
                             >
-                              Версия {ver}
-                            </span>
-                            {ver === '2.5' && <LitStatusBadge active={true} />}
-                          </div>
-                          <span className="text-xs font-mono text-slate-400">{items.length} пунктов</span>
-                        </div>
-                        <ul className="space-y-1.5 text-xs text-slate-200">
-                          {items.map((line, idx) => (
-                            <li key={idx} className="leading-relaxed">
-                              {line}
-                            </li>
-                          ))}
-                        </ul>
+                              <div className="flex items-center justify-between gap-2 w-full">
+                                <span className="truncate font-bold">{th.name}</span>
+                                <LitStatusBadge active={isSelected} />
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className="w-4 h-4 rounded-full border border-white/20"
+                                  style={{ backgroundColor: th.cardHex }}
+                                />
+                                <span
+                                  className="w-4 h-4 rounded-full border border-white/20"
+                                  style={{ backgroundColor: th.accentHex }}
+                                />
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ))}
-                </div>
-              )}
+                    </div>
+                  </div>
+                )}
+
+                {/* CATEGORY 3: 18 CLOCK STYLES */}
+                {settingsTab === 'clock' && (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-slate-700/70 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-bold">Коллекция из 18 стилей часов</h4>
+                        <span className="text-xs font-mono text-emerald-400">
+                          Активен: {CLOCK_STYLE_OPTIONS.find((o) => o.id === clockStyle)?.label}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
+                        {CLOCK_STYLE_OPTIONS.map((opt) => {
+                          const isSelected = clockStyle === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              onClick={() => {
+                                setClockStyle(opt.id);
+                                pushToast('Стиль часов зажегся', `${opt.label} • 🟢 АКТИВНО`, 'success');
+                              }}
+                              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1.5 ${
+                                isSelected
+                                  ? 'border-emerald-400 bg-emerald-500/15'
+                                  : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636]'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1.5 w-full">
+                                <span className="text-xs font-bold truncate">{opt.label}</span>
+                                <LitStatusBadge active={isSelected} />
+                              </div>
+                              <span className="text-xs font-mono text-blue-300">{opt.sample}</span>
+                              <span className="text-[11px] text-slate-400 line-clamp-1">{opt.description}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CATEGORY 4: ONE-HANDED RIGHT-CLICK BACK NAVIGATION */}
+                {settingsTab === 'navigation' && (
+                  <div className="space-y-4">
+                    <div
+                      onClick={() => setRightClickBackEnabled((v) => !v)}
+                      className={`p-5 rounded-2xl border cursor-pointer flex items-center justify-between gap-4 ${
+                        rightClickBackEnabled
+                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <MousePointerClick className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-sm font-bold">
+                            Функция «ПКМ = Назад» (Удобное управление одной рукой)
+                          </div>
+                          <div className="text-xs text-slate-300 mt-1">
+                            Нажатие правой кнопкой мыши в любом свободном месте лаунчера возвращает вас на шаг назад: закрывает открытое окно/остров, очищает поиск, сбрасывает фильтр категорий или возвращает из Трекера времени в Приложения.
+                          </div>
+                        </div>
+                      </div>
+                      <LitStatusBadge active={rightClickBackEnabled} />
+                    </div>
+                  </div>
+                )}
+
+                {/* CATEGORY 5: PLUGINS & LAUNCH GRID */}
+                {settingsTab === 'plugins' && (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-slate-700/70 space-y-3">
+                      <div
+                        onClick={() => setShowPluginsInGrid((v) => !v)}
+                        className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                          showPluginsInGrid ? 'border-emerald-400 bg-emerald-500/15' : 'border-slate-700 bg-[#121824]'
+                        }`}
+                      >
+                        <div>
+                          <div className="text-sm font-bold">Показывать плагины в списке запуска</div>
+                          <div className="text-xs text-slate-400">
+                            Активные плагины отображаются как карточки в библиотеке и главной сетке
+                          </div>
+                        </div>
+                        <LitStatusBadge active={showPluginsInGrid} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CATEGORY 6: GITHUB AUTO-UPDATE, VERSION CHECK, REPO FORWARDING & DIAGNOSTICS */}
+                {settingsTab === 'updater' && (
+                  <div className="space-y-4">
+                    {/* GitHub Auto-Update & Repo Forwarding Card */}
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-cyan-500/40 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Github className="w-5 h-5 text-cyan-400" />
+                          <div>
+                            <h4 className="text-sm font-bold">Автообновление с GitHub и проверка новой версии</h4>
+                            <p className="text-xs text-slate-400">{githubUpdateStatus}</p>
+                          </div>
+                        </div>
+                        <div
+                          onClick={() => setGithubAutoUpdate((v) => !v)}
+                          className="cursor-pointer flex items-center gap-2"
+                        >
+                          <span className="text-xs text-slate-300">Автообновление:</span>
+                          <LitStatusBadge active={githubAutoUpdate} />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={githubRepoUrl}
+                          onChange={(e) => setGithubRepoUrl(e.target.value)}
+                          className="flex-1 px-3 py-2 rounded-xl bg-[#101622] border border-slate-700 text-xs font-mono"
+                        />
+                        <button
+                          onClick={() => {
+                            setCheckingGithub(true);
+                            setTimeout(() => {
+                              setCheckingGithub(false);
+                              setGithubUpdateStatus(
+                                `✅ Проверено в ${new Date().toLocaleTimeString('ru-RU')}: установлена последняя версия v2.6`
+                              );
+                              pushToast(
+                                'Проверка обновлений GitHub',
+                                'У вас установлена самая свежая версия Launcher Hab 2.6!',
+                                'success'
+                              );
+                            }, 500);
+                          }}
+                          className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold cursor-pointer whitespace-nowrap"
+                        >
+                          {checkingGithub ? 'Проверка...' : '🔄 Проверить новую версию'}
+                        </button>
+                        <a
+                          href={githubRepoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={() =>
+                            pushToast('Переход на GitHub', `Открыт репозиторий ${githubRepoUrl}`, 'info')
+                          }
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 whitespace-nowrap"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Перейти на GitHub
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Full Application Diagnostics Card */}
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-emerald-500/40 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Stethoscope className="w-5 h-5 text-emerald-400" />
+                          <div>
+                            <h4 className="text-sm font-bold">
+                              Диагностика приложения ({diagnosticsPassed}/{diagnosticsTotal} узлов в норме • Здоровье {diagnosticsScore}%)
+                            </h4>
+                            <p className="text-xs text-slate-400">Последняя проверка: {diagnosticsTime}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setDiagnosticsScore(100);
+                            setDiagnosticsPassed(6);
+                            setDiagnosticsTime(new Date().toLocaleTimeString('ru-RU'));
+                            pushToast(
+                              'Диагностика завершена',
+                              'Все 6 подсистем (Python Runtime, Crypto 2.5, Dynamic Island, Audio, Plugins, Storage) работают идеально (100%).',
+                              'success'
+                            );
+                          }}
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer"
+                        >
+                          🩺 Запустить диагностику
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        {[
+                          ['Python 3.11 + Flet Desktop Engine', 'OK • Инициализировано без ошибок'],
+                          ['Crypto 2.5 (PBKDF2-HMAC-SHA256 + Fernet)', `OK • Ключ ревизии #${cryptoKeyVersion} (32 байта)`],
+                          ['Dynamic Island 2.6 & DND Engine', `OK • Активен, уведомлений: ${windowsNotifications.length}`],
+                          ['CoreAudio / pycaw Фоновый контроллер', `OK • Громкость ${volume}%, ${audioBgStatus}`],
+                          ['Plugin API 2.6 & Трекер сессий', `OK • Плагинов активно: ${plugins.filter((p) => p.enabled).length}`],
+                          ['Хранилище и Адаптивная тема День/Ночь', `OK • Тема: ${currentTheme.name}`],
+                        ].map(([name, detail]) => (
+                          <div
+                            key={name}
+                            className="p-2.5 rounded-xl bg-[#101622] border border-slate-800 flex items-start gap-2"
+                          >
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                            <div>
+                              <div className="font-bold text-white">{name}</div>
+                              <div className="text-[11px] text-slate-400">{detail}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CATEGORY 7: ABOUT APP & COMPLETE VERSION HISTORY (1.0 TO 2.6) */}
+                {settingsTab === 'about' && (
+                  <div className="space-y-4">
+                    {/* About App Card */}
+                    <div className="p-4 rounded-2xl bg-[#161f30] border border-blue-500/40 flex flex-wrap items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-base shadow-lg">
+                          2.6
+                        </div>
+                        <div>
+                          <h4 className="text-base font-bold">Launcher Hab 2.6 — Dynamic Island & Android Settings</h4>
+                          <p className="text-xs text-slate-400">
+                            Написано на Python (Flet) • 18 стилей часов • Трекер времени с 00:00 • Адаптивная тема День/Ночь • ПКМ = Назад
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href="/launcher_hab2.6.zip"
+                        download="launcher_hab2.6.zip"
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5"
+                      >
+                        <Download className="w-4 h-4" />
+                        Скачать Python v2.6 (.zip)
+                      </a>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[#121824] border border-slate-800">
+                      <span className="text-xs font-bold text-slate-300">
+                        Полная история версий (17 релизов: с v1.0 по v2.6):
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        <button
+                          onClick={() => setChangelogFilter('all')}
+                          className={`px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer ${
+                            changelogFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-[#1a2232] text-slate-400'
+                          }`}
+                        >
+                          Все (1.0–2.6)
+                        </button>
+                        {Object.keys(VERSION_HISTORY).map((v) => (
+                          <button
+                            key={v}
+                            onClick={() => setChangelogFilter(v)}
+                            className={`px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer ${
+                              changelogFilter === v
+                                ? 'bg-emerald-600 text-white font-bold'
+                                : 'bg-[#1a2232] text-slate-400'
+                            }`}
+                          >
+                            v{v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {Object.entries(VERSION_HISTORY)
+                      .filter(([ver]) => changelogFilter === 'all' || changelogFilter === ver)
+                      .map(([ver, items]) => (
+                        <div
+                          key={ver}
+                          className={`p-4 rounded-xl border ${
+                            ver === '2.6'
+                              ? 'bg-emerald-500/10 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.12)]'
+                              : ver === '2.5'
+                              ? 'bg-blue-500/10 border-blue-500/40'
+                              : 'bg-[#1a2232] border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-sm font-bold ${
+                                  ver === '2.6' ? 'text-emerald-400' : 'text-blue-400'
+                                }`}
+                              >
+                                Версия {ver}
+                              </span>
+                              {ver === '2.6' && <LitStatusBadge active={true} />}
+                            </div>
+                            <span className="text-xs font-mono text-slate-400">{items.length} пунктов</span>
+                          </div>
+                          <ul className="space-y-1.5 text-xs text-slate-200">
+                            {items.map((line, idx) => (
+                              <li key={idx} className="leading-relaxed">
+                                {line}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -8,8 +8,22 @@ from .ui_dialogs_workspace import WorkspaceDialogMixin
 
 
 class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
-    # Полная история всех версий от 1.0 до 2.5
+    # Полная история всех версий от 1.0 до 2.6
     VERSION_HISTORY_1_0_TO_2_5 = {
+        "2.6": [
+            "🚀 LAUNCHER HAB 2.6 — DYNAMIC ISLAND, НАСТРОЙКИ В СТИЛЕ ANDROID, АДАПТИВНАЯ ТЕМА ДЕНЬ/НОЧЬ, АВТООБНОВЛЕНИЕ С GITHUB И ПКМ «НАЗАД»",
+            "🏝️ ВСЕГДА АКТИВНЫЙ DYNAMIC ISLAND — интерактивный остров в верхней панели с постоянным отображением статуса, времени, даты и процентов заряда устройства",
+            "🔔 ПРОСМОТР УВЕДОМЛЕНИЙ ОТ WINDOWS В ОСТРОВЕ — перехват и журнал системных и прикладных уведомлений Windows с очисткой и фильтрацией",
+            "🎵 СМЕНА ПРОИГРЫВАТЕЛЯ В DYNAMIC ISLAND — переключение между Windows Media (SMTC), Яндекс Музыкой, Spotify, VK Музыкой и Telegram Audio + управление треками",
+            "⏱️ ВСТРОЕННЫЙ ТАЙМЕР И СЕКУНДОМЕР В ОСТРОВЕ — обратный отсчет с пресетами (1/5/15/25 мин) и секундомер с записью кругов (Laps) и выводом прямо на капсулу",
+            "⚡ АНИМАЦИЯ ЗАРЯДКИ УСТРОЙСТВА — неоновая изумрудная волна и пульсация молнии в Dynamic Island при подключении питания и отображение процентов батареи",
+            "🌙 ПОЛНОСТЬЮ РАБОЧИЙ РЕЖИМ «НЕ БЕСПОКОИТЬ» (DND) — блокирует всплывающие баннеры и звуки, тихо сохраняя все уведомления внутри Dynamic Island",
+            "📱 ПОЛНОСТЬЮ ПЕРЕРИСОВАННЫЕ НАСТРОЙКИ В СТИЛЕ ANDROID 15 — боковое меню с цветными иконками, плитки быстрых настроек (Quick Settings Tiles) и скругленные карточки",
+            "🌗 АДАПТИВНАЯ ТЕМА «ДЕНЬ / НОЧЬ» ПО РАСПИСАНИЮ — автоматическая смена темы (днем — светлая/белая, ночью — темная) с выбором точного времени смены и конкретных тем",
+            "🔄 АВТООБНОВЛЕНИЕ И ПРОВЕРКА НОВОЙ ВЕРСИИ С GITHUB — проверка релизов через GitHub API, переход на репозиторий GitHub в 1 клик и автопроверка при запуске",
+            "🩺 ДИАГНОСТИКА ПРИЛОЖЕНИЯ И РАЗДЕЛ «О ПРИЛОЖЕНИИ» — комплексная проверка файловой системы, шифрования PBKDF2, плагинов, ресурсов ОС и экспорт отчета",
+            "🖱️ ФУНКЦИЯ «НАЗАД» НА ПКМ (ПРАВУЮ КНОПКУ МЫШИ) — удобная навигация одной рукой: клик ПКМ возвращает на предыдущий экран, сбрасывает фильтр или закрывает поиск",
+        ],
         "2.5": [
             "🚀 LAUNCHER HAB 2.5 — МЕГА-ПЕРСОНАЛИЗАЦИЯ, 18 СТИЛЕЙ ЧАСОВ, КАСТОМНЫЕ ТЕМЫ PRO, API 2.5 И PBKDF2 ШИФРОВАНИЕ",
             "💡 МГНОВЕННАЯ ПОДСВЕТКА АКТИВНЫХ НАСТРОЕК («ЗАЖИГАНИЕ» СТАТУСА) — при выборе любого стиля, переключателя или пресета элемент мгновенно загорается неоновой рамкой и меняет статус с «⚪ Неактивно» на «🟢 АКТИВНО»",
@@ -370,22 +384,46 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             title=ft.Container(
                 content=ft.Row(
                     [
-                        ft.Icon("tune", color=colors["ACCENT"], size=24),
-                        ft.Text("Настройки Launcher Hab 2.5", size=20, weight=ft.FontWeight.BOLD),
                         ft.Container(
-                            content=ft.Text("🟢 Live Sync 2.5", size=11, color=colors["SUCCESS"], weight=ft.FontWeight.BOLD),
-                            bgcolor=self._alpha(colors["SUCCESS"], 0.16),
-                            padding=ft.padding.symmetric(horizontal=10, vertical=4),
-                            border_radius=8,
+                            width=38,
+                            height=38,
+                            bgcolor=self._alpha(colors["ACCENT"], 0.2),
+                            border_radius=19,
+                            alignment=ft.alignment.center,
+                            content=ft.Icon("android", color=colors["ACCENT"], size=22),
                         ),
-                    ]
+                        ft.Column(
+                            [
+                                ft.Text("Настройки системы • Android UI 2.6", size=19, weight=ft.FontWeight.BOLD),
+                                ft.Text(
+                                    "Dynamic Island • Авто День/Ночь • GitHub Updater • ПКМ Назад",
+                                    size=11,
+                                    color=colors["ON_SURFACE_VARIANT"],
+                                ),
+                            ],
+                            spacing=1,
+                            expand=True,
+                        ),
+                        ft.Container(
+                            content=ft.Text(
+                                "🟢 Android 15 Style",
+                                size=11,
+                                color=colors["SUCCESS"],
+                                weight=ft.FontWeight.BOLD,
+                            ),
+                            bgcolor=self._alpha(colors["SUCCESS"], 0.16),
+                            padding=ft.padding.symmetric(horizontal=12, vertical=5),
+                            border_radius=12,
+                        ),
+                    ],
+                    spacing=10,
                 ),
-                padding=ft.padding.only(bottom=6),
+                padding=ft.padding.only(bottom=4),
             ),
             content=ft.Container(
                 content=settings_content,
-                width=820,
-                height=650,
+                width=940,
+                height=660,
             ),
             actions=[
                 ft.TextButton(
@@ -395,41 +433,789 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 ),
                 ft.FilledButton("Готово (сохранено)", on_click=lambda e: self.core.page.close(settings_dialog)),
             ],
+            shape=ft.RoundedRectangleBorder(radius=24),
         )
         self.core.page.open(settings_dialog)
 
     def create_modern_settings(self, colors):
-        return ft.Tabs(
-            selected_index=0,
-            animation_duration=260,
-            tabs=[
-                ft.Tab(
-                    text="Персонализация и Часы (18)",
-                    icon=ft.Icon("palette"),
-                    content=self.create_appearance_settings(colors),
+        """
+        Полностью перерисованные Настройки в стиле Android 15 (OneUI / Pixel Settings):
+        - Верхняя шторка быстрых плиток (Android Quick Settings Tiles)
+        - Левое меню категорий с круглыми цветными иконками в стиле Android
+        - Скругленные карточки настроек справа с мгновенным «зажиганием» статуса
+        """
+        state = {"active_cat": "island"}
+        right_panel = ft.Container(expand=True)
+        nav_col = ft.Column(spacing=6, scroll=ft.ScrollMode.ADAPTIVE)
+        quick_tiles_row = ft.Row(spacing=8, wrap=True)
+
+        categories = [
+            ("island", "blur_circular", "#10b981", "Dynamic Island", "Уведомления, плеер, таймер, DND"),
+            ("display", "dark_mode", "#3b82f6", "Экран и День / Ночь", "Адаптивная тема, стекло, палитры"),
+            ("clock", "schedule", "#a855f7", "Часы и Циферблаты", "18 стилей часов, неон и форматы"),
+            ("navigation", "touch_app", "#f59e0b", "Удобство и ПКМ Назад", "Управление одной рукой, сетка"),
+            ("plugins", "extension", "#ec4899", "Плагины и API 2.6", "Расширения и трекер времени"),
+            ("update_diag", "system_update", "#06b6d4", "Обновление и Диагностика", "GitHub релизы, чек-ап системы"),
+            ("about", "info", "#6366f1", "О приложении и Версии", "Сборка 2.6 и история 1.0 – 2.6"),
+        ]
+
+        def rebuild_quick_tiles():
+            quick_tiles_row.controls.clear()
+            tm = self.core.theme_manager
+            island = getattr(self.core, "dynamic_island", None)
+            dnd_on = island.dnd_enabled if island else False
+
+            tiles_data = [
+                (
+                    "Не беспокоить",
+                    "do_not_disturb_on" if dnd_on else "notifications_none",
+                    dnd_on,
+                    "#a855f7",
+                    lambda e: (
+                        island.toggle_dnd() if island else None,
+                        rebuild_quick_tiles(),
+                        quick_tiles_row.update(),
+                    ),
                 ),
-                ft.Tab(
-                    text="Приложения и Трекер",
-                    icon=ft.Icon("apps"),
-                    content=self.create_apps_settings(colors),
+                (
+                    "Авто День/Ночь",
+                    "brightness_auto",
+                    getattr(tm, "adaptive_theme_enabled", False),
+                    "#f59e0b",
+                    lambda e: (
+                        tm.set_adaptive_theme_preferences(enabled=not getattr(tm, "adaptive_theme_enabled", False)),
+                        self.core.check_and_apply_adaptive_theme(force_notify=True),
+                        rebuild_quick_tiles(),
+                        quick_tiles_row.update(),
+                    ),
                 ),
-                ft.Tab(
-                    text="Плагины и API 2.5",
-                    icon=ft.Icon("extension"),
-                    content=self.create_plugins_settings(colors),
+                (
+                    "ПКМ = Назад",
+                    "mouse",
+                    getattr(tm, "right_click_back_enabled", True),
+                    "#10b981",
+                    lambda e: (
+                        setattr(tm, "right_click_back_enabled", not getattr(tm, "right_click_back_enabled", True)),
+                        tm.save_settings(),
+                        self.core.show_toast(
+                            "🟢 ПКМ «Назад» включено"
+                            if tm.right_click_back_enabled
+                            else "⚪ ПКМ «Назад» выключено"
+                        ),
+                        rebuild_quick_tiles(),
+                        quick_tiles_row.update(),
+                    ),
                 ),
-                ft.Tab(
-                    text="Система и Шифрование",
-                    icon=ft.Icon("security"),
-                    content=self.create_system_settings_tab(colors),
+                (
+                    "Жидкое стекло",
+                    "blur_on",
+                    tm.glass_effect_enabled,
+                    "#3b82f6",
+                    lambda e: (
+                        self.core.toggle_glass_effect(),
+                        rebuild_quick_tiles(),
+                        quick_tiles_row.update(),
+                    ),
                 ),
-                ft.Tab(
-                    text="История версий (1.0–2.5)",
-                    icon=ft.Icon("history_edu"),
-                    content=self.create_version_history(colors),
+                (
+                    "Открыть Остров",
+                    "open_in_new",
+                    True,
+                    "#06b6d4",
+                    lambda e: island.show_island_modal() if island else None,
+                ),
+            ]
+
+            for t_title, t_icon, is_on, t_color, t_click in tiles_data:
+                quick_tiles_row.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                ft.Container(
+                                    width=30,
+                                    height=30,
+                                    bgcolor=t_color if is_on else self._alpha(colors["SURFACE"], 0.6),
+                                    border_radius=15,
+                                    alignment=ft.alignment.center,
+                                    content=ft.Icon(t_icon, size=16, color="#ffffff" if is_on else colors["ON_SURFACE_VARIANT"]),
+                                ),
+                                ft.Column(
+                                    [
+                                        ft.Text(t_title, size=11, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
+                                        ft.Text(
+                                            "🟢 Активно" if is_on else "⚪ Выкл",
+                                            size=10,
+                                            color=t_color if is_on else colors["ON_SURFACE_VARIANT"],
+                                            weight=ft.FontWeight.W_600,
+                                        ),
+                                    ],
+                                    spacing=0,
+                                ),
+                            ],
+                            spacing=8,
+                            tight=True,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=12, vertical=8),
+                        bgcolor=self._alpha(t_color, 0.18) if is_on else colors["SETTINGS_CARD"],
+                        border=ft.border.all(1.5 if is_on else 1, t_color if is_on else colors["OUTLINE"]),
+                        border_radius=18,
+                        on_click=t_click,
+                    )
+                )
+
+        def switch_cat(cat_id: str):
+            state["active_cat"] = cat_id
+            rebuild_nav()
+            rebuild_right()
+            try:
+                nav_col.update()
+                right_panel.update()
+            except Exception:
+                pass
+
+        def rebuild_nav():
+            nav_col.controls.clear()
+            for c_id, c_icon, c_color, c_title, c_sub in categories:
+                is_sel = state["active_cat"] == c_id
+                nav_col.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                ft.Container(
+                                    width=38,
+                                    height=38,
+                                    bgcolor=c_color if is_sel else self._alpha(c_color, 0.18),
+                                    border_radius=19,
+                                    alignment=ft.alignment.center,
+                                    content=ft.Icon(c_icon, size=19, color="#ffffff" if is_sel else c_color),
+                                ),
+                                ft.Column(
+                                    [
+                                        ft.Text(
+                                            c_title,
+                                            size=13,
+                                            weight=ft.FontWeight.BOLD if is_sel else ft.FontWeight.W_600,
+                                            color=colors["ON_SURFACE"],
+                                        ),
+                                        ft.Text(
+                                            c_sub,
+                                            size=10,
+                                            color=colors["ON_SURFACE_VARIANT"],
+                                            max_lines=1,
+                                            overflow=ft.TextOverflow.ELLIPSIS,
+                                        ),
+                                    ],
+                                    spacing=1,
+                                    expand=True,
+                                ),
+                                ft.Icon(
+                                    "chevron_right",
+                                    size=16,
+                                    color=c_color if is_sel else colors["ON_SURFACE_VARIANT"],
+                                ),
+                            ],
+                            spacing=10,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=12, vertical=10),
+                        bgcolor=self._alpha(c_color, 0.18) if is_sel else colors["SETTINGS_CARD"],
+                        border=ft.border.all(2 if is_sel else 1, c_color if is_sel else colors["OUTLINE"]),
+                        border_radius=18,
+                        on_click=lambda e, cid=c_id: switch_cat(cid),
+                    )
+                )
+
+        def rebuild_right():
+            cid = state["active_cat"]
+            if cid == "island":
+                right_panel.content = self.create_android_island_settings(colors)
+            elif cid == "display":
+                right_panel.content = self.create_appearance_settings(colors)
+            elif cid == "clock":
+                right_panel.content = ft.Container(
+                    content=ft.Column(
+                        [
+                            self.create_settings_section(
+                                "🕒 18 Стилей Часов и Расширенный Дизайн (v2.6)",
+                                "Вертикальные часы Android 14 + 10 дизайнерских стилей, неон, рамка и прозрачность",
+                                self.create_customization_settings(colors),
+                                colors,
+                            )
+                        ],
+                        scroll=ft.ScrollMode.ADAPTIVE,
+                    ),
+                    padding=8,
+                )
+            elif cid == "navigation":
+                right_panel.content = self.create_android_navigation_and_apps_settings(colors)
+            elif cid == "plugins":
+                right_panel.content = self.create_plugins_settings(colors)
+            elif cid == "update_diag":
+                right_panel.content = self.create_github_and_diagnostics_settings(colors)
+            else:
+                right_panel.content = self.create_about_and_history_settings(colors)
+
+        rebuild_quick_tiles()
+        rebuild_nav()
+        rebuild_right()
+
+        return ft.Column(
+            [
+                # Верхняя шторка быстрых переключателей в стиле Android Quick Settings
+                ft.Container(
+                    bgcolor=self._alpha(colors["SURFACE_VARIANT"], 0.45),
+                    border=ft.border.all(1, colors["OUTLINE"]),
+                    border_radius=20,
+                    padding=10,
+                    content=quick_tiles_row,
+                ),
+                # Двухпанельный макет Android Settings (Слева меню категорий, Справа контент)
+                ft.Row(
+                    [
+                        ft.Container(
+                            width=275,
+                            content=nav_col,
+                            padding=ft.padding.only(right=6),
+                        ),
+                        ft.VerticalDivider(width=1, color=colors["OUTLINE"]),
+                        right_panel,
+                    ],
+                    expand=True,
+                    spacing=10,
                 ),
             ],
-            expand=1,
+            spacing=10,
+            expand=True,
+        )
+
+    def create_android_island_settings(self, colors):
+        """Раздел настроек Dynamic Island 2.6 в стиле Android."""
+        island = getattr(self.core, "dynamic_island", None)
+        return ft.Container(
+            content=ft.Column(
+                [
+                    self.create_settings_section(
+                        "🏝️ Dynamic Island 2.6 (Всегда активный остров)",
+                        "Управление уведомлениями Windows, плеером, таймером, секундомером, анимацией зарядки и режимом «Не беспокоить»",
+                        ft.Column(
+                            [
+                                ft.Row(
+                                    [
+                                        ft.FilledButton(
+                                            "Открыть центр Dynamic Island",
+                                            icon="blur_circular",
+                                            on_click=lambda e: island.show_island_modal("overview") if island else None,
+                                        ),
+                                        ft.FilledTonalButton(
+                                            "Таймер Острова",
+                                            icon="hourglass_bottom",
+                                            on_click=lambda e: island.show_island_modal("timer") if island else None,
+                                        ),
+                                        ft.FilledTonalButton(
+                                            "Секундомер",
+                                            icon="timer",
+                                            on_click=lambda e: island.show_island_modal("stopwatch") if island else None,
+                                        ),
+                                        ft.OutlinedButton(
+                                            "Уведомления Windows",
+                                            icon="notifications_active",
+                                            on_click=lambda e: island.show_island_modal("notifications") if island else None,
+                                        ),
+                                    ],
+                                    spacing=8,
+                                    wrap=True,
+                                ),
+                                self._create_lit_switch_row(
+                                    "Режим «Не беспокоить» (DND — полностью рабочий)",
+                                    "Подавляет все всплывающие окна и звуки, сохраняя уведомления внутри Dynamic Island",
+                                    island.dnd_enabled if island else False,
+                                    lambda val: (
+                                        island.toggle_dnd(val) if island else None,
+                                        self.core.show_toast(
+                                            "🌙 Режим «Не беспокоить» ВКЛЮЧЕН" if val else "🔔 Режим «Не беспокоить» ВЫКЛЮЧЕН",
+                                            force_show=True,
+                                        ),
+                                    ),
+                                    colors,
+                                ),
+                                self._create_lit_switch_row(
+                                    "Анимация зарядки устройства в Dynamic Island",
+                                    "Показывать неоновую изумрудную волну и пульс молнии при зарядке",
+                                    island.show_charging_anim if island else True,
+                                    lambda val: (
+                                        setattr(island, "show_charging_anim", val) if island else None,
+                                        setattr(self.core.theme_manager, "island_charging_anim", val),
+                                        self.core.theme_manager.save_settings(),
+                                        island.update_capsule() if island else None,
+                                    ),
+                                    colors,
+                                ),
+                                self._create_lit_switch_row(
+                                    "Индикация зарядки на стационарном ПК",
+                                    "Отображать анимацию питания и проценты устройства на ПК без аккумулятора",
+                                    island.simulate_charging if island else True,
+                                    lambda val: (
+                                        setattr(island, "simulate_charging", val) if island else None,
+                                        setattr(self.core.theme_manager, "island_simulate_charging", val),
+                                        self.core.theme_manager.save_settings(),
+                                        island.update_capsule() if island else None,
+                                    ),
+                                    colors,
+                                ),
+                                self._create_lit_switch_row(
+                                    "Неоновая подсветка капсулы Острова",
+                                    "Динамический ореол вокруг острова под цвет текущего действия (зарядка, плеер, таймер)",
+                                    island.island_glow if island else True,
+                                    lambda val: (
+                                        setattr(island, "island_glow", val) if island else None,
+                                        setattr(self.core.theme_manager, "island_glow_enabled", val),
+                                        self.core.theme_manager.save_settings(),
+                                        self.core.update_header(),
+                                    ),
+                                    colors,
+                                ),
+                            ],
+                            spacing=10,
+                        ),
+                        colors,
+                    ),
+                ],
+                scroll=ft.ScrollMode.ADAPTIVE,
+            ),
+            padding=8,
+        )
+
+    def create_adaptive_day_night_settings(self, colors):
+        """
+        Настройка адаптивной темы «День / Ночь» (v2.6):
+        Если день — светлая/белая, если ночь — темная, с выбором времени смены и какие именно темы меняются.
+        """
+        tm = self.core.theme_manager
+        available_themes = tm.get_available_themes()
+        theme_options = [
+            ft.dropdown.Option(k, f"{v.get('NAME', k)} ({k})") for k, v in available_themes.items()
+        ]
+
+        day_hours = [f"{h:02d}:00" for h in range(5, 13)]
+        night_hours = [f"{h:02d}:00" for h in range(17, 24)] + ["00:00"]
+
+        day_time_dd = ft.Dropdown(
+            label="Время начала Дня",
+            value=tm.day_start_time if tm.day_start_time in day_hours else "07:00",
+            options=[ft.dropdown.Option(t, f"☀️ С {t}") for t in day_hours],
+            width=190,
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_radius=12,
+            on_change=lambda e: (
+                tm.set_adaptive_theme_preferences(day_start_time=e.control.value),
+                self.core.check_and_apply_adaptive_theme(force_notify=True),
+            ),
+        )
+
+        night_time_dd = ft.Dropdown(
+            label="Время начала Ночи",
+            value=tm.night_start_time if tm.night_start_time in night_hours else "20:00",
+            options=[ft.dropdown.Option(t, f"🌙 С {t}") for t in night_hours],
+            width=190,
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_radius=12,
+            on_change=lambda e: (
+                tm.set_adaptive_theme_preferences(night_start_time=e.control.value),
+                self.core.check_and_apply_adaptive_theme(force_notify=True),
+            ),
+        )
+
+        day_theme_dd = ft.Dropdown(
+            label="Дневная тема (Белая / Светлая)",
+            value=tm.day_theme_name if tm.day_theme_name in available_themes else "light",
+            options=theme_options,
+            width=260,
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_radius=12,
+            on_change=lambda e: (
+                tm.set_adaptive_theme_preferences(day_theme_name=e.control.value),
+                self.core.check_and_apply_adaptive_theme(force_notify=True),
+            ),
+        )
+
+        night_theme_dd = ft.Dropdown(
+            label="Ночная тема (Темная / AMOLED)",
+            value=tm.night_theme_name if tm.night_theme_name in available_themes else "dark",
+            options=theme_options,
+            width=260,
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_radius=12,
+            on_change=lambda e: (
+                tm.set_adaptive_theme_preferences(night_theme_name=e.control.value),
+                self.core.check_and_apply_adaptive_theme(force_notify=True),
+            ),
+        )
+
+        return ft.Column(
+            [
+                self._create_lit_switch_row(
+                    "Адаптивная авто-смена темы «День / Ночь»",
+                    "Автоматически включает светлую тему днем и темную тему ночью по вашему расписанию",
+                    getattr(tm, "adaptive_theme_enabled", False),
+                    lambda val: (
+                        tm.set_adaptive_theme_preferences(enabled=val),
+                        self.core.check_and_apply_adaptive_theme(force_notify=True),
+                    ),
+                    colors,
+                ),
+                ft.Row([day_time_dd, day_theme_dd], spacing=12, wrap=True),
+                ft.Row([night_time_dd, night_theme_dd], spacing=12, wrap=True),
+                ft.Row(
+                    [
+                        ft.FilledTonalButton(
+                            "Проверить время и применить тему сейчас",
+                            icon="schedule_send",
+                            on_click=lambda e: (
+                                tm.set_adaptive_theme_preferences(enabled=True),
+                                self.core.check_and_apply_adaptive_theme(force_notify=True),
+                            ),
+                        ),
+                    ]
+                ),
+            ],
+            spacing=12,
+        )
+
+    def create_android_navigation_and_apps_settings(self, colors):
+        """Настройки управления одной рукой (ПКМ = Назад), сетки, иконок и поведения приложений."""
+        tm = self.core.theme_manager
+        return ft.Container(
+            content=ft.Column(
+                [
+                    self.create_settings_section(
+                        "🖱️ Управление одной рукой: Функция «Назад» на ПКМ (v2.6)",
+                        "Нажатие правой кнопки мыши (ПКМ) на свободном месте возвращает назад, закрывает фильтр или очищает поиск",
+                        ft.Column(
+                            [
+                                self._create_lit_switch_row(
+                                    "ПКМ — действие «Назад» (Навигация одной рукой)",
+                                    "Позволяет мгновенно возвращаться из Трекера времени, поиска и фильтров одной рукой",
+                                    getattr(tm, "right_click_back_enabled", True),
+                                    lambda val: (
+                                        setattr(tm, "right_click_back_enabled", val),
+                                        tm.save_settings(),
+                                        self.core.show_toast(
+                                            "🟢 Навигация ПКМ «Назад» включена"
+                                            if val
+                                            else "⚪ Навигация ПКМ «Назад» выключена"
+                                        ),
+                                    ),
+                                    colors,
+                                ),
+                                ft.Row(
+                                    [
+                                        ft.FilledTonalButton(
+                                            "Протестировать переход «Назад (ПКМ)»",
+                                            icon="arrow_back",
+                                            on_click=lambda e: self.core.handle_right_click_back(),
+                                        ),
+                                    ]
+                                ),
+                            ],
+                            spacing=10,
+                        ),
+                        colors,
+                    ),
+                    self.create_settings_section(
+                        "✨ Персонализация карточек, иконок и свечения",
+                        "Радиус скругления плиток, масштаб иконок, цвет индикатора запуска и свечение при наведении",
+                        self.create_personalization_settings(colors),
+                        colors,
+                    ),
+                    self.create_settings_section(
+                        "📱 Управление библиотекой приложений и сеткой",
+                        "Настройте отображение плагинов в списке запуска, число колонок и поведение при старте",
+                        self.create_apps_management(colors),
+                        colors,
+                    ),
+                ],
+                scroll=ft.ScrollMode.ADAPTIVE,
+            ),
+            padding=8,
+        )
+
+    def create_github_and_diagnostics_settings(self, colors):
+        """Раздел автообновления с GitHub, проверки новой версии и полной диагностики приложения (v2.6)."""
+        du = self.core.diagnostics_updater
+        tm = self.core.theme_manager
+
+        status_text_ref = ft.Text(
+            du.update_status_text,
+            size=13,
+            weight=ft.FontWeight.BOLD,
+            color=colors["SUCCESS"],
+        )
+        repo_input = ft.TextField(
+            label="URL репозитория GitHub для автообновления",
+            value=du.github_repo_url,
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_radius=12,
+            expand=True,
+            on_change=lambda e: (
+                setattr(du, "github_repo_url", e.control.value.strip()),
+                setattr(tm, "github_repo_url", e.control.value.strip()),
+                tm.save_settings(),
+            ),
+        )
+
+        diag_column = ft.Column(spacing=8)
+
+        def render_diagnostics():
+            diag_column.controls.clear()
+            items = du.run_full_diagnostics()
+            for item in items:
+                is_ok = item["status"] == "OK"
+                diag_column.controls.append(
+                    ft.Container(
+                        padding=12,
+                        border_radius=14,
+                        bgcolor=self._alpha(colors["SUCCESS"] if is_ok else "#f59e0b", 0.1),
+                        border=ft.border.all(1, colors["SUCCESS"] if is_ok else "#f59e0b"),
+                        content=ft.Row(
+                            [
+                                ft.Icon(
+                                    "check_circle" if is_ok else "warning_amber",
+                                    color=colors["SUCCESS"] if is_ok else "#f59e0b",
+                                    size=22,
+                                ),
+                                ft.Column(
+                                    [
+                                        ft.Text(item["title"], weight=ft.FontWeight.BOLD, size=13),
+                                        ft.Text(item["details"], size=11, color=colors["ON_SURFACE_VARIANT"]),
+                                    ],
+                                    spacing=2,
+                                    expand=True,
+                                ),
+                                ft.Container(
+                                    padding=ft.padding.symmetric(horizontal=10, vertical=4),
+                                    border_radius=8,
+                                    bgcolor=self._alpha(colors["SUCCESS"], 0.2),
+                                    content=ft.Text(
+                                        item["badge"],
+                                        size=10,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=colors["SUCCESS"],
+                                    ),
+                                ),
+                            ],
+                            spacing=10,
+                        ),
+                    )
+                )
+
+        def check_now(_):
+            res = du.check_for_updates(silent=False)
+            status_text_ref.value = f"{res['status_text']} (Проверено: {res['checked_at']})"
+            try:
+                status_text_ref.update()
+            except Exception:
+                pass
+
+        render_diagnostics()
+
+        return ft.Container(
+            content=ft.Column(
+                [
+                    self.create_settings_section(
+                        "🔄 Автообновление с GitHub и Проверка новой версии (v2.6)",
+                        "Автоматическая проверка релизов на GitHub, загрузка обновлений и быстрый переход в репозиторий",
+                        ft.Column(
+                            [
+                                self._create_lit_switch_row(
+                                    "Автообновление и проверка новой версии с GitHub при запуске",
+                                    "Фоновая синхронизация с GitHub Releases API при старте лаунчера",
+                                    getattr(tm, "github_auto_update", True),
+                                    lambda val: (
+                                        setattr(tm, "github_auto_update", val),
+                                        setattr(du, "auto_check_github", val),
+                                        tm.save_settings(),
+                                    ),
+                                    colors,
+                                ),
+                                ft.Row([repo_input]),
+                                ft.Container(
+                                    padding=12,
+                                    border_radius=12,
+                                    bgcolor=self._alpha(colors["ACCENT"], 0.12),
+                                    border=ft.border.all(1, colors["ACCENT"]),
+                                    content=ft.Row(
+                                        [
+                                            ft.Icon("cloud_done", color=colors["ACCENT"]),
+                                            ft.Column(
+                                                [
+                                                    ft.Text(
+                                                        f"Текущая версия: v{du.CURRENT_VERSION} (Build {du.BUILD_NUMBER})",
+                                                        size=12,
+                                                        color=colors["ON_SURFACE_VARIANT"],
+                                                    ),
+                                                    status_text_ref,
+                                                ],
+                                                spacing=2,
+                                                expand=True,
+                                            ),
+                                        ]
+                                    ),
+                                ),
+                                ft.Row(
+                                    [
+                                        ft.FilledButton(
+                                            "Проверить новую версию на GitHub",
+                                            icon="ManageSearch" if False else "system_update_alt",
+                                            on_click=check_now,
+                                        ),
+                                        ft.FilledTonalButton(
+                                            "Перейти на GitHub репозиторий",
+                                            icon="open_in_new",
+                                            on_click=lambda e: du.open_github_repository(),
+                                        ),
+                                        ft.OutlinedButton(
+                                            "Сообщить о проблеме (GitHub Issues)",
+                                            icon="bug_report",
+                                            on_click=lambda e: du.open_github_repository("issues"),
+                                        ),
+                                    ],
+                                    spacing=8,
+                                    wrap=True,
+                                ),
+                            ],
+                            spacing=10,
+                        ),
+                        colors,
+                    ),
+                    self.create_settings_section(
+                        "🩺 Диагностика приложения (Полный чек-ап узлов v2.6)",
+                        "Проверка целостности базы, шифрования PBKDF2-HMAC, Dynamic Island, плагинов и ресурсов ОС",
+                        ft.Column(
+                            [
+                                ft.Row(
+                                    [
+                                        ft.FilledButton(
+                                            "Запустить полную диагностику",
+                                            icon="health_and_safety",
+                                            on_click=lambda e: (
+                                                render_diagnostics(),
+                                                diag_column.update(),
+                                                self.core.show_toast("🟢 Диагностика всех 6 подсистем успешно выполнена!"),
+                                            ),
+                                        ),
+                                        ft.FilledTonalButton(
+                                            "Исправить кэш и синхронизировать базу",
+                                            icon="build_circle",
+                                            on_click=lambda e: (
+                                                du.repair_and_optimize(),
+                                                render_diagnostics(),
+                                                diag_column.update(),
+                                            ),
+                                        ),
+                                        ft.OutlinedButton(
+                                            "Экспортировать отчет (.json)",
+                                            icon="download",
+                                            on_click=lambda e: du.export_diagnostics_report(),
+                                        ),
+                                    ],
+                                    spacing=8,
+                                    wrap=True,
+                                ),
+                                diag_column,
+                            ],
+                            spacing=10,
+                        ),
+                        colors,
+                    ),
+                    self.create_settings_section(
+                        "🔐 Шифрование, Бэкапы и Горячие клавиши",
+                        "Управление резервными копиями, криптографией и комбинациями клавиш",
+                        self.create_system_settings_tab(colors),
+                        colors,
+                    ),
+                ],
+                scroll=ft.ScrollMode.ADAPTIVE,
+            ),
+            padding=8,
+        )
+
+    def create_about_and_history_settings(self, colors):
+        """Раздел «О приложении» в стиле Android 15 + полная история версий 1.0 – 2.6."""
+        du = self.core.diagnostics_updater
+        about_card = ft.Container(
+            padding=20,
+            border_radius=20,
+            bgcolor=colors["SETTINGS_CARD"],
+            border=ft.border.all(1.5, colors["ACCENT"]),
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Container(
+                                width=64,
+                                height=64,
+                                bgcolor=self._alpha(colors["ACCENT"], 0.2),
+                                border_radius=20,
+                                alignment=ft.alignment.center,
+                                content=ft.Icon("rocket_launch", color=colors["ACCENT"], size=34),
+                            ),
+                            ft.Column(
+                                [
+                                    ft.Text("Launcher Hab 2.6", size=22, weight=ft.FontWeight.W_900),
+                                    ft.Text(
+                                        f"Версия {du.CURRENT_VERSION} • Сборка {du.BUILD_NUMBER} • Python + Flet Engine",
+                                        size=12,
+                                        color=colors["ON_SURFACE_VARIANT"],
+                                    ),
+                                    ft.Text(
+                                        "Dynamic Island • Настройки Android 15 • Авто-тема День/Ночь • GitHub Auto-Updater • ПКМ Назад",
+                                        size=12,
+                                        color=colors["SUCCESS"],
+                                        weight=ft.FontWeight.BOLD,
+                                    ),
+                                ],
+                                spacing=3,
+                                expand=True,
+                            ),
+                            ft.FilledTonalButton(
+                                "GitHub Проект",
+                                icon="open_in_new",
+                                on_click=lambda e: du.open_github_repository(),
+                            ),
+                        ],
+                        spacing=14,
+                    ),
+                    ft.Divider(color=colors["OUTLINE"], height=12),
+                    ft.Row(
+                        [
+                            ft.Text("Криптография: Fernet AES-128 + PBKDF2 (100k)", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                            ft.Text("•", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                            ft.Text("Стилей часов: 18", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                            ft.Text("•", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                            ft.Text("API расширений: v2.6", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                        ],
+                        spacing=8,
+                        wrap=True,
+                    ),
+                ],
+                spacing=10,
+            ),
+        )
+
+        return ft.Container(
+            content=ft.Column(
+                [
+                    about_card,
+                    ft.Container(height=8),
+                    self.create_version_history(colors),
+                ],
+                scroll=ft.ScrollMode.ADAPTIVE,
+            ),
+            padding=8,
         )
 
     def create_appearance_settings(self, colors):
@@ -437,31 +1223,25 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             content=ft.Column(
                 [
                     self.create_settings_section(
+                        "🌗 Адаптивная тема «День / Ночь» по расписанию (v2.6)",
+                        "Автоматическое переключение: днем — светлая/белая тема, ночью — темная (с выбором времени и тем)",
+                        self.create_adaptive_day_night_settings(colors),
+                        colors,
+                    ),
+                    self.create_settings_section(
                         "Тема оформления (С мгновенной подсветкой активной темы)",
                         "При выборе темы карточка сразу загорается статусом «🟢 АКТИВНО» и обновляет интерфейс",
                         self.create_theme_selector(colors),
                         colors,
                     ),
                     self.create_settings_section(
-                        "🕒 18 Стилей Часов и Расширенный Дизайн Часов (v2.5)",
-                        "Вертикальные часы Android 14 + 10 новых дизайнерских стилей, неоновое свечение, рамка и прозрачность",
-                        self.create_customization_settings(colors),
-                        colors,
-                    ),
-                    self.create_settings_section(
-                        "✨ Персонализация карточек, иконок и свечения (v2.5)",
-                        "Настройте радиус скругления плиток, масштаб иконок, цвет индикатора запуска и свечение при наведении",
-                        self.create_personalization_settings(colors),
-                        colors,
-                    ),
-                    self.create_settings_section(
-                        "Эффекты прозрачного стекла (Glassmorphism 2.5)",
+                        "Эффекты прозрачного стекла (Glassmorphism 2.6)",
                         "Управление размытием ft.Blur, плотностью фона и плавными анимациями",
                         self.create_effects_settings(colors),
                         colors,
                     ),
                     self.create_settings_section(
-                        "🎨 Студия создания кастомных тем Pro (v2.5)",
+                        "🎨 Студия создания кастомных тем Pro (v2.6)",
                         "Создавайте собственные темы с живым превью, 7 цветовыми каналами и настройкой геометрии",
                         self.create_custom_themes_management(colors),
                         colors,
@@ -469,7 +1249,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 ],
                 scroll=ft.ScrollMode.ADAPTIVE,
             ),
-            padding=16,
+            padding=8,
         )
 
     def create_personalization_settings(self, colors):
@@ -1758,10 +2538,10 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         return button
 
     def create_version_history(self, colors):
-        """Полная история всех версий с 1.0 по 2.5."""
+        """Полная история всех версий с 1.0 по 2.6."""
         version_items = []
         for version, features in self.VERSION_HISTORY_1_0_TO_2_5.items():
-            is_latest = version == "2.5"
+            is_latest = version == "2.6"
             version_items.append(
                 ft.Container(
                     content=ft.Column(
@@ -1797,7 +2577,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                     ),
                     bgcolor=self._alpha(colors["ACCENT"], 0.10) if is_latest else colors["SETTINGS_CARD"],
                     border=ft.border.all(2 if is_latest else 1, colors["ACCENT"] if is_latest else colors["OUTLINE"]),
-                    border_radius=12,
+                    border_radius=16,
                     padding=18,
                     margin=ft.margin.only(bottom=12),
                 )
@@ -1806,7 +2586,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         return ft.Column(
             [
                 ft.Text(
-                    "Полная история обновлений Launcher Hab (Версии 1.0 — 2.5)",
+                    "Полная история обновлений Launcher Hab (Версии 1.0 — 2.6)",
                     size=18,
                     weight=ft.FontWeight.BOLD,
                 ),

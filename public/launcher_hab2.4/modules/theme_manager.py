@@ -214,6 +214,80 @@ class ThemeManager:
         self.system_notifications_enabled = bool(settings.get("system_notifications_enabled", True))
         self.autostart_windows = bool(settings.get("autostart_windows", False))
 
+        # --- НОВЫЕ НАСТРОЙКИ ВЕРСИИ 2.6 ---
+        # 1. Адаптивная тема День / Ночь (по расписанию времени)
+        self.adaptive_theme_enabled = bool(settings.get("adaptive_theme_enabled", False))
+        self.day_start_time = settings.get("day_start_time", "07:00")
+        self.night_start_time = settings.get("night_start_time", "20:00")
+        self.day_theme_name = settings.get("day_theme_name", "light")
+        self.night_theme_name = settings.get("night_theme_name", "dark")
+
+        # 2. Dynamic Island 2.6
+        self.island_dnd_enabled = bool(settings.get("island_dnd_enabled", False))
+        self.island_glow_enabled = bool(settings.get("island_glow_enabled", True))
+        self.island_charging_anim = bool(settings.get("island_charging_anim", True))
+        self.island_simulate_charging = bool(settings.get("island_simulate_charging", True))
+        self.island_style = settings.get("island_style", "expanded")
+
+        # 3. Удобная навигация одной рукой: ПКМ = Назад
+        self.right_click_back_enabled = bool(settings.get("right_click_back_enabled", True))
+
+        # 4. Автообновление с GitHub
+        self.github_repo_url = settings.get("github_repo_url", "https://github.com/launcher-hab/LauncherHab")
+        self.github_auto_update = bool(settings.get("github_auto_update", True))
+
+    def evaluate_adaptive_theme(self, current_dt=None) -> str:
+        """
+        Определяет, какая тема должна быть активна сейчас при включенной адаптивной теме День/Ночь.
+        Если день (между day_start_time и night_start_time) -> day_theme_name (по умолчанию 'light'),
+        иначе ночь -> night_theme_name (по умолчанию 'dark').
+        """
+        from datetime import datetime as _dt
+
+        now = current_dt or _dt.now()
+        cur_minutes = now.hour * 60 + now.minute
+
+        def _parse_hhmm(val: str, fallback_h: int) -> int:
+            try:
+                parts = str(val).strip().split(":")
+                return int(parts[0]) * 60 + (int(parts[1]) if len(parts) > 1 else 0)
+            except Exception:
+                return fallback_h * 60
+
+        day_m = _parse_hhmm(self.day_start_time, 7)
+        night_m = _parse_hhmm(self.night_start_time, 20)
+
+        if day_m <= night_m:
+            is_daytime = day_m <= cur_minutes < night_m
+        else:
+            is_daytime = cur_minutes >= day_m or cur_minutes < night_m
+
+        target = self.day_theme_name if is_daytime else self.night_theme_name
+        all_themes = self.get_available_themes()
+        if target not in all_themes:
+            target = "light" if is_daytime else "dark"
+        return target
+
+    def set_adaptive_theme_preferences(
+        self,
+        enabled=None,
+        day_start_time=None,
+        night_start_time=None,
+        day_theme_name=None,
+        night_theme_name=None,
+    ):
+        if enabled is not None:
+            self.adaptive_theme_enabled = bool(enabled)
+        if day_start_time:
+            self.day_start_time = str(day_start_time)
+        if night_start_time:
+            self.night_start_time = str(night_start_time)
+        if day_theme_name:
+            self.day_theme_name = str(day_theme_name)
+        if night_theme_name:
+            self.night_theme_name = str(night_theme_name)
+        self.save_settings()
+
     def save_settings(self):
         settings_data = {
             "theme": self.current_theme,
@@ -263,6 +337,19 @@ class ThemeManager:
             "auto_update_enabled": self.auto_update_enabled,
             "system_notifications_enabled": self.system_notifications_enabled,
             "autostart_windows": self.autostart_windows,
+            "adaptive_theme_enabled": self.adaptive_theme_enabled,
+            "day_start_time": self.day_start_time,
+            "night_start_time": self.night_start_time,
+            "day_theme_name": self.day_theme_name,
+            "night_theme_name": self.night_theme_name,
+            "island_dnd_enabled": self.island_dnd_enabled,
+            "island_glow_enabled": self.island_glow_enabled,
+            "island_charging_anim": self.island_charging_anim,
+            "island_simulate_charging": self.island_simulate_charging,
+            "island_style": self.island_style,
+            "right_click_back_enabled": self.right_click_back_enabled,
+            "github_repo_url": self.github_repo_url,
+            "github_auto_update": self.github_auto_update,
         }
         return self.file_manager.save_settings(settings_data)
 

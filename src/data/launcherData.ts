@@ -744,20 +744,134 @@ export const INITIAL_WORKSPACES: WorkspacePreset[] = [
   },
 ];
 
+export interface IslandPlayerItem {
+  id: string;
+  name: string;
+  color: string;
+  track: string;
+  artist: string;
+}
+
+export interface IslandNotificationItem {
+  id: string;
+  app: string;
+  title: string;
+  message: string;
+  time: string;
+  color: string;
+  read: boolean;
+}
+
+export const INITIAL_ISLAND_PLAYERS: IslandPlayerItem[] = [
+  {
+    id: 'windows_smtc',
+    name: 'Windows Media (SMTC)',
+    color: '#3b82f6',
+    track: 'Synthwave Night Drive',
+    artist: 'System Audio Session',
+  },
+  {
+    id: 'yandex_music',
+    name: 'Яндекс Музыка',
+    color: '#f59e0b',
+    track: 'Моя Волна • Поток',
+    artist: 'Яндекс Музыка HQ',
+  },
+  {
+    id: 'spotify',
+    name: 'Spotify Desktop',
+    color: '#10b981',
+    track: 'Midnight City (Lo-Fi Mix)',
+    artist: 'Spotify Connect',
+  },
+  {
+    id: 'vk_music',
+    name: 'VK Музыка',
+    color: '#60a5fa',
+    track: 'Киберпанк Плейлист',
+    artist: 'VK Audio',
+  },
+  {
+    id: 'telegram_audio',
+    name: 'Telegram Плеер',
+    color: '#38bdf8',
+    track: 'Голосовой / Аудио подкаст',
+    artist: 'Telegram Desktop',
+  },
+];
+
+export const INITIAL_WINDOWS_NOTIFICATIONS: IslandNotificationItem[] = [
+  {
+    id: 'win_1',
+    app: 'Безопасность Windows 11',
+    title: 'Защита в реальном времени активна',
+    message: 'Угроз не обнаружено. Криптоконтейнер PBKDF2-HMAC-SHA256 синхронизирован.',
+    time: 'Сейчас',
+    color: '#10b981',
+    read: false,
+  },
+  {
+    id: 'win_2',
+    app: 'Центр уведомлений Windows',
+    title: 'Dynamic Island 2.6 подключен к системе',
+    message: 'Перехват уведомлений Windows, контроль зарядки, таймер и аудио-сессии активны.',
+    time: '1 мин назад',
+    color: '#3b82f6',
+    read: false,
+  },
+  {
+    id: 'win_3',
+    app: 'GitHub Auto-Updater 2.6',
+    title: 'Проверка обновлений выполнена',
+    message: 'Установлена актуальная сборка Launcher Hab 2.6.0 (Python + Flet).',
+    time: '2 мин назад',
+    color: '#a855f7',
+    read: false,
+  },
+];
+
 export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string; summary: string }[] = [
+  {
+    path: 'modules/dynamic_island.py',
+    title: 'modules/dynamic_island.py',
+    badge: 'NEW v2.6',
+    summary:
+      'Всегда активный Dynamic Island 2.6: уведомления Windows, смена проигрывателя, таймер, секундомер, анимация зарядки и режим «Не беспокоить».',
+  },
+  {
+    path: 'modules/diagnostics_updater.py',
+    title: 'modules/diagnostics_updater.py',
+    badge: 'NEW v2.6',
+    summary:
+      'Автообновление с GitHub Releases API, проверка новой версии, переход на GitHub, раздел «О приложении» и полная диагностика 6 подсистем.',
+  },
   {
     path: 'modules/ui_dialogs.py',
     title: 'modules/ui_dialogs.py',
-    badge: 'NEW v2.5',
+    badge: 'ANDROID v2.6',
     summary:
-      'Полная история версий 1.0–2.5, мгновенное «зажигание» активного статуса (🟢 АКТИВНО), 18 стилей часов и Custom Theme Studio Pro.',
+      'Полностью перерисованные настройки в стиле Android 15 (Quick Settings Tiles + боковое меню), адаптивная тема День/Ночь и история версий 1.0–2.6.',
   },
   {
     path: 'modules/theme_manager.py',
     title: 'modules/theme_manager.py',
-    badge: 'NEW v2.5',
+    badge: 'ADAPTIVE v2.6',
     summary:
-      '18 стилей часов (+10 новых в 2.5), настройки неонового свечения, радиуса и прозрачности часов, кастомизация карточек и кастомных тем.',
+      'Адаптивная тема «День / Ночь» по расписанию (выбор времени и тем), настройки Dynamic Island, ПКМ «Назад» и 18 стилей часов.',
+  },
+  {
+    path: 'modules/ui_manager_core.py',
+    title: 'modules/ui_manager_core.py',
+    badge: 'CORE v2.6',
+    summary:
+      'Ядро Launcher Hab 2.6: навигация одной рукой (ПКМ = Назад), подавление тостов в режиме «Не беспокоить», тик Острова и авто-смена темы.',
+  },
+  {
+    path: 'modules/ui_panels.py',
+    title: 'modules/ui_panels.py',
+    badge: 'ISLAND v2.6',
+    summary:
+      'Встроенная капсула Dynamic Island 2.6 в центре верхней панели, жест ПКМ «Назад» (GestureDetector) и 18 стилей часов.',
   },
   {
     path: 'modules/encryption_manager.py',
@@ -769,21 +883,14 @@ export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string;
   {
     path: 'modules/plugin_manager.py',
     title: 'modules/plugin_manager.py',
-    badge: 'API v2.5',
+    badge: 'API v2.6',
     summary:
-      'PluginAPI 2.5.0: зашифрованные секреты плагинов (get_secure_secret / set_secure_secret), хуки смены темы и часов, магазин расширений.',
-  },
-  {
-    path: 'modules/ui_panels.py',
-    title: 'modules/ui_panels.py',
-    badge: 'CLOCKS v2.5',
-    summary:
-      'Рендеринг 18 стилей часов, неоновая подсветка циферблата, радиус карточек и масштаб иконок.',
+      'PluginAPI: зашифрованные секреты плагинов, хуки смены темы и часов, магазин расширений и трекер времени.',
   },
   {
     path: 'modules/glass_morphism.py',
     title: 'modules/glass_morphism.py',
-    badge: 'GLASS v2.5',
+    badge: 'GLASS',
     summary:
       'Поддержка кастомного скругления карточек, масштаба иконок (85–120%), подсветки активных приложений и формата #AARRGGBB.',
   },
@@ -793,13 +900,6 @@ export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string;
     badge: 'ZERO-START',
     summary:
       'Трекер времени начинается с 0 мин и запускает живой посекундный таймер (🟢 00:00:15) при старте приложения или игры.',
-  },
-  {
-    path: 'modules/ui_manager_core.py',
-    title: 'modules/ui_manager_core.py',
-    badge: 'CORE v2.5',
-    summary:
-      'Ядро Launcher Hab 2.5: форматирование всех 18 стилей часов, мигающее двоеточие и живой тик таймера.',
   },
   {
     path: 'modules/file_manager.py',
@@ -819,12 +919,26 @@ export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string;
     path: 'main.py',
     title: 'main.py',
     badge: 'ENTRY',
-    summary: 'Точка входа Flet-приложения Launcher Hab 2.5 на языке Python.',
+    summary: 'Точка входа Flet-приложения Launcher Hab 2.6 на языке Python.',
   },
 ];
 
-// Полная история версий с 1.0 до 2.5
+// Полная история версий с 1.0 до 2.6
 export const VERSION_HISTORY: Record<string, string[]> = {
+  '2.6': [
+    '🚀 LAUNCHER HAB 2.6 — DYNAMIC ISLAND, НАСТРОЙКИ В СТИЛЕ ANDROID, АДАПТИВНАЯ ТЕМА ДЕНЬ/НОЧЬ, АВТООБНОВЛЕНИЕ С GITHUB И ПКМ «НАЗАД»',
+    '🏝️ ВСЕГДА АКТИВНЫЙ DYNAMIC ISLAND — интерактивный остров в верхней панели с постоянным отображением статуса, времени, даты и процентов заряда устройства',
+    '🔔 ПРОСМОТР УВЕДОМЛЕНИЙ ОТ WINDOWS В ОСТРОВЕ — перехват и журнал системных и прикладных уведомлений Windows с очисткой и фильтрацией',
+    '🎵 СМЕНА ПРОИГРЫВАТЕЛЯ В DYNAMIC ISLAND — переключение между Windows Media (SMTC), Яндекс Музыкой, Spotify, VK Музыкой и Telegram Audio + управление треками',
+    '⏱️ ВСТРОЕННЫЙ ТАЙМЕР И СЕКУНДОМЕР В ОСТРОВЕ — обратный отсчет с пресетами (1/5/15/25 мин) и секундомер с записью кругов (Laps) и выводом прямо на капсулу',
+    '⚡ АНИМАЦИЯ ЗАРЯДКИ УСТРОЙСТВА — неоновая изумрудная волна и пульсация молнии в Dynamic Island при подключении питания и отображение процентов батареи',
+    '🌙 ПОЛНОСТЬЮ РАБОЧИМ РЕЖИМ «НЕ БЕСПОКОИТЬ» (DND) — блокирует всплывающие баннеры и звуки, тихо сохраняя все уведомления внутри Dynamic Island',
+    '📱 ПОЛНОСТЬЮ ПЕРЕРИСОВАННЫЕ НАСТРОЙКИ В СТИЛЕ ANDROID 15 — боковое меню с цветными иконками, плитки быстрых настроек (Quick Settings Tiles) и скругленные карточки',
+    '🌗 АДАПТИВНАЯ ТЕМА «ДЕНЬ / НОЧЬ» ПО РАСПИСАНИЮ — автоматическая смена темы (днем — светлая/белая, ночью — темная) с выбором точного времени смены и конкретных тем',
+    '🔄 АВТООБНОВЛЕНИЕ И ПРОВЕРКА НОВОЙ ВЕРСИИ С GITHUB — проверка релизов через GitHub API, переход на репозиторий GitHub в 1 клик и автопроверка при запуске',
+    '🩺 ДИАГНОСТИКА ПРИЛОЖЕНИЯ И РАЗДЕЛ «О ПРИЛОЖЕНИИ» — комплексная проверка файловой системы, шифрования PBKDF2, плагинов, ресурсов ОС и экспорт отчета',
+    '🖱️ ФУНКЦИЯ «НАЗАД» НА ПКМ (ПРАВУЮ КНОПКУ МЫШИ) — удобная навигация одной рукой: клик ПКМ возвращает на предыдущий экран, сбрасывает фильтр или закрывает поиск',
+  ],
   '2.5': [
     '🚀 LAUNCHER HAB 2.5 — МЕГА-ПЕРСОНАЛИЗАЦИЯ, 18 СТИЛЕЙ ЧАСОВ, КАСТОМНЫЕ ТЕМЫ PRO, API 2.5 И PBKDF2 ШИФРОВАНИЕ',
     '💡 МГНОВЕННАЯ ПОДСВЕТКА АКТИВНЫХ НАСТРОЕК («ЗАЖИГАНИЕ» СТАТУСА) — при выборе любого стиля, переключателя или пресета элемент мгновенно загорается неоновой рамкой и меняет статус с «⚪ НЕАКТИВНО» на «🟢 АКТИВНО»',

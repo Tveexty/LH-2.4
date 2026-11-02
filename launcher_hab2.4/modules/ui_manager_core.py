@@ -78,13 +78,18 @@ class UIManagerCore:
 
         from .ui_panels import UIPanels
         from .ui_dialogs import UIDialogs
+        from .dynamic_island import DynamicIslandManager
+        from .diagnostics_updater import GitHubUpdaterAndDiagnostics
 
+        self.dynamic_island = DynamicIslandManager(self)
+        self.diagnostics_updater = GitHubUpdaterAndDiagnostics(self)
         self.panels = UIPanels(self)
         self.dialogs = UIDialogs(self)
 
-        # Состояние разделов (v2.4)
+        # Состояние разделов и стек навигации для функции «ПКМ = Назад» (v2.6)
         self.active_section = "apps"  # "apps" | "tracker"
         self.current_filter = "all"
+        self.navigation_stack = []
         self.filter_dialog_open = False
         self.auto_update_enabled = self.theme_manager.auto_update_enabled
         self.system_notifications_enabled = self.theme_manager.system_notifications_enabled
@@ -99,8 +104,31 @@ class UIManagerCore:
 
         self.setup_hotkeys()
 
-    def show_toast(self, message: str, title: str = None):
-        """Универсальный метод показа уведомления в современном Flet (page.open вместо удаленного show_snack_bar)."""
+    def show_toast(self, message: str, title: str = None, force_show: bool = False):
+        """
+        Универсальный метод показа уведомления в современном Flet.
+        Если в Dynamic Island включен режим «Не беспокоить» (DND), всплывающее окно подавляется,
+        а уведомление тихо сохраняется в центр уведомлений Dynamic Island!
+        """
+        if hasattr(self, "dynamic_island") and self.dynamic_island and title:
+            self.dynamic_island.push_notification(
+                app=title,
+                title=title,
+                message=message,
+                icon="notifications_active",
+                color="#3b82f6",
+                silent=True,
+            )
+
+        if (
+            not force_show
+            and hasattr(self, "dynamic_island")
+            and self.dynamic_island
+            and self.dynamic_island.dnd_enabled
+        ):
+            # Полностью рабочий режим «Не беспокоить»: блокируем всплывающий баннер
+            return
+
         if not hasattr(self, "page") or not self.page:
             return
         try:
@@ -125,6 +153,73 @@ class UIManagerCore:
                 self.page.update()
         except Exception:
             logger.exception("Не удалось показать SnackBar")
+
+    def handle_right_click_back(self, e=None):
+        """
+        Функция «Назад» по правой кнопке мыши (ПКМ) для удобного управления одной рукой (v2.6).
+        Возвращает из раздела «Трекер времени», сбрасывает поисковый запрос или фильтр категории.
+        """
+        if not getattr(self.theme_manager, "right_click_back_enabled", True):
+            return
+
+        # 1. Если открыт поиск — очищаем строку поиска
+        if hasattr(self.panels, "search_field") and self.panels.search_field and self.panels.search_field.value:
+            self.panels.search_field.value = ""
+            self.update_main_content()
+            self.update_sidebar()
+            self.show_toast("⬅️ Назад (ПКМ): поиск очищен")
+            return
+
+        # 2. Если включен фильтр категории — возвращаем «Все приложения»
+        if self.current_filter != "all":
+            self.current_filter = "all"
+            self.update_main_content()
+            self.update_sidebar()
+            self.show_toast("⬅️ Назад (ПКМ): показаны все приложения")
+            return
+
+        # 3. Если мы во вкладке «Трекер времени» — возвращаемся в «Приложения»
+        if self.active_section != "apps":
+            self.switch_section("apps")
+            self.show_toast("⬅️ Назад (ПКМ): возврат на главный экран приложений")
+            return
+
+        # 4. Если есть история в стеке навигации
+        if self.navigation_stack:
+            prev_state = self.navigation_stack.pop()
+            self.active_section = prev_state.get("section", "apps")
+            self.current_filter = prev_state.get("filter", "all")
+            self.update_header()
+            self.update_main_content()
+            self.update_sidebar()
+            self.show_toast("⬅️ Назад (ПКМ)")
+            return
+
+        self.show_toast("⬅️ Вы на главном экране (ПКМ — Назад активно)")
+
+    def check_and_apply_adaptive_theme(self, force_notify: bool = False):
+        """
+        Проверяет расписание адаптивной темы «День / Ночь» (v2.6):
+        Днём включает выбранную светлую тему, ночью — тёмную.
+        """
+        if not getattr(self.theme_manager, "adaptive_theme_enabled", False):
+            return
+        target_theme = self.theme_manager.evaluate_adaptive_theme()
+        if target_theme and target_theme != self.theme_manager.current_theme:
+            self.theme_manager.apply_theme(self.page, target_theme)
+            self.update_interface_colors()
+            self.update_header()
+            self.update_main_content()
+            self.update_sidebar()
+            if force_notify:
+                self.show_toast(
+                    f"🌗 Адаптивная тема День/Ночь переключена на: {target_theme}",
+                    title="Адаптивная тема 2.6",
+                )
+        elif force_notify:
+            self.show_toast(
+                f"🌗 По расписанию активна тема: {target_theme} ({self.theme_manager.day_start_time} – {self.theme_manager.night_start_time})"
+            )
 
     def setup_hotkeys(self):
         try:
@@ -180,6 +275,9 @@ class UIManagerCore:
 
     def initialize_ui(self):
         self.setup_page()
+        if getattr(self.theme_manager, "adaptive_theme_enabled", False):
+            target = self.theme_manager.evaluate_adaptive_theme()
+            self.theme_manager.current_theme = target
         self.create_ui_elements()
         self.setup_timers()
         self.apply_initial_theme()
@@ -187,8 +285,14 @@ class UIManagerCore:
         if hasattr(self.theme_manager, "backup_auto") and self.theme_manager.backup_auto:
             threading.Thread(target=self.backup_manager.auto_backup, daemon=True).start()
 
+        if getattr(self.theme_manager, "github_auto_update", True):
+            threading.Thread(
+                target=lambda: self.diagnostics_updater.check_for_updates(silent=True),
+                daemon=True,
+            ).start()
+
     def setup_page(self):
-        self.page.title = "Launcher Hab 2.5"
+        self.page.title = "Launcher Hab 2.6"
         self.page.padding = 0
         self.page.spacing = 0
         self.page.theme_mode = ft.ThemeMode.DARK
@@ -260,6 +364,9 @@ class UIManagerCore:
             tick_counter = 0
             while True:
                 self.update_time()
+                # Посекундный тик для Dynamic Island 2.6 (Таймер, Секундомер, Зарядка)
+                if hasattr(self, "dynamic_island") and self.dynamic_island:
+                    self.dynamic_island.tick_second()
                 # Посекундный тик для запущенных приложений в Session Tracker
                 if hasattr(self.plugin_manager, "notify_second_tick"):
                     has_active = self.plugin_manager.notify_second_tick()
@@ -272,6 +379,7 @@ class UIManagerCore:
                 tick_counter += 1
                 if tick_counter >= 60:
                     tick_counter = 0
+                    self.check_and_apply_adaptive_theme(force_notify=False)
                     if hasattr(self.plugin_manager, "notify_tick"):
                         self.plugin_manager.notify_tick()
                 time.sleep(1)
@@ -381,9 +489,12 @@ class UIManagerCore:
                     pass
 
     def switch_section(self, section_name: str):
-        """Плавное переключение между разделами ('apps' <-> 'tracker') с анимацией."""
+        """Плавное переключение между разделами ('apps' <-> 'tracker') с анимацией и сохранением истории для ПКМ Назад."""
         if self.active_section == section_name:
             return
+        self.navigation_stack.append({"section": self.active_section, "filter": self.current_filter})
+        if len(self.navigation_stack) > 15:
+            self.navigation_stack.pop(0)
         self.active_section = section_name
         self.update_header()
         self.update_main_content()
