@@ -31,16 +31,16 @@ def _safe_toast(page, message: str):
 
 class PluginAPI:
     """
-    Расширенный SDK / API для плагинов и расширений Launcher Hab 2.4.
+    Расширенный SDK / API для плагинов и расширений Launcher Hab 2.5.
     Позволяет плагинам безопасно взаимодействовать с ядром лаунчера:
-    - подписываться на события запуска/закрытия приложений (on_app_launched, on_tick, on_theme_changed);
+    - подписываться на события ('app_launched', 'theme_changed', 'clock_style_changed', 'tick');
     - добавлять бейджи на карточки приложений (get_app_card_badge);
     - регистрировать плагин в общем списке запуска («Плагины»);
-    - хранить собственные настройки в JSON (get_config / save_config);
+    - хранить настройки в JSON (get_config / save_config) и зашифрованные секреты (get_secure_secret / set_secure_secret);
     - управлять системной громкостью и уведомлениями.
     """
 
-    API_VERSION = "2.4.2"
+    API_VERSION = "2.5.0"
 
     def __init__(self, plugin_manager, core=None):
         self.plugin_manager = plugin_manager
@@ -48,7 +48,7 @@ class PluginAPI:
         self._event_listeners: Dict[str, List[Callable]] = {}
 
     def on(self, event_name: str, callback: Callable):
-        """Подписка на системное событие ('app_launched', 'theme_changed', 'tick')."""
+        """Подписка на системное событие ('app_launched', 'theme_changed', 'clock_style_changed', 'tick')."""
         self._event_listeners.setdefault(event_name, []).append(callback)
 
     def emit(self, event_name: str, *args, **kwargs):
@@ -70,6 +70,31 @@ class PluginAPI:
     def save_config(self, plugin_name: str, config: Dict) -> bool:
         return self.plugin_manager.save_plugin_config(plugin_name, config)
 
+    def set_secure_secret(self, plugin_name: str, key: str, secret_value: str) -> bool:
+        """Сохранить зашифрованный секрет плагина через EncryptionManager v2.5 (AES-Fernet + PBKDF2)."""
+        cfg = self.get_config(plugin_name, {})
+        sec_map = cfg.get("_encrypted_secrets", {})
+        enc_mgr = getattr(self.plugin_manager.file_manager, "encryption_manager", None)
+        if enc_mgr and hasattr(enc_mgr, "encrypt_data"):
+            sec_map[key] = enc_mgr.encrypt_data(str(secret_value))
+        else:
+            sec_map[key] = str(secret_value)
+        cfg["_encrypted_secrets"] = sec_map
+        return self.save_config(plugin_name, cfg)
+
+    def get_secure_secret(self, plugin_name: str, key: str, default: str = "") -> str:
+        """Расшифровать секрет плагина через EncryptionManager v2.5."""
+        cfg = self.get_config(plugin_name, {})
+        sec_map = cfg.get("_encrypted_secrets", {})
+        raw = sec_map.get(key)
+        if not raw:
+            return default
+        enc_mgr = getattr(self.plugin_manager.file_manager, "encryption_manager", None)
+        if enc_mgr and hasattr(enc_mgr, "decrypt_data"):
+            val = enc_mgr.decrypt_data(raw)
+            return str(val) if val is not None else default
+        return str(raw)
+
     def get_all_apps(self) -> List[Dict]:
         if self.core and hasattr(self.core, "app_manager"):
             return self.core.app_manager.get_all_apps()
@@ -86,7 +111,7 @@ class PluginAPI:
 
 
 class PluginManager:
-    """Улучшенный менеджер плагинов, каталога расширений и SDK (Launcher Hab 2.4)."""
+    """Улучшенный менеджер плагинов, каталога расширений и SDK (Launcher Hab 2.5)."""
 
     # Плагины, включенные по умолчанию, чтобы они сразу были в списке запуска
     DEFAULT_ENABLED_PLUGINS = {
@@ -505,7 +530,7 @@ def initialize_plugin():
             )
         return result
 
-    # --- Хуки расширений 2.4 ---
+    # --- Хуки расширений 2.5 ---
     def notify_app_launched(self, app: Dict[str, Any]):
         self.api.emit("app_launched", app)
         for plugin_data in self.loaded_plugins.values():
@@ -515,6 +540,26 @@ def initialize_plugin():
                     instance.on_app_launched(app)
                 except Exception:
                     logger.exception("Ошибка on_app_launched в плагине")
+
+    def notify_theme_changed(self, theme_name: str):
+        self.api.emit("theme_changed", theme_name)
+        for plugin_data in self.loaded_plugins.values():
+            instance = plugin_data.get("instance")
+            if instance and hasattr(instance, "on_theme_changed"):
+                try:
+                    instance.on_theme_changed(theme_name)
+                except Exception:
+                    pass
+
+    def notify_clock_style_changed(self, style_id: str):
+        self.api.emit("clock_style_changed", style_id)
+        for plugin_data in self.loaded_plugins.values():
+            instance = plugin_data.get("instance")
+            if instance and hasattr(instance, "on_clock_style_changed"):
+                try:
+                    instance.on_clock_style_changed(style_id)
+                except Exception:
+                    pass
 
     def notify_second_tick(self) -> bool:
         """Посекундный тик для живого таймера активных приложений."""
@@ -542,7 +587,7 @@ def initialize_plugin():
 
     def get_app_card_badge(self, app: Dict[str, Any]) -> Optional[str]:
         if app.get("type") == "plugin":
-            return "Плагин 2.4"
+            return "Плагин 2.5"
         for plugin_data in self.loaded_plugins.values():
             instance = plugin_data.get("instance")
             if instance and hasattr(instance, "get_app_card_badge"):

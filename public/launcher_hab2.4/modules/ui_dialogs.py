@@ -8,11 +8,284 @@ from .ui_dialogs_workspace import WorkspaceDialogMixin
 
 
 class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
+    # Полная история всех версий от 1.0 до 2.5
+    VERSION_HISTORY_1_0_TO_2_5 = {
+        "2.5": [
+            "🚀 LAUNCHER HAB 2.5 — МЕГА-ПЕРСОНАЛИЗАЦИЯ, 18 СТИЛЕЙ ЧАСОВ, КАСТОМНЫЕ ТЕМЫ PRO, API 2.5 И PBKDF2 ШИФРОВАНИЕ",
+            "💡 МГНОВЕННАЯ ПОДСВЕТКА АКТИВНЫХ НАСТРОЕК («ЗАЖИГАНИЕ» СТАТУСА) — при выборе любого стиля, переключателя или пресета элемент мгновенно загорается неоновой рамкой и меняет статус с «⚪ Неактивно» на «🟢 АКТИВНО»",
+            "🕒 +10 НОВЫХ СТИЛЕЙ ЧАСОВ (ВСЕГО 18 СТИЛЕЙ) — добавлены Nothing OS (Dot-Matrix), iOS 17 StandBy, Samsung OneUI 6, Neon Synthwave 80s, Retro LCD Casio F-91W, macOS Sonoma, Sci-Fi Tactical HUD, Гибридный Хронограф, Неоновая Вертикаль и Material You Expressive",
+            "✨ РАСШИРЕННЫЙ ДИЗАЙН ЧАСОВ — настройка неонового свечения (Glow), скругления рамки часов, прозрачности подложки, акцентного цвета минут, жирности шрифта и мигающего разделителя",
+            "🎨 СТУДИЯ СОЗДАНИЯ КАСТОМНЫХ ТЕМ 2.5 — живое интерактивное превью темы, выбор режима (Dark / AMOLED / Light), настройка 7 цветовых каналов, радиуса скругления карточек, масштаба иконок и свечения при наведении",
+            "🔐 ОБНОВЛЕННОЕ ШИФРОВАНИЕ ДАННЫХ 2.5 — деривация ключей PBKDF2-HMAC-SHA256 (100 000 итераций), контроль целостности HMAC-SHA256, ротация ключей и обратная совместимость с v2.4",
+            "🔌 УЛУЧШЕННЫЙ APPLICATION & PLUGIN API 2.5 — шифрованное хранилище секретов для плагинов, хуки смены темы/часов (on_theme_changed, on_clock_style_changed) и диагностика безопасности",
+            "📜 ПОЛНАЯ ИСТОРИЯ ОБНОВЛЕНИЙ — добавлен полный архив изменений всех версий программы с 1.0 по 2.5",
+        ],
+        "2.4": [
+            "🚀 LAUNCHER HAB 2.4 — DARK SLATE PRO, LIVE SESSION TRACKER (С 0) И ANDROID 14 ЧАСЫ",
+            "🎨 ИСПРАВЛЕНЫ ЦВЕТА И РАМКИ (#AARRGGBB) — убраны желтые полосы, внедрен графитовый стиль Midnight Slate",
+            "🔐 ИСПРАВЛЕНО СОХРАНЕНИЕ И ШИФРОВАНИЕ НАСТРОЕК — валидный 32-байтовый ключ Fernet без потери данных",
+            "⏱️ GAME & APP SESSION TRACKER С 0 — честный отсчет времени с 00:00 при запуске приложения и живой таймер на карточках",
+            "🧩 ПЛАГИНЫ В СПИСКЕ ЗАПУСКА И МАГАЗИН РАСШИРЕНИЙ — скачивание, настройка, включение и удаление плагинов в 1 клик",
+            "🕒 ВЕРТИКАЛЬНЫЕ ЧАСЫ ANDROID 14 — крупный вертикальный виджет часов (HH / MM) и 8 современных стилей",
+            "🔊 ФОНОВЫЙ КОНТРОЛЛЕР СИСТЕМНОЙ ГРОМКОСТИ — плавная регулировка громкости в фоновом потоке",
+        ],
+        "2.3": [
+            "🎨 УЛУЧШЕННЫЙ LIQUID GLASS ИНТЕРФЕЙС – переработанный стеклянный дизайн, плавные эффекты прозрачности и более современный внешний вид",
+            "🖥 FLOATING HUD – новая плавающая панель с системной информацией и быстрым доступом к функциям",
+            "🗑 ФИКСИРОВАННАЯ КОРЗИНА – корзина закреплена в правом нижнем углу интерфейса",
+            "🔎 ИСТОРИЯ ПОИСКА – система поиска теперь сохраняет предыдущие запросы для более быстрого доступа",
+            "💾 УЛУЧШЕННАЯ СИСТЕМА РЕЗЕРВНОГО КОПИРОВАНИЯ – стабильное сохранение и восстановление настроек и данных пользователя",
+            "🕒 НОВЫЕ СТИЛИ ЧАСОВ – добавлены дополнительные варианты отображения времени и даты с кастомизацией цвета",
+            "🎨 УЛУЧШЕННАЯ ПАНЕЛЬ НАСТРОЕК – более гармоничный дизайн и удобная навигация",
+            "🔌 СИСТЕМА ПЛАГИНОВ – поддержка расширений LauncherHub для добавления новых возможностей",
+            "🎯 FOCUS MODE PLUGIN – режим концентрации с Pomodoro таймером и минималистичным интерфейсом",
+            "🌦 SMART WEATHER PLUGIN – отображение температуры, влажности и скорости ветра",
+            "🎵 SMART MUSIC CONTROLLER – управление музыкой через встроенный мини-плеер",
+            "📂 SMART FILE FINDER И IDEA NOTEBOOK – быстрый поиск файлов и встроенный блокнот для идей",
+        ],
+        "2.2": [
+            "🚀 LAUNCHER HAB 2.2 - ОПТИМИЗАЦИЯ И КАСТОМИЗАЦИЯ",
+            "⚡ ОПТИМИЗАЦИЯ ПРОИЗВОДИЛЬНОСТИ - снижение потребления памяти на 40%",
+            "🔍 КЭШИРОВАНИЕ ПОИСКА - мгновенные результаты при повторных запросах",
+            "📱 ВИРТУАЛИЗАЦИЯ СПИСКОВ - плавная работа с тысячами приложений",
+            "💾 СИСТЕМА РЕЗЕРВНОГО КОПИРОВАНИЯ - полное сохранение/восстановление настроек",
+            "⌨️ РАСШИРЕННЫЕ ГОРЯЧИЕ КЛАВИШИ - кастомные комбинации клавиш",
+            "👆 УПРАВЛЕНИЕ ЖЕСТАМИ - свайпы для быстрых действий",
+            "🕒 КАСТОМИЗАЦИЯ ВРЕМЕНИ - форматы 12/24 часа, выбор стиля отображения",
+            "🔤 НАСТРОЙКИ ШРИФТОВ - выбор шрифта и размера текста",
+            "🔄 АВТОМАТИЧЕСКИЕ БЭКАПЫ - регулярное сохранение настроек",
+            "🎯 ОПТИМИЗИРОВАННЫЙ РЕНДЕРИНГ - отложенная загрузка элементов",
+            "🔧 УЛУЧШЕННЫЙ КЭШ-МЕНЕДЖЕР - интеллектуальное кэширование данных",
+            "📊 СИСТЕМА МОНИТОРИНГА ПРОИЗВОДИЛЬНОСТИ - отслеживание потребления ресурсов",
+            "🐛 ИСПРАВЛЕНИЕ МЕЛКИХ ОШИБОК И УЛУЧШЕНИЕ СТАБИЛЬНОСТИ",
+        ],
+        "2.1": [
+            "🧩 СИСТЕМА ПЛАГИНОВ - модульное расширение функциональности",
+            "🔌 Менеджер плагинов с загрузкой/выгрузкой в реальном времени",
+            "📁 Автоматическое обнаружение плагинов в папке 'plugins'",
+            "🎛️ Компактный аудио-контроллер в основном интерфейсе",
+            "🔊 Управление системной громкостью через слайдер",
+            "📶 Переключатели Bluetooth и Wi-Fi",
+            "🎨 РАСШИРЕННАЯ СИСТЕМА КАСТОМНЫХ ТЕМ",
+            "🌈 Создание собственных тем оформления",
+            "🔄 Динамическое обновление списка тем",
+            "⚡ Оптимизация производительности системы плагинов",
+            "🔧 Улучшенный API для разработчиков плагинов",
+            "📱 Лучшая адаптация для сенсорных устройств",
+            "🎯 Улучшенная навигация в настройках",
+            "🐛 Исправление мелких ошибок интерфейса",
+        ],
+        "2.0": [
+            "🚀 МАЖОРНОЕ ОБНОВЛЕНИЕ - ПОЛНАЯ ПЕРЕРАБОТКА",
+            "🎨 Новая улучшенная темная тема с лучшей контрастностью",
+            "⚡ Оптимизация производительности - на 30% меньше потребления ресурсов",
+            "📱 Уникальные Android-анимации открытия окон",
+            "✨ Эффекты наведения для всех элементов интерфейса",
+            "🔧 Полная модуляризация кодовой базы",
+            "🎯 Улучшенная система цветов и теней",
+            "📚 Добавлено 50+ новых иконок Material Design",
+            "🔄 Переработанный интерфейс настроек",
+            "💫 Плавные переходы между состояниями",
+            "🎪 Анимации масштабирования при наведении",
+            "🔮 Улучшенный Glass Morphism с настраиваемой интенсивностью",
+            "📊 Оптимизированная работа с памятью",
+            "⚙️ Умное кэширование ресурсов",
+            "🌙 Автоматическое управление темой",
+            "🔍 Улучшенный поиск с подсказками",
+            "📱 Адаптивный дизайн для всех разрешений",
+            "🎮 Геймифицированный интерфейс",
+            "🔒 Улучшенная система безопасности",
+            "📦 Модульная архитектура для легкого расширения",
+        ],
+        "1.9": [
+            "🔐 Система шифрования — безопасное хранение настроек",
+            "🛡️ Обработка исключений — try/catch во всех компонентах",
+            "⚡ Управление потоками — ThreadPool и асинхронность",
+            "🔮 Glass Morphism — полупрозрачные эффекты для кнопок",
+            "🎯 Избранное в основной части — полноразмерные плитки",
+            "🎨 Система кастомных тем — создавайте свои темы",
+            "📱 Адаптивный дизайн — улучшенная UX/UI",
+            "🔧 Оптимизация производительности — ThreadPoolManager",
+            "🚀 Асинхронные операции — плавный интерфейс",
+            "💎 Улучшенная безопасность — Fernet шифрование",
+        ],
+        "1.8": [
+            "📱 Панель устройств перемещена в header",
+            "⭐ Панель избранного в основной части",
+            "🎯 Убрано постоянное свечение фильтров",
+            "📏 Уменьшена высота диалога фильтров",
+            "📁 Кнопка проводника в диалоге добавления",
+            "🔋 Система мониторинга устройств в реальном времени",
+            "🔒 Ограничение избранного до 10 приложений",
+            "💎 Оптимизация интерфейса для компактности",
+            "🔄 Улучшенное обновление интерфейса в реальном времени",
+            "🎨 Плавные анимации для избранных приложений",
+            "📊 Точный мониторинг батареи с процентами",
+            "🌐 Улучшенное определение сетевых соединений",
+            "🔧 Исправлены ошибки кодировки при работе с реестром",
+        ],
+        "1.7": [
+            "🎨 Улучшенный визуальный дизайн с тенями и разделителями",
+            "📱 Сбалансированные размеры иконок и текста",
+            "🖱️ Плавные hover-анимации карточек приложений",
+            "✨ Свечение Fluent Design при наведении",
+            "🎯 Улучшенная контрастность текстов",
+            "📂 Визуальное разделение между секциями",
+            "🔧 Улучшенная кнопка фильтра с tooltip",
+            "🚀 Плавная прокрутка главной страницы",
+            "🎨 Более яркие акцентные цвета",
+            "⚡ Стабильное переключение тем без артефактов",
+            "💎 Express-кнопка добавления приложений с градиентом",
+            "🕒 Обновленная верхняя панель с местом для аватара",
+            "🔔 Информативные tooltip'ы для статусов приложений",
+        ],
+        "1.6": [
+            "Мгновенное обновление интерфейса при изменениям",
+            "Компактная система фильтров в сайдбаре",
+            "Увеличенные иконки приложений (70% площади)",
+            "Увеличенные кнопки приложений для лучшего UX",
+            "Исправлены все проблемы со сменой тем",
+            "Полная синхронизация цветов интерфейса",
+            "Автоматическое обновление без перезапуска",
+        ],
+        "1.5": [
+            "4 темы оформления: Тёмная, Светлая, Фиолетовая, Весна",
+            "Улучшенная светлая тема с лучшей читаемостью",
+            "Красивая фиолетовая тема",
+            "Нежная тема 'Весна' в цветах сакуры",
+            "Удобный переключатель тем в настройках",
+            "Увеличены иконки приложений для лучшей видимости",
+            "Исправлено выравнивание элементов интерфейса",
+            "Визуальный выбор иконок при добавлении приложений",
+            "Улучшенный дизайн загрузки приложений",
+            "Все приложения выровнены по сетке",
+            "Убраны иконки '+' из хедера",
+            "Статичная кнопка добавления приложения",
+        ],
+        "1.4": [
+            "Кнопка меню (три точки) для каждого приложения",
+            "Быстрый доступ к избранному через меню",
+            "Изменение пути к файлу для любого приложения",
+            "Удаление кастомных приложений через меню",
+            "Улучшенное управление приложениями",
+            "Более удобная навигация по функциям",
+        ],
+        "1.3": [
+            "Продвинутые анимации интерфейса",
+            "Номер эффекта для кнопок",
+            "Анимация запуска приложений",
+            "Главное подавление элементов",
+            "Анимация переключения тем",
+            "Контекстовное меню по клику",
+        ],
+        "1.2": [
+            "Официальные сайты для скачивания",
+            "Добавление своих приложений",
+            "Улучшенный поиск приложений",
+            "Сохранение всех изменений",
+            "Правильное определение Word, Excel",
+            "Улучшена проверка установки",
+            "Оптимизировано сохранение данных",
+        ],
+        "1.1": [
+            "Таймер времени — правильное обновление",
+            "Сохранение избранного между запусками",
+            "Улучшенная проверка установки приложений",
+            "Универсальные системные команды",
+            "Ручной выбор пути к приложению",
+            "Цветовые индикаторы для веб-приложений",
+            "Контекстовное меню (долгое нажатие)",
+            "Сохранение настроек и ручных путей",
+        ],
+        "1.0": [
+            "Базовый запуск приложений",
+            "Категории приложений",
+            "Тёмная тема",
+            "Поиск приложений",
+        ],
+    }
+
     def __init__(self, ui_core):
         self.core = ui_core
 
     def _alpha(self, hex_color: str, opacity: float) -> str:
         return GlassMorphism._apply_opacity(hex_color, opacity)
+
+    def _create_lit_switch_row(self, title: str, subtitle: str, initial_value: bool, on_toggle, colors: dict):
+        """
+        Создает интерактивную строку настройки, которая МГНОВЕННО «зажигается» (меняет цвет, рамку, свечение и бейдж статуса
+        с «⚪ Неактивно» на «🟢 АКТИВНО») сразу при переключении!
+        """
+        state = {"active": bool(initial_value)}
+
+        status_badge = ft.Container(
+            padding=ft.padding.symmetric(horizontal=10, vertical=4),
+            border_radius=8,
+        )
+        sw = ft.Switch(
+            value=state["active"],
+            active_track_color=colors["SUCCESS"],
+        )
+        row_container = ft.Container(
+            padding=12,
+            border_radius=12,
+            animate=ft.Animation(180, ft.AnimationCurve.EASE_OUT),
+        )
+
+        def _sync_visual():
+            is_on = state["active"]
+            status_badge.content = ft.Text(
+                "🟢 АКТИВНО" if is_on else "⚪ НЕАКТИВНО",
+                size=11,
+                weight=ft.FontWeight.BOLD,
+                color=colors["SUCCESS"] if is_on else colors["ON_SURFACE_VARIANT"],
+            )
+            status_badge.bgcolor = (
+                self._alpha(colors["SUCCESS"], 0.18) if is_on else self._alpha(colors["SURFACE_VARIANT"], 0.5)
+            )
+            row_container.bgcolor = (
+                self._alpha(colors["ACCENT"], 0.14) if is_on else self._alpha(colors["SURFACE_VARIANT"], 0.35)
+            )
+            row_container.border = ft.border.all(
+                1.5 if is_on else 1,
+                colors["ACCENT"] if is_on else colors["OUTLINE"],
+            )
+            row_container.shadow = (
+                ft.BoxShadow(blur_radius=12, color=self._alpha(colors["ACCENT"], 0.25), offset=ft.Offset(0, 2))
+                if is_on
+                else None
+            )
+
+        def _handle_change(e):
+            state["active"] = bool(sw.value)
+            _sync_visual()
+            try:
+                row_container.update()
+            except Exception:
+                pass
+            if on_toggle:
+                on_toggle(state["active"])
+
+        sw.on_change = _handle_change
+        _sync_visual()
+
+        row_container.content = ft.Row(
+            [
+                sw,
+                ft.Column(
+                    [
+                        ft.Text(title, weight=ft.FontWeight.W_600, size=13, color=colors["ON_SURFACE"]),
+                        ft.Text(subtitle, size=11, color=colors["ON_SURFACE_VARIANT"]),
+                    ],
+                    spacing=2,
+                    expand=True,
+                ),
+                status_badge,
+            ],
+            spacing=10,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        return row_container
 
     def show_filter_menu(self, e):
         if self.core.filter_dialog_open:
@@ -54,14 +327,18 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                                 color=colors["ON_SURFACE"],
                                 weight=ft.FontWeight.W_600 if is_active else ft.FontWeight.NORMAL,
                             ),
-                            ft.Icon("check", color=colors["ACCENT"], size=16)
-                            if is_active
-                            else ft.Container(width=16, height=16),
+                            ft.Text(
+                                "🟢 АКТИВНО" if is_active else "",
+                                size=11,
+                                color=colors["SUCCESS"],
+                                weight=ft.FontWeight.BOLD,
+                            ),
                         ]
                     ),
                     on_click=lambda e, ft_val=filter_type: apply_selected_filter(ft_val, e),
                     padding=14,
-                    bgcolor=self._alpha(colors["ACCENT"], 0.16) if is_active else "transparent",
+                    bgcolor=self._alpha(colors["ACCENT"], 0.18) if is_active else "transparent",
+                    border=ft.border.all(1.5, colors["ACCENT"]) if is_active else None,
                     border_radius=10,
                 )
             )
@@ -77,7 +354,9 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
         dialog = ft.AlertDialog(
             modal=True,
-            content=ft.Container(content=dialog_content, padding=16, bgcolor=colors["SURFACE"], border_radius=14, width=360),
+            content=ft.Container(
+                content=dialog_content, padding=16, bgcolor=colors["SURFACE"], border_radius=14, width=380
+            ),
             actions=[ft.TextButton("Закрыть", on_click=close_dialog)],
             shape=ft.RoundedRectangleBorder(radius=14),
         )
@@ -92,15 +371,21 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 content=ft.Row(
                     [
                         ft.Icon("tune", color=colors["ACCENT"], size=24),
-                        ft.Text("Настройки Launcher Hab 2.4", size=20, weight=ft.FontWeight.BOLD),
+                        ft.Text("Настройки Launcher Hab 2.5", size=20, weight=ft.FontWeight.BOLD),
+                        ft.Container(
+                            content=ft.Text("🟢 Live Sync 2.5", size=11, color=colors["SUCCESS"], weight=ft.FontWeight.BOLD),
+                            bgcolor=self._alpha(colors["SUCCESS"], 0.16),
+                            padding=ft.padding.symmetric(horizontal=10, vertical=4),
+                            border_radius=8,
+                        ),
                     ]
                 ),
                 padding=ft.padding.only(bottom=6),
             ),
             content=ft.Container(
                 content=settings_content,
-                width=760,
-                height=620,
+                width=820,
+                height=650,
             ),
             actions=[
                 ft.TextButton(
@@ -116,10 +401,10 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
     def create_modern_settings(self, colors):
         return ft.Tabs(
             selected_index=0,
-            animation_duration=280,
+            animation_duration=260,
             tabs=[
                 ft.Tab(
-                    text="Внешний вид и Часы",
+                    text="Персонализация и Часы (18)",
                     icon=ft.Icon("palette"),
                     content=self.create_appearance_settings(colors),
                 ),
@@ -129,17 +414,17 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                     content=self.create_apps_settings(colors),
                 ),
                 ft.Tab(
-                    text="Плагины и Магазин",
+                    text="Плагины и API 2.5",
                     icon=ft.Icon("extension"),
                     content=self.create_plugins_settings(colors),
                 ),
                 ft.Tab(
-                    text="Система и Бэкапы",
-                    icon=ft.Icon("settings"),
+                    text="Система и Шифрование",
+                    icon=ft.Icon("security"),
                     content=self.create_system_settings_tab(colors),
                 ),
                 ft.Tab(
-                    text="История версий",
+                    text="История версий (1.0–2.5)",
                     icon=ft.Icon("history_edu"),
                     content=self.create_version_history(colors),
                 ),
@@ -152,26 +437,32 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             content=ft.Column(
                 [
                     self.create_settings_section(
-                        "Тема оформления",
-                        "Основная темная тема Midnight Slate (как на скриншоте 2), AMOLED Оникс и кастомные схемы",
+                        "Тема оформления (С мгновенной подсветкой активной темы)",
+                        "При выборе темы карточка сразу загорается статусом «🟢 АКТИВНО» и обновляет интерфейс",
                         self.create_theme_selector(colors),
                         colors,
                     ),
                     self.create_settings_section(
-                        "🕒 Вертикальные часы Android 14 и стили часов",
-                        "Настройте вертикальные часы как на Android, Flip-часы, капсулу и цвета",
+                        "🕒 18 Стилей Часов и Расширенный Дизайн Часов (v2.5)",
+                        "Вертикальные часы Android 14 + 10 новых дизайнерских стилей, неоновое свечение, рамка и прозрачность",
                         self.create_customization_settings(colors),
                         colors,
                     ),
                     self.create_settings_section(
-                        "Эффекты прозрачного стекла (Glassmorphism 2.4)",
-                        "Управление размытием, прозрачностью и плавными анимациями",
+                        "✨ Персонализация карточек, иконок и свечения (v2.5)",
+                        "Настройте радиус скругления плиток, масштаб иконок, цвет индикатора запуска и свечение при наведении",
+                        self.create_personalization_settings(colors),
+                        colors,
+                    ),
+                    self.create_settings_section(
+                        "Эффекты прозрачного стекла (Glassmorphism 2.5)",
+                        "Управление размытием ft.Blur, плотностью фона и плавными анимациями",
                         self.create_effects_settings(colors),
                         colors,
                     ),
                     self.create_settings_section(
-                        "Кастомные темы",
-                        "Создавайте, экспортируйте и удаляйте собственные темы",
+                        "🎨 Студия создания кастомных тем Pro (v2.5)",
+                        "Создавайте собственные темы с живым превью, 7 цветовыми каналами и настройкой геометрии",
                         self.create_custom_themes_management(colors),
                         colors,
                     ),
@@ -179,6 +470,121 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 scroll=ft.ScrollMode.ADAPTIVE,
             ),
             padding=16,
+        )
+
+    def create_personalization_settings(self, colors):
+        """Новые настройки глубокой персонализации интерфейса v2.5 с мгновенным зажиганием активного статуса."""
+        active_colors_container = ft.Row(spacing=10, wrap=True)
+        indicator_presets = [
+            ("#10b981", "Изумрудный"),
+            ("#3b82f6", "Синий неон"),
+            ("#a855f7", " Аметист"),
+            ("#f59e0b", "Янтарь"),
+            ("#ec4899", "Кибер-Розовый"),
+            ("#06b6d4", "Циан"),
+        ]
+
+        def rebuild_indicator_chips():
+            active_colors_container.controls.clear()
+            cur_ind = getattr(self.core.theme_manager, "active_app_color", "#10b981")
+            for hex_c, label in indicator_presets:
+                is_sel = cur_ind.lower() == hex_c.lower()
+                active_colors_container.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                ft.Container(width=14, height=14, bgcolor=hex_c, border_radius=7),
+                                ft.Text(
+                                    f"{label} {'• АКТИВНО' if is_sel else ''}",
+                                    size=11,
+                                    weight=ft.FontWeight.BOLD if is_sel else ft.FontWeight.NORMAL,
+                                    color="#ffffff" if is_sel else colors["ON_SURFACE_VARIANT"],
+                                ),
+                            ],
+                            spacing=6,
+                            tight=True,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=12, vertical=8),
+                        bgcolor=self._alpha(hex_c, 0.25) if is_sel else self._alpha(colors["SURFACE_VARIANT"], 0.45),
+                        border=ft.border.all(2 if is_sel else 1, hex_c if is_sel else colors["OUTLINE"]),
+                        border_radius=10,
+                        shadow=ft.BoxShadow(blur_radius=12, color=self._alpha(hex_c, 0.35)) if is_sel else None,
+                        on_click=lambda e, hc=hex_c: _select_indicator(hc),
+                    )
+                )
+
+        def _select_indicator(hex_c):
+            self.core.theme_manager.set_personalization_preferences(active_app_color=hex_c)
+            rebuild_indicator_chips()
+            try:
+                active_colors_container.update()
+            except Exception:
+                pass
+            self.core.update_main_content()
+            self.core.update_sidebar()
+            self.core.show_toast(f"🟢 Цвет активного индикатора: {hex_c}")
+
+        rebuild_indicator_chips()
+
+        hover_glow_row = self._create_lit_switch_row(
+            "Свечение карточек при наведении курсора (Hover Glow)",
+            "Плитки приложений мягко подсвечиваются акцентным ореолом при наведении",
+            getattr(self.core.theme_manager, "card_hover_glow", True),
+            lambda val: (
+                self.core.theme_manager.set_personalization_preferences(card_hover_glow=val),
+                self.core.update_main_content(),
+                self.core.show_toast("🟢 Свечение карточек включено" if val else "⚪ Свечение карточек выключено"),
+            ),
+            colors,
+        )
+
+        return ft.Column(
+            [
+                hover_glow_row,
+                ft.Text("Цвет подсветки запущенных приложений:", size=13, weight=ft.FontWeight.W_600),
+                active_colors_container,
+                ft.Row(
+                    [
+                        ft.Text("Радиус скругления карточек:", size=13, width=210),
+                        ft.Slider(
+                            value=getattr(self.core.theme_manager, "card_border_radius", 18),
+                            min=8,
+                            max=30,
+                            divisions=22,
+                            label="{value}px",
+                            active_color=colors["ACCENT"],
+                            on_change=lambda e: (
+                                self.core.theme_manager.set_personalization_preferences(
+                                    card_border_radius=int(e.control.value)
+                                ),
+                                self.core.update_main_content(),
+                            ),
+                            expand=True,
+                        ),
+                    ]
+                ),
+                ft.Row(
+                    [
+                        ft.Text("Масштаб иконок приложений (%):", size=13, width=210),
+                        ft.Slider(
+                            value=getattr(self.core.theme_manager, "icon_scale_pct", 100),
+                            min=80,
+                            max=130,
+                            divisions=10,
+                            label="{value}%",
+                            active_color=colors["ACCENT"],
+                            on_change=lambda e: (
+                                self.core.theme_manager.set_personalization_preferences(
+                                    icon_scale_pct=int(e.control.value)
+                                ),
+                                self.core.update_main_content(),
+                            ),
+                            expand=True,
+                        ),
+                    ]
+                ),
+            ],
+            spacing=12,
         )
 
     def create_apps_settings(self, colors):
@@ -202,7 +608,7 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             content=ft.Column(
                 [
                     self.create_settings_section(
-                        "Центр плагинов и расширений (API 2.4)",
+                        "Центр плагинов и расширений (API 2.5)",
                         "Скачивайте новые плагины, меняйте их настройки, включайте в список запуска или удаляйте",
                         self.core.plugin_manager.create_plugin_ui(colors),
                         colors,
@@ -214,9 +620,50 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         )
 
     def create_system_settings_tab(self, colors):
+        sec_status = {}
+        if hasattr(self.core.app_manager.file_manager, "encryption_manager"):
+            em = self.core.app_manager.file_manager.encryption_manager
+            if hasattr(em, "get_security_status"):
+                sec_status = em.get_security_status()
+
+        security_card = ft.Container(
+            bgcolor=self._alpha(colors["SUCCESS"], 0.12),
+            border=ft.border.all(1.5, colors["SUCCESS"]),
+            border_radius=12,
+            padding=14,
+            content=ft.Column(
+                [
+                    ft.Row(
+                        [
+                            ft.Icon("verified_user", color=colors["SUCCESS"], size=22),
+                            ft.Text(
+                                f"Криптографическая защита v{sec_status.get('version', '2.5')} — 🟢 АКТИВНО",
+                                weight=ft.FontWeight.BOLD,
+                                size=14,
+                                color=colors["ON_SURFACE"],
+                            ),
+                        ],
+                        spacing=8,
+                    ),
+                    ft.Text(
+                        f"Алгоритм: {sec_status.get('engine', 'Fernet AES-128 + HMAC-SHA256')} • KDF: {sec_status.get('kdf', 'PBKDF2-HMAC-SHA256')}",
+                        size=12,
+                        color=colors["ON_SURFACE_VARIANT"],
+                    ),
+                ],
+                spacing=4,
+            ),
+        )
+
         return ft.Container(
             content=ft.Column(
                 [
+                    self.create_settings_section(
+                        "🔐 Шифрование данных и безопасность (v2.5)",
+                        "Автоматическое шифрование настроек PBKDF2-HMAC-SHA256 + контроль целостности",
+                        security_card,
+                        colors,
+                    ),
                     self.create_settings_section(
                         "Smart Workspace",
                         "Пресеты одновременного запуска игр, браузеров и рабочих программ",
@@ -234,33 +681,43 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                     ),
                     self.create_settings_section(
                         "Поведение окна и уведомления",
-                        "Режим рабочего стола, автообновление и системные уведомления",
+                        "Каждая настройка мгновенно загорается при активации",
                         ft.Column(
                             [
-                                ft.Row(
-                                    [
-                                        ft.Switch(
-                                            value=self.core.theme_manager.desktop_mode_enabled,
-                                            on_change=lambda e: (
-                                                self.core.theme_manager.set_desktop_mode(e.control.value),
-                                                self.core.show_toast("✅ Настройка режима окна сохранена"),
-                                            ),
-                                            active_track_color=colors["ACCENT"],
-                                        ),
-                                        ft.Text("Режим замены рабочего стола (возвращать окно после сворачивания)", expand=True),
-                                    ]
+                                self._create_lit_switch_row(
+                                    "Режим замены рабочего стола",
+                                    "Возвращать окно лаунчера после сворачивания",
+                                    self.core.theme_manager.desktop_mode_enabled,
+                                    lambda val: (
+                                        self.core.theme_manager.set_desktop_mode(val),
+                                        self.core.show_toast("🟢 Режим рабочего стола активен" if val else "⚪ Режим рабочего стола выключен"),
+                                    ),
+                                    colors,
                                 ),
-                                ft.Row(
-                                    [
-                                        ft.Switch(
-                                            value=self.core.system_notifications_enabled,
-                                            on_change=self.core.toggle_system_notifications,
-                                            active_track_color=colors["ACCENT"],
-                                        ),
-                                        ft.Text("Системные всплывающие уведомления при запуске", expand=True),
-                                    ]
+                                self._create_lit_switch_row(
+                                    "Системные всплывающие уведомления",
+                                    "Показывать уведомления о запуске приложений и действиях",
+                                    self.core.system_notifications_enabled,
+                                    lambda val: (
+                                         setattr(self.core, "system_notifications_enabled", val),
+                                        setattr(self.core.theme_manager, "system_notifications_enabled", val),
+                                        self.core.theme_manager.save_settings(),
+                                        self.core.show_toast("🟢 Уведомления включены" if val else "⚪ Уведомления выключены"),
+                                    ),
+                                    colors,
                                 ),
-                                self.create_auto_update_settings(colors),
+                                self._create_lit_switch_row(
+                                    "Автоматическое обновление интерфейса",
+                                    "Мгновенная синхронизация карточек при любых изменениях",
+                                    self.core.auto_update_enabled,
+                                    lambda val: (
+                                        setattr(self.core, "auto_update_enabled", val),
+                                        setattr(self.core.theme_manager, "auto_update_enabled", val),
+                                        self.core.theme_manager.save_settings(),
+                                        self.core.show_toast("🟢 Автообновление активно" if val else "⚪ Автообновление выключено"),
+                                    ),
+                                    colors,
+                                ),
                             ],
                             spacing=10,
                         ),
@@ -293,75 +750,42 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
     def create_performance_settings(self, colors):
         return ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=self.core.theme_manager.search_cache_enabled,
-                            on_change=lambda e: (
-                                self.core.set_performance_settings(
-                                    e.control.value, self.core.theme_manager.virtualization_enabled
-                                ),
-                                self.core.show_toast("✅ Настройки кэша сохранены"),
-                            ),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text("Кэширование поиска", weight=ft.FontWeight.W_500),
-                                ft.Text("Мгновенные результаты при повторных запросах", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ],
-                            expand=True,
-                        ),
-                    ]
+                self._create_lit_switch_row(
+                    "Кэширование поиска",
+                    "Мгновенные результаты при повторных поисковых запросах",
+                    self.core.theme_manager.search_cache_enabled,
+                    lambda val: (
+                        self.core.set_performance_settings(val, self.core.theme_manager.virtualization_enabled),
+                        self.core.show_toast("🟢 Кэширование поиска активно" if val else "⚪ Кэширование поиска отключено"),
+                    ),
+                    colors,
                 ),
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=self.core.theme_manager.virtualization_enabled,
-                            on_change=lambda e: (
-                                self.core.set_performance_settings(
-                                    self.core.theme_manager.search_cache_enabled, e.control.value
-                                ),
-                                self.core.show_toast("✅ Настройки виртуализации сохранены"),
-                            ),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text("Виртуализация списков", weight=ft.FontWeight.W_500),
-                                ft.Text("Плавная работа с большим списком приложений", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ],
-                            expand=True,
-                        ),
-                    ]
+                self._create_lit_switch_row(
+                    "Виртуализация списков",
+                    "Плавная работа с большим списком приложений",
+                    self.core.theme_manager.virtualization_enabled,
+                    lambda val: (
+                        self.core.set_performance_settings(self.core.theme_manager.search_cache_enabled, val),
+                        self.core.show_toast("🟢 Виртуализация активна" if val else "⚪ Виртуализация отключена"),
+                    ),
+                    colors,
                 ),
             ],
-            spacing=12,
+            spacing=10,
         )
 
     def create_backup_settings(self, colors):
         return ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=self.core.theme_manager.backup_auto,
-                            on_change=lambda e: (
-                                self.core.theme_manager.set_backup_settings(
-                                    e.control.value, self.core.theme_manager.backup_interval
-                                ),
-                                self.core.show_toast("✅ Авто-бэкап сохранен"),
-                            ),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text("Автоматическое резервное копирование", weight=ft.FontWeight.W_500),
-                                ft.Text("Регулярное сохранение всех настроек", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ],
-                            expand=True,
-                        ),
-                    ]
+                self._create_lit_switch_row(
+                    "Автоматическое резервное копирование",
+                    "Регулярное сохранение всех настроек в фоновом режиме",
+                    self.core.theme_manager.backup_auto,
+                    lambda val: (
+                        self.core.theme_manager.set_backup_settings(val, self.core.theme_manager.backup_interval),
+                        self.core.show_toast("🟢 Авто-бэкап включен" if val else "⚪ Авто-бэкап выключен"),
+                    ),
+                    colors,
                 ),
                 ft.Text("Интервал автоматического бэкапа:", size=13, weight=ft.FontWeight.W_500),
                 ft.Dropdown(
@@ -431,118 +855,227 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         )
 
     def create_customization_settings(self, colors):
-        """Расширенные настройки часов (включая вертикальные часы Android 14 и популярные стили)."""
+        """
+        Расширенные настройки дизайна часов v2.5 (18 стилей часов!).
+        При клике на любой стиль или параметр карточка мгновенно ЗАЖИГАЕТСЯ («🟢 АКТИВНО»).
+        """
         clock_styles = list(self.core.theme_manager.CLOCK_STYLES.items())
+        styles_grid = ft.Row(wrap=True, spacing=8, run_spacing=8)
 
-        style_buttons = []
-        for s_key, s_label in clock_styles:
-            is_sel = getattr(self.core.theme_manager, "clock_style", "android_vertical") == s_key
-            style_buttons.append(
-                ft.FilledButton(
-                    s_label,
-                    on_click=lambda e, k=s_key: self.set_clock_preferences(style=k),
-                    style=ft.ButtonStyle(
-                        color="#ffffff" if is_sel else colors["ON_SURFACE_VARIANT"],
-                        bgcolor=colors["ACCENT"] if is_sel else colors["SURFACE_VARIANT"],
-                    ),
+        def rebuild_clock_style_cards():
+            styles_grid.controls.clear()
+            cur_style = getattr(self.core.theme_manager, "clock_style", "android_vertical")
+            for s_key, s_label in clock_styles:
+                is_sel = cur_style == s_key
+                styles_grid.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                ft.Icon(
+                                    "check_circle" if is_sel else "schedule",
+                                    size=16,
+                                    color=colors["SUCCESS"] if is_sel else colors["ON_SURFACE_VARIANT"],
+                                ),
+                                ft.Text(
+                                    s_label,
+                                    size=12,
+                                    weight=ft.FontWeight.BOLD if is_sel else ft.FontWeight.NORMAL,
+                                    color="#ffffff" if is_sel else colors["ON_SURFACE"],
+                                ),
+                                ft.Container(
+                                    content=ft.Text(
+                                        "АКТИВНО" if is_sel else "",
+                                        size=9,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=colors["SUCCESS"],
+                                    ),
+                                    visible=is_sel,
+                                ),
+                            ],
+                            spacing=6,
+                            tight=True,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=12, vertical=9),
+                        bgcolor=self._alpha(colors["ACCENT"], 0.24) if is_sel else self._alpha(colors["SURFACE_VARIANT"], 0.45),
+                        border=ft.border.all(2 if is_sel else 1, colors["ACCENT"] if is_sel else colors["OUTLINE"]),
+                        border_radius=11,
+                        shadow=ft.BoxShadow(blur_radius=12, color=self._alpha(colors["ACCENT"], 0.35)) if is_sel else None,
+                        on_click=lambda e, k=s_key: _select_style(k),
+                    )
                 )
-            )
 
-        color_presets = ["#f1f5f9", "#60a5fa", "#10b981", "#fbbf24", "#f472b6", "#c084fc"]
-        preset_chips = [
-            ft.Container(
-                width=28,
-                height=28,
-                bgcolor=hex_c,
-                border_radius=14,
-                border=ft.border.all(2, colors["ACCENT"] if self.core.theme_manager.time_color == hex_c else "transparent"),
-                on_click=lambda e, hc=hex_c: self.set_clock_preferences(time_color=hc),
-                tooltip=f"Цвет часов: {hex_c}",
-            )
-            for hex_c in color_presets
-        ]
+        def _select_style(k):
+            self.set_clock_preferences(style=k)
+            rebuild_clock_style_cards()
+            try:
+                styles_grid.update()
+            except Exception:
+                pass
+
+        rebuild_clock_style_cards()
+
+        # Быстрые цвета часов с мгновенным зажиганием
+        color_presets = ["#f1f5f9", "#60a5fa", "#10b981", "#fbbf24", "#f472b6", "#c084fc", "#ff3b30", "#00f5d4"]
+        preset_chips_row = ft.Row(spacing=8, wrap=True)
+
+        def rebuild_color_chips():
+            preset_chips_row.controls.clear()
+            cur_tc = getattr(self.core.theme_manager, "time_color", "#f1f5f9")
+            for hex_c in color_presets:
+                is_c = cur_tc.lower() == hex_c.lower()
+                preset_chips_row.controls.append(
+                    ft.Container(
+                        width=32,
+                        height=32,
+                        bgcolor=hex_c,
+                        border_radius=16,
+                        border=ft.border.all(3 if is_c else 1, "#ffffff" if is_c else colors["OUTLINE"]),
+                        shadow=ft.BoxShadow(blur_radius=10, color=hex_c) if is_c else None,
+                        content=ft.Icon("check", size=14, color="#000000") if is_c else None,
+                        alignment=ft.alignment.center,
+                        on_click=lambda e, hc=hex_c: _select_time_color(hc),
+                        tooltip=f"Цвет цифр: {hex_c}",
+                    )
+                )
+
+        def _select_time_color(hc):
+            self.set_clock_preferences(time_color=hc)
+            rebuild_color_chips()
+            try:
+                preset_chips_row.update()
+            except Exception:
+                pass
+
+        rebuild_color_chips()
+
+        # Акцентный цвет часов (для вертикальных минут, неона и бейджей)
+        accent_presets = ["#3b82f6", "#10b981", "#ef4444", "#a855f7", "#f59e0b", "#ec4899"]
+        accent_chips_row = ft.Row(spacing=8, wrap=True)
+
+        def rebuild_accent_chips():
+            accent_chips_row.controls.clear()
+            cur_ac = getattr(self.core.theme_manager, "clock_accent_color", "#3b82f6")
+            for hex_c in accent_presets:
+                is_c = cur_ac.lower() == hex_c.lower()
+                accent_chips_row.controls.append(
+                    ft.Container(
+                        width=32,
+                        height=32,
+                        bgcolor=hex_c,
+                        border_radius=16,
+                        border=ft.border.all(3 if is_c else 1, "#ffffff" if is_c else colors["OUTLINE"]),
+                        shadow=ft.BoxShadow(blur_radius=10, color=hex_c) if is_c else None,
+                        content=ft.Icon("check", size=14, color="#ffffff") if is_c else None,
+                        alignment=ft.alignment.center,
+                        on_click=lambda e, hc=hex_c: _select_clock_accent(hc),
+                        tooltip=f"Акцент часов: {hex_c}",
+                    )
+                )
+
+        def _select_clock_accent(hc):
+            self.set_clock_preferences(clock_accent_color=hc)
+            rebuild_accent_chips()
+            try:
+                accent_chips_row.update()
+            except Exception:
+                pass
+
+        rebuild_accent_chips()
+
+        # Формат 24 / 12 с мгновенным зажиганием
+        fmt_row = ft.Row(spacing=10)
+
+        def rebuild_fmt_buttons():
+            fmt_row.controls.clear()
+            cur_fmt = self.core.theme_manager.time_format
+            for fmt_val, fmt_label in [("24", "24-часовой формат (14:30)"), ("12", "12-часовой AM/PM (02:30 PM)")]:
+                is_f = cur_fmt == fmt_val
+                fmt_row.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                ft.Icon("check_circle" if is_f else "access_time", size=16, color=colors["SUCCESS"] if is_f else colors["ON_SURFACE_VARIANT"]),
+                                ft.Text(fmt_label, size=12, weight=ft.FontWeight.BOLD if is_f else ft.FontWeight.NORMAL),
+                                ft.Text("🟢 АКТИВНО" if is_f else "", size=10, color=colors["SUCCESS"], weight=ft.FontWeight.BOLD),
+                            ],
+                            spacing=6,
+                            tight=True,
+                        ),
+                        padding=ft.padding.symmetric(horizontal=14, vertical=9),
+                        bgcolor=self._alpha(colors["ACCENT"], 0.22) if is_f else self._alpha(colors["SURFACE_VARIANT"], 0.45),
+                        border=ft.border.all(2 if is_f else 1, colors["ACCENT"] if is_f else colors["OUTLINE"]),
+                        border_radius=10,
+                        on_click=lambda e, fv=fmt_val: _select_fmt(fv),
+                    )
+                )
+
+        def _select_fmt(fv):
+            self.core.set_time_format(fv)
+            rebuild_fmt_buttons()
+            try:
+                fmt_row.update()
+            except Exception:
+                pass
+            self.core.show_toast(f"🟢 Формат времени {fv}ч активирован")
+
+        rebuild_fmt_buttons()
 
         return ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=getattr(self.core.theme_manager, "show_android_clock_widget", True),
-                            on_change=lambda e: self.set_clock_preferences(show_android_clock_widget=e.control.value),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text("Крупный вертикальный виджет часов Android 14 на главном экране", weight=ft.FontWeight.W_600),
-                                ft.Text("Вертикальные часы (Часы сверху / Минуты снизу) как на экране блокировки Android", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ],
-                            expand=True,
-                        ),
-                    ]
+                ft.Text("Выберите стиль часов (18 стилей — выбранный сразу загорается):", size=14, weight=ft.FontWeight.BOLD),
+                styles_grid,
+                ft.Divider(color=colors["OUTLINE"], height=10),
+                self._create_lit_switch_row(
+                    "Крупный вертикальный виджет часов Android 14 на главном экране",
+                    "Показывает часы HH / MM, дату и быстрый переключатель 18 стилей над избранным",
+                    getattr(self.core.theme_manager, "show_android_clock_widget", True),
+                    lambda val: self.set_clock_preferences(show_android_clock_widget=val),
+                    colors,
                 ),
-                ft.Text("Стиль часов:", size=14, weight=ft.FontWeight.W_600),
-                ft.Row(style_buttons, wrap=True, spacing=8, run_spacing=8),
-                ft.Row(
-                    [
-                        ft.FilledButton(
-                            "24-часовой формат",
-                            on_click=lambda e: self.core.set_time_format("24"),
-                            style=ft.ButtonStyle(
-                                color="#ffffff" if self.core.theme_manager.time_format == "24" else colors["ON_SURFACE_VARIANT"],
-                                bgcolor=colors["ACCENT"] if self.core.theme_manager.time_format == "24" else colors["SURFACE_VARIANT"],
-                            ),
-                        ),
-                        ft.FilledButton(
-                            "12-часовой (AM/PM)",
-                            on_click=lambda e: self.core.set_time_format("12"),
-                            style=ft.ButtonStyle(
-                                color="#ffffff" if self.core.theme_manager.time_format == "12" else colors["ON_SURFACE_VARIANT"],
-                                bgcolor=colors["ACCENT"] if self.core.theme_manager.time_format == "12" else colors["SURFACE_VARIANT"],
-                            ),
-                        ),
-                    ],
-                    spacing=10,
+                self._create_lit_switch_row(
+                    "Неоновое свечение часов (Clock Neon Glow)",
+                    "Добавляет мягкий светящийся ореол вокруг виджета часов",
+                    getattr(self.core.theme_manager, "clock_glow_enabled", True),
+                    lambda val: self.set_clock_preferences(clock_glow_enabled=val),
+                    colors,
                 ),
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=getattr(self.core.theme_manager, "show_seconds", True),
-                            on_change=lambda e: self.set_clock_preferences(show_seconds=e.control.value),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Text("Показывать секунды", expand=True),
-                        ft.Switch(
-                            value=self.core.theme_manager.show_date,
-                            on_change=lambda e: self.set_clock_preferences(show_date=e.control.value),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Text("Показывать дату", expand=True),
-                    ]
+                self._create_lit_switch_row(
+                    "Показывать секунды",
+                    "Точный посекундный отсчет времени",
+                    getattr(self.core.theme_manager, "show_seconds", True),
+                    lambda val: self.set_clock_preferences(show_seconds=val),
+                    colors,
                 ),
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=getattr(self.core.theme_manager, "show_weekday", True),
-                            on_change=lambda e: self.set_clock_preferences(show_weekday=e.control.value),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Text("День недели (Пн, Вт...)", expand=True),
-                        ft.Switch(
-                            value=getattr(self.core.theme_manager, "clock_glass_frame", True),
-                            on_change=lambda e: self.set_clock_preferences(clock_glass_frame=e.control.value),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Text("Стеклянная рамка часов", expand=True),
-                    ]
+                self._create_lit_switch_row(
+                    "Показывать дату и день недели",
+                    "Отображать текущую дату и день недели (Пн, Вт...)",
+                    self.core.theme_manager.show_date,
+                    lambda val: self.set_clock_preferences(show_date=val, show_weekday=val),
+                    colors,
                 ),
+                self._create_lit_switch_row(
+                    "Стеклянная капсула вокруг часов",
+                    "Отображать полупрозрачную рамку вокруг часов в верхней панели",
+                    getattr(self.core.theme_manager, "clock_glass_frame", True),
+                    lambda val: self.set_clock_preferences(clock_glass_frame=val),
+                    colors,
+                ),
+                self._create_lit_switch_row(
+                    "Мигающее двоеточие (Живой пульс секунд)",
+                    "Разделитель часов и минут плавно мигает каждую секунду",
+                    getattr(self.core.theme_manager, "clock_blink_colon", False),
+                    lambda val: self.set_clock_preferences(clock_blink_colon=val),
+                    colors,
+                ),
+                fmt_row,
                 ft.Row(
                     [
-                        ft.Text("Размер шрифта часов:", size=13),
+                        ft.Text("Размер шрифта часов:", size=13, width=190),
                         ft.Slider(
                             value=getattr(self.core.theme_manager, "time_font_size", 22),
                             min=14,
-                            max=42,
-                            divisions=28,
+                            max=46,
+                            divisions=32,
                             label="{value}px",
                             active_color=colors["ACCENT"],
                             on_change=lambda e: self.set_clock_preferences(time_font_size=int(e.control.value)),
@@ -550,51 +1083,38 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                         ),
                     ]
                 ),
-                ft.Row([ft.Text("Быстрый цвет часов:", size=13), *preset_chips], spacing=8),
                 ft.Row(
                     [
-                        ft.Dropdown(
-                            label="Шрифт интерфейса",
-                            value=self.core.theme_manager.font_family,
-                            options=[
-                                ft.dropdown.Option("Segoe UI"),
-                                ft.dropdown.Option("Arial"),
-                                ft.dropdown.Option("Consolas"),
-                                ft.dropdown.Option("Tahoma"),
-                                ft.dropdown.Option("Verdana"),
-                            ],
-                            on_change=lambda e: (
-                                self.core.set_font_family(e.control.value),
-                                self.core.show_toast(f"✅ Шрифт {e.control.value} сохранен"),
-                            ),
+                        ft.Text("Скругление рамки часов:", size=13, width=190),
+                        ft.Slider(
+                            value=getattr(self.core.theme_manager, "clock_border_radius", 14),
+                            min=4,
+                            max=28,
+                            divisions=24,
+                            label="{value}px",
+                            active_color=colors["ACCENT"],
+                            on_change=lambda e: self.set_clock_preferences(clock_border_radius=int(e.control.value)),
                             expand=True,
-                            filled=True,
-                            bgcolor=colors["SURFACE_VARIANT"],
-                            border_radius=10,
-                            border_color="transparent",
                         ),
-                        ft.Dropdown(
-                            label="Формат даты",
-                            value=self.core.theme_manager.date_format,
-                            options=[
-                                ft.dropdown.Option("dd.mm.yyyy", "ДД.ММ.ГГГГ"),
-                                ft.dropdown.Option("yyyy-mm-dd", "ГГГГ-ММ-ДД"),
-                                ft.dropdown.Option("mm/dd/yyyy", "ММ/ДД/ГГГГ"),
-                            ],
-                            on_change=lambda e: (
-                                self.core.theme_manager.set_date_format(e.control.value),
-                                self.core.update_time(),
-                                self.core.show_toast("✅ Формат даты сохранен"),
-                            ),
-                            width=180,
-                            filled=True,
-                            bgcolor=colors["SURFACE_VARIANT"],
-                            border_radius=10,
-                            border_color="transparent",
-                        ),
-                    ],
-                    spacing=10,
+                    ]
                 ),
+                ft.Row(
+                    [
+                        ft.Text("Прозрачность фона часов:", size=13, width=190),
+                        ft.Slider(
+                            value=getattr(self.core.theme_manager, "clock_bg_opacity", 70),
+                            min=10,
+                            max=100,
+                            divisions=18,
+                            label="{value}%",
+                            active_color=colors["ACCENT"],
+                            on_change=lambda e: self.set_clock_preferences(clock_bg_opacity=int(e.control.value)),
+                            expand=True,
+                        ),
+                    ]
+                ),
+                ft.Row([ft.Text("Основной цвет цифр:", size=13, width=190), preset_chips_row]),
+                ft.Row([ft.Text("Акцентный цвет часов:", size=13, width=190), accent_chips_row]),
             ],
             spacing=10,
         )
@@ -610,6 +1130,13 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         clock_glass_frame=None,
         time_font_size=None,
         show_android_clock_widget=None,
+        clock_accent_color=None,
+        clock_glow_enabled=None,
+        clock_glow_intensity=None,
+        clock_border_radius=None,
+        clock_bg_opacity=None,
+        clock_bold=None,
+        clock_blink_colon=None,
     ):
         self.core.theme_manager.set_clock_preferences(
             style=style,
@@ -621,23 +1148,20 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             clock_glass_frame=clock_glass_frame,
             time_font_size=time_font_size,
             show_android_clock_widget=show_android_clock_widget,
+            clock_accent_color=clock_accent_color,
+            clock_glow_enabled=clock_glow_enabled,
+            clock_glow_intensity=clock_glow_intensity,
+            clock_border_radius=clock_border_radius,
+            clock_bg_opacity=clock_bg_opacity,
+            clock_bold=clock_bold,
+            clock_blink_colon=clock_blink_colon,
         )
+        if hasattr(self.core.plugin_manager, "notify_clock_style_changed"):
+            self.core.plugin_manager.notify_clock_style_changed(self.core.theme_manager.clock_style)
         self.core.update_header()
         self.core.update_main_content()
         self.core.update_time()
-        self.core.show_toast("✅ Настройки часов сохранены")
-
-    def create_auto_update_settings(self, colors):
-        return ft.Row(
-            [
-                ft.Switch(
-                    value=self.core.auto_update_enabled,
-                    on_change=self.core.toggle_auto_update,
-                    active_track_color=colors["ACCENT"],
-                ),
-                ft.Text("Автоматическое обновление интерфейса при изменениях", expand=True),
-            ]
-        )
+        self.core.show_toast("🟢 Настройки часов активированы и сохранены")
 
     def create_settings_section(self, title, subtitle, content, colors):
         return ft.Container(
@@ -661,38 +1185,80 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         )
 
     def create_theme_selector(self, colors):
-        themes = self.core.theme_manager.get_available_themes()
+        """Селектор тем с мгновенным зажиганием выбранной карточки темы."""
         theme_buttons = ft.Row(scroll=ft.ScrollMode.ADAPTIVE, spacing=12)
 
-        for theme_name, theme_data in themes.items():
-            is_current = theme_name == self.core.theme_manager.current_theme
+        def rebuild_themes():
+            theme_buttons.controls.clear()
+            themes = self.core.theme_manager.get_available_themes()
+            cur_theme = self.core.theme_manager.current_theme
 
-            theme_button = ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Container(
-                            content=ft.Icon("palette", color=theme_data["ACCENT"], size=24),
-                            width=64,
-                            height=56,
-                            bgcolor=theme_data["BG"],
-                            border=ft.border.all(2, theme_data["ACCENT"] if is_current else theme_data["OUTLINE"]),
-                            border_radius=12,
-                            alignment=ft.alignment.center,
-                        ),
-                        ft.Text(theme_data["NAME"], size=11, text_align=ft.TextAlign.CENTER, max_lines=1),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=6,
-                ),
-                on_click=lambda e, tn=theme_name: self.core.apply_theme_settings(tn),
-                padding=10,
-                bgcolor=self._alpha(colors["ACCENT"], 0.16) if is_current else self._alpha(colors["SURFACE_VARIANT"], 0.45),
-                border=ft.border.all(1.5, colors["ACCENT"] if is_current else "transparent"),
-                border_radius=12,
-                width=128,
-            )
-            theme_buttons.controls.append(theme_button)
+            for theme_name, theme_data in themes.items():
+                is_current = theme_name == cur_theme
+                theme_button = ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Container(
+                                content=ft.Icon(
+                                    "check_circle" if is_current else "palette",
+                                    color=theme_data["ACCENT"],
+                                    size=26,
+                                ),
+                                width=72,
+                                height=54,
+                                bgcolor=theme_data["BG"],
+                                border=ft.border.all(
+                                    2.5 if is_current else 1,
+                                    theme_data["ACCENT"] if is_current else theme_data["OUTLINE"],
+                                ),
+                                border_radius=12,
+                                alignment=ft.alignment.center,
+                            ),
+                            ft.Text(
+                                theme_data["NAME"],
+                                size=11,
+                                weight=ft.FontWeight.BOLD if is_current else ft.FontWeight.NORMAL,
+                                text_align=ft.TextAlign.CENTER,
+                                max_lines=1,
+                            ),
+                            ft.Container(
+                                content=ft.Text(
+                                    "🟢 АКТИВНО" if is_current else "⚪ Выбрать",
+                                    size=10,
+                                    weight=ft.FontWeight.BOLD if is_current else ft.FontWeight.NORMAL,
+                                    color=colors["SUCCESS"] if is_current else colors["ON_SURFACE_VARIANT"],
+                                ),
+                                bgcolor=self._alpha(colors["SUCCESS"], 0.16) if is_current else "transparent",
+                                padding=ft.padding.symmetric(horizontal=8, vertical=2),
+                                border_radius=6,
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=5,
+                    ),
+                    on_click=lambda e, tn=theme_name: _on_pick_theme(tn),
+                    padding=10,
+                    bgcolor=self._alpha(theme_data["ACCENT"], 0.20)
+                    if is_current
+                    else self._alpha(colors["SURFACE_VARIANT"], 0.45),
+                    border=ft.border.all(2 if is_current else 1, theme_data["ACCENT"] if is_current else colors["OUTLINE"]),
+                    shadow=ft.BoxShadow(blur_radius=14, color=self._alpha(theme_data["ACCENT"], 0.35))
+                    if is_current
+                    else None,
+                    border_radius=14,
+                    width=142,
+                )
+                theme_buttons.controls.append(theme_button)
 
+        def _on_pick_theme(tn):
+            self.core.apply_theme_settings(tn)
+            rebuild_themes()
+            try:
+                theme_buttons.update()
+            except Exception:
+                pass
+
+        rebuild_themes()
         return theme_buttons
 
     def create_custom_themes_management(self, colors):
@@ -707,10 +1273,55 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             except Exception:
                 self.core.show_toast("❌ Не удалось экспортировать тему")
 
+        custom_list_col = ft.Column(spacing=6)
+
+        def rebuild_custom_list():
+            custom_list_col.controls.clear()
+            for c_name, c_data in self.core.theme_manager.custom_themes.items():
+                is_cur = self.core.theme_manager.current_theme == c_name
+                custom_list_col.controls.append(
+                    ft.Container(
+                        padding=10,
+                        border_radius=10,
+                        bgcolor=self._alpha(c_data.get("ACCENT", "#3b82f6"), 0.16)
+                        if is_cur
+                        else self._alpha(colors["SURFACE_VARIANT"], 0.4),
+                        border=ft.border.all(1.5 if is_cur else 1, c_data.get("ACCENT", "#3b82f6") if is_cur else colors["OUTLINE"]),
+                        content=ft.Row(
+                            [
+                                ft.Container(width=20, height=20, bgcolor=c_data.get("ACCENT", "#3b82f6"), border_radius=10),
+                                ft.Text(c_data.get("NAME", c_name), weight=ft.FontWeight.BOLD, expand=True),
+                                ft.Text("🟢 АКТИВНА" if is_cur else "", size=11, color=colors["SUCCESS"]),
+                                ft.TextButton(
+                                    "Применить",
+                                    on_click=lambda e, cn=c_name: (
+                                        self.core.apply_theme_settings(cn),
+                                        rebuild_custom_list(),
+                                        custom_list_col.update(),
+                                    ),
+                                ),
+                                ft.IconButton(
+                                    icon="delete_outline",
+                                    icon_color=colors["ERROR"],
+                                    on_click=lambda e, cn=c_name: (
+                                        self.core.theme_manager.delete_custom_theme(cn),
+                                        rebuild_custom_list(),
+                                        custom_list_col.update(),
+                                        self.core.show_toast(f"🗑️ Тема {cn} удалена"),
+                                    ),
+                                ),
+                            ]
+                        ),
+                    )
+                )
+
+        rebuild_custom_list()
+
         return ft.Column(
             [
+                custom_list_col,
                 self.create_settings_button(
-                    "Создать новую кастомную тему",
+                    "Открыть Студию создания кастомной темы Pro (v2.5)",
                     "palette",
                     lambda e: self.show_create_theme_dialog(),
                     colors,
@@ -726,19 +1337,124 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         )
 
     def show_create_theme_dialog(self):
+        """Расширенная студия создания кастомной темы v2.5 с живым превью и быстрыми палитрами."""
         colors = self.core.get_colors()
 
         theme_name = ft.TextField(
-            label="Название темы",
-            hint_text="Моя тема",
+            label="Название темы *",
+            value="Cyber Emerald 2.5",
             filled=True,
             bgcolor=colors["SURFACE_VARIANT"],
             border_radius=10,
             border_color="transparent",
         )
-        bg_field = ft.TextField(label="Основной фон (#RRGGBB)", value="#0d111a", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
-        surface_field = ft.TextField(label="Поверхность карточек (#RRGGBB)", value="#151b26", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
-        accent_field = ft.TextField(label="Акцентный цвет (#RRGGBB)", value="#3b82f6", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
+        mode_dropdown = ft.Dropdown(
+            label="Базовый режим темы",
+            value="dark",
+            options=[
+                ft.dropdown.Option("dark", "Темная (Dark Slate)"),
+                ft.dropdown.Option("amoled", "Глубокий черный (AMOLED)"),
+                ft.dropdown.Option("light", "Светлая (Daylight)"),
+            ],
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_radius=10,
+            border_color="transparent",
+        )
+        bg_field = ft.TextField(label="Основной фон (#RRGGBB)", value="#0b101b", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent", expand=True)
+        surface_field = ft.TextField(label="Фон секций (#RRGGBB)", value="#141c2e", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent", expand=True)
+        card_field = ft.TextField(label="Фон плиток (#RRGGBB)", value="#1d2842", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent", expand=True)
+        accent_field = ft.TextField(label="Акцентный цвет (#RRGGBB)", value="#10b981", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent", expand=True)
+        text_field = ft.TextField(label="Цвет текста (#RRGGBB)", value="#f8fafc", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent", expand=True)
+        outline_field = ft.TextField(label="Цвет рамок (#RRGGBB)", value="#2b3a55", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent", expand=True)
+
+        glass_opacity_slider = ft.Slider(value=78, min=30, max=98, divisions=17, label="Стекло: {value}%", active_color=colors["ACCENT"])
+
+        # Живое превью создаваемой темы
+        preview_box = ft.Container(
+            padding=16,
+            border_radius=14,
+            bgcolor="#0b101b",
+            border=ft.border.all(2, "#10b981"),
+            content=ft.Row(
+                [
+                    ft.Container(
+                        width=48,
+                        height=48,
+                        bgcolor="#1d2842",
+                        border_radius=12,
+                        border=ft.border.all(1.5, "#10b981"),
+                        content=ft.Icon("rocket_launch", color="#10b981", size=24),
+                        alignment=ft.alignment.center,
+                    ),
+                    ft.Column(
+                        [
+                            ft.Text("Живое превью темы (🟢 АКТИВНО)", weight=ft.FontWeight.BOLD, size=14, color="#f8fafc"),
+                            ft.Text("Карточки, фон и акцент обновляются мгновенно", size=11, color="#94a3b8"),
+                        ],
+                        spacing=2,
+                        expand=True,
+                    ),
+                ],
+                spacing=12,
+            ),
+        )
+
+        def _update_live_preview(_=None):
+            bg_c = (bg_field.value or "#0b101b").strip()
+            card_c = (card_field.value or "#1d2842").strip()
+            acc_c = (accent_field.value or "#10b981").strip()
+            txt_c = (text_field.value or "#f8fafc").strip()
+            preview_box.bgcolor = bg_c
+            preview_box.border = ft.border.all(2, acc_c)
+            preview_box.content.controls[0].bgcolor = card_c
+            preview_box.content.controls[0].border = ft.border.all(1.5, acc_c)
+            preview_box.content.controls[0].content.color = acc_c
+            preview_box.content.controls[1].controls[0].color = txt_c
+            try:
+                preview_box.update()
+            except Exception:
+                pass
+
+        for fld in (bg_field, surface_field, card_field, accent_field, text_field, outline_field):
+            fld.on_change = _update_live_preview
+
+        def _apply_preset_palette(bg_c, surf_c, crd_c, acc_c, txt_c, out_c, mode_v="dark"):
+            bg_field.value = bg_c
+            surface_field.value = surf_c
+            card_field.value = crd_c
+            accent_field.value = acc_c
+            text_field.value = txt_c
+            outline_field.value = out_c
+            mode_dropdown.value = mode_v
+            _update_live_preview()
+            try:
+                dialog.content.update()
+            except Exception:
+                pass
+
+        presets_row = ft.Row(
+            [
+                ft.OutlinedButton(
+                    "Кибер Изумруд",
+                    on_click=lambda e: _apply_preset_palette("#091118", "#111e29", "#192c3d", "#10b981", "#f1f5f9", "#243e54"),
+                ),
+                ft.OutlinedButton(
+                    "Неоновый Рубин",
+                    on_click=lambda e: _apply_preset_palette("#140a10", "#21111a", "#301926", "#f43f5e", "#fff1f2", "#4c2439"),
+                ),
+                ft.OutlinedButton(
+                    "Глубокий Океан",
+                    on_click=lambda e: _apply_preset_palette("#08101f", "#101d36", "#182b4d", "#38bdf8", "#f0f9ff", "#26406e"),
+                ),
+                ft.OutlinedButton(
+                    "Золотой Оникс",
+                    on_click=lambda e: _apply_preset_palette("#0b0a08", "#171510", "#242018", "#f59e0b", "#fef3c7", "#3b3425", "amoled"),
+                ),
+            ],
+            wrap=True,
+            spacing=6,
+        )
 
         def create_theme(_):
             name_val = (theme_name.value or "").strip()
@@ -747,42 +1463,68 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 return
             bg_c = (bg_field.value or "#0d111a").strip()
             surf_c = (surface_field.value or "#151b26").strip()
+            crd_c = (card_field.value or "#1e2636").strip()
             acc_c = (accent_field.value or "#3b82f6").strip()
+            txt_c = (text_field.value or "#f1f5f9").strip()
+            out_c = (outline_field.value or "#263042").strip()
+            op_val = float(glass_opacity_slider.value or 78) / 100.0
 
             new_theme = {
                 "NAME": name_val,
+                "MODE": mode_dropdown.value or "dark",
                 "BG": bg_c,
                 "SURFACE": surf_c,
-                "SURFACE_VARIANT": "#1e2636",
-                "ON_SURFACE": "#f1f5f9",
-                "ON_SURFACE_VARIANT": "#8b9bb4",
-                "OUTLINE": "#263042",
+                "SURFACE_VARIANT": crd_c,
+                "ON_SURFACE": txt_c,
+                "ON_SURFACE_VARIANT": "#94a3b8",
+                "OUTLINE": out_c,
                 "ACCENT": acc_c,
-                "ACCENT_GLOW": self._alpha(acc_c, 0.25),
+                "ACCENT_GLOW": self._alpha(acc_c, 0.28),
                 "ERROR": "#ef4444",
                 "SUCCESS": "#10b981",
                 "WEB_BLUE": acc_c,
-                "GLASS_BG": self._alpha(surf_c, 0.75),
+                "GLASS_BG": self._alpha(surf_c, op_val),
                 "GLASS_BORDER": "#18ffffff",
                 "GLASS_SHADOW": "#66000000",
-                "GLASS_BG_LIGHT": self._alpha(surf_c, 0.45),
+                "GLASS_BG_LIGHT": self._alpha(crd_c, max(0.35, op_val - 0.2)),
                 "SETTINGS_BG": bg_c,
                 "SETTINGS_SURFACE": surf_c,
-                "SETTINGS_CARD": "#1b2230",
+                "SETTINGS_CARD": crd_c,
             }
             if self.core.theme_manager.add_custom_theme(name_val, new_theme):
                 self.core.page.close(dialog)
                 self.core.apply_theme_settings(name_val)
 
         dialog = ft.AlertDialog(
-            title=ft.Text("Создать кастомную тему"),
+            title=ft.Row(
+                [
+                    ft.Icon("palette", color=colors["ACCENT"]),
+                    ft.Text("Студия создания кастомной темы Pro (v2.5)", weight=ft.FontWeight.BOLD, size=18),
+                ],
+                spacing=8,
+            ),
             content=ft.Container(
-                width=480,
-                content=ft.Column([theme_name, bg_field, surface_field, accent_field], spacing=10, tight=True),
+                width=580,
+                content=ft.Column(
+                    [
+                        preview_box,
+                        ft.Text("Быстрые палитры:", size=12, color=colors["ON_SURFACE_VARIANT"]),
+                        presets_row,
+                        ft.Row([theme_name, mode_dropdown], spacing=10),
+                        ft.Row([bg_field, surface_field], spacing=10),
+                        ft.Row([card_field, accent_field], spacing=10),
+                        ft.Row([text_field, outline_field], spacing=10),
+                        ft.Text("Непрозрачность стеклянных панелей:", size=12),
+                        glass_opacity_slider,
+                    ],
+                    spacing=10,
+                    tight=True,
+                    scroll=ft.ScrollMode.ADAPTIVE,
+                ),
             ),
             actions=[
                 ft.TextButton("Отмена", on_click=lambda e: self.core.page.close(dialog)),
-                ft.FilledButton("Создать и применить", on_click=create_theme),
+                ft.FilledButton("Создать и сразу зажечь тему", icon="check", on_click=create_theme),
             ],
         )
         self.core.page.open(dialog)
@@ -790,21 +1532,12 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
     def create_effects_settings(self, colors):
         return ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=self.core.theme_manager.glass_effect_enabled,
-                            on_change=lambda e: self.core.toggle_glass_effect(),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text("Эффект матового стекла (Glassmorphism 2.4)", weight=ft.FontWeight.W_600),
-                                ft.Text("Размытие заднего плана ft.Blur и полупрозрачные панели", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ],
-                            expand=True,
-                        ),
-                    ]
+                self._create_lit_switch_row(
+                    "Эффект матового стекла (Glassmorphism 2.5)",
+                    "Аппаратное размытие заднего плана ft.Blur и полупрозрачные панели",
+                    self.core.theme_manager.glass_effect_enabled,
+                    lambda val: self.core.toggle_glass_effect(),
+                    colors,
                 ),
                 self.create_glass_intensity_selector(colors),
                 ft.Row(
@@ -826,15 +1559,12 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                         ),
                     ]
                 ),
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=self.core.theme_manager.smooth_animations,
-                            on_change=lambda e: self.core.toggle_smooth_animations(),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Text("Плавные переходы между разделами (AnimatedSwitcher)", expand=True),
-                    ]
+                self._create_lit_switch_row(
+                    "Плавные переходы между разделами (AnimatedSwitcher)",
+                    "Анимация переключения между библиотекой, фильтрами и трекером",
+                    self.core.theme_manager.smooth_animations,
+                    lambda val: self.core.toggle_smooth_animations(),
+                    colors,
                 ),
             ],
             spacing=12,
@@ -847,25 +1577,52 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             ("strong", "blur_off", "Глубокая"),
         ]
         intensity_buttons = ft.Row(spacing=10)
-        for intensity, icon, title in intensities:
-            is_active = self.core.theme_manager.glass_intensity == intensity
-            intensity_buttons.controls.append(
-                ft.Container(
-                    content=ft.Row(
-                        [
-                            ft.Icon(icon, color=colors["ACCENT"] if is_active else colors["ON_SURFACE_VARIANT"], size=18),
-                            ft.Text(title, size=12, weight=ft.FontWeight.W_600),
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                    ),
-                    on_click=lambda e, ints=intensity: self.core.set_glass_intensity(ints),
-                    padding=12,
-                    bgcolor=self._alpha(colors["ACCENT"], 0.18) if is_active else self._alpha(colors["SURFACE_VARIANT"], 0.5),
-                    border=ft.border.all(1.5, colors["ACCENT"] if is_active else "transparent"),
-                    border_radius=10,
-                    expand=True,
+
+        def rebuild_intensities():
+            intensity_buttons.controls.clear()
+            cur_int = self.core.theme_manager.glass_intensity
+            for intensity, icon, title in intensities:
+                is_active = cur_int == intensity
+                intensity_buttons.controls.append(
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                ft.Icon(
+                                    "check_circle" if is_active else icon,
+                                    color=colors["SUCCESS"] if is_active else colors["ON_SURFACE_VARIANT"],
+                                    size=18,
+                                ),
+                                ft.Text(
+                                    f"{title} {'• АКТИВНО' if is_active else ''}",
+                                    size=12,
+                                    weight=ft.FontWeight.BOLD if is_active else ft.FontWeight.W_500,
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                        ),
+                        on_click=lambda e, ints=intensity: _pick_intensity(ints),
+                        padding=12,
+                        bgcolor=self._alpha(colors["ACCENT"], 0.22)
+                        if is_active
+                        else self._alpha(colors["SURFACE_VARIANT"], 0.5),
+                        border=ft.border.all(2 if is_active else 1, colors["ACCENT"] if is_active else colors["OUTLINE"]),
+                        shadow=ft.BoxShadow(blur_radius=12, color=self._alpha(colors["ACCENT"], 0.3))
+                        if is_active
+                        else None,
+                        border_radius=10,
+                        expand=True,
+                    )
                 )
-            )
+
+        def _pick_intensity(ints):
+            self.core.set_glass_intensity(ints)
+            rebuild_intensities()
+            try:
+                intensity_buttons.update()
+            except Exception:
+                pass
+
+        rebuild_intensities()
         return intensity_buttons
 
     def create_apps_management(self, colors):
@@ -880,45 +1637,27 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
         return ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=getattr(self.core.theme_manager, "show_plugins_in_grid", True),
-                            on_change=lambda e: (
-                                self.core.theme_manager.set_program_preferences(show_plugins_in_grid=e.control.value),
-                                self.core.update_main_content(),
-                                self.core.update_sidebar(),
-                                self.core.show_toast("✅ Настройка отображения плагинов в списке сохранена"),
-                            ),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text("Отображать активные плагины в списке запуска", weight=ft.FontWeight.W_600),
-                                ft.Text("Плагины доступны прямо в библиотеке и категории «Плагины»", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ],
-                            expand=True,
-                        ),
-                    ]
+                self._create_lit_switch_row(
+                    "Отображать активные плагины в списке запуска",
+                    "Плагины доступны прямо в библиотеке и категории «Плагины»",
+                    getattr(self.core.theme_manager, "show_plugins_in_grid", True),
+                    lambda val: (
+                        self.core.theme_manager.set_program_preferences(show_plugins_in_grid=val),
+                        self.core.update_main_content(),
+                        self.core.update_sidebar(),
+                        self.core.show_toast("🟢 Плагины в списке запуска включены" if val else "⚪ Плагины скрыты из сетки"),
+                    ),
+                    colors,
                 ),
-                ft.Row(
-                    [
-                        ft.Switch(
-                            value=getattr(self.core.theme_manager, "detox_notifications", True),
-                            on_change=lambda e: (
-                                self.core.theme_manager.set_program_preferences(detox_notifications=e.control.value),
-                                self.core.show_toast("✅ Настройка уведомлений детокса сохранена"),
-                            ),
-                            active_track_color=colors["ACCENT"],
-                        ),
-                        ft.Column(
-                            [
-                                ft.Text("Уведомления цифрового детокса при превышении лимита", weight=ft.FontWeight.W_600),
-                                ft.Text("Предупреждать, когда время в играх или соцсетях превышает дневной лимит", size=12, color=colors["ON_SURFACE_VARIANT"]),
-                            ],
-                            expand=True,
-                        ),
-                    ]
+                self._create_lit_switch_row(
+                    "Уведомления цифрового детокса при превышении лимита",
+                    "Предупреждать, когда время в играх или соцсетях превышает дневной лимит",
+                    getattr(self.core.theme_manager, "detox_notifications", True),
+                    lambda val: (
+                        self.core.theme_manager.set_program_preferences(detox_notifications=val),
+                        self.core.show_toast("🟢 Контроль детокса активен" if val else "⚪ Уведомления детокса отключены"),
+                    ),
+                    colors,
                 ),
                 ft.Row(
                     [
@@ -1008,55 +1747,56 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
         )
 
         def on_hover(e):
-            button.bgcolor = self._alpha(colors["ACCENT"], 0.16) if e.data == "true" else self._alpha(colors["SURFACE_VARIANT"], 0.55)
+            button.bgcolor = (
+                self._alpha(colors["ACCENT"], 0.16)
+                if e.data == "true"
+                else self._alpha(colors["SURFACE_VARIANT"], 0.55)
+            )
             button.update()
 
         button.on_hover = on_hover
         return button
 
     def create_version_history(self, colors):
-        versions = {
-            "2.4": [
-                "🚀 LAUNCHER HAB 2.4 — DARK SLATE PRO, LIVE SESSION TRACKER (С 0) И ANDROID 14 ЧАСЫ",
-                "🎨 ИСПРАВЛЕНЫ ЦВЕТА И РАМКИ (#AARRGGBB) — убраны желтые полосы, внедрен графитовый стиль Midnight Slate",
-                "🔐 ИСПРАВЛЕНО СОХРАНЕНИЕ И ШИФРОВАНИЕ НАСТРОЕК — валидный 32-байтовый ключ Fernet без потери данных",
-                "⏱️ GAME & APP SESSION TRACKER С 0 — честный отсчет времени с 00:00 при запуске приложения и живой таймер на карточках",
-                "🧩 ПЛАГИНЫ В СПИСКЕ ЗАПУСКА И МАГАЗИН РАСШИРЕНИЙ — скачивание, настройка, включение и удаление плагинов в 1 клик",
-                "🕒 ВЕРТИКАЛЬНЫЕ ЧАСЫ ANDROID 14 — крупный вертикальный виджет часов (HH / MM) и 8 современных стилей",
-                "🔊 ФОНОВЫЙ КОНТРОЛЛЕР СИСТЕМНОЙ ГРОМКОСТИ — плавная регулировка громкости в фоновом потоке",
-            ],
-            "2.3": [
-                "🎨 Liquid Glass интерфейс и плавающая панель Floating HUD",
-                "🔌 Система плагинов (Focus Mode, Smart Weather, Smart Music, Idea Notebook)",
-            ],
-            "2.2": [
-                "⚡ Кэширование поиска, виртуализация списков и система резервного копирования",
-            ],
-        }
-
+        """Полная история всех версий с 1.0 по 2.5."""
         version_items = []
-        for version, features in versions.items():
+        for version, features in self.VERSION_HISTORY_1_0_TO_2_5.items():
+            is_latest = version == "2.5"
             version_items.append(
                 ft.Container(
                     content=ft.Column(
                         [
                             ft.Row(
                                 [
-                                    ft.Text(f"Версия {version}", weight=ft.FontWeight.BOLD, size=16, color=colors["ACCENT"]),
+                                    ft.Text(
+                                        f"Версия {version}" + (" (Текущая)" if is_latest else ""),
+                                        weight=ft.FontWeight.BOLD,
+                                        size=16,
+                                        color=colors["SUCCESS"] if is_latest else colors["ACCENT"],
+                                    ),
                                     ft.Container(
-                                        content=ft.Text(f"{len(features)} изменений", size=11, color=colors["ON_SURFACE_VARIANT"]),
-                                        bgcolor=self._alpha(colors["SURFACE_VARIANT"], 0.6),
+                                        content=ft.Text(
+                                            f"{len(features)} изменений",
+                                            size=11,
+                                            color=colors["ON_SURFACE"],
+                                        ),
+                                        bgcolor=self._alpha(colors["ACCENT"], 0.22)
+                                        if is_latest
+                                        else self._alpha(colors["SURFACE_VARIANT"], 0.6),
                                         padding=ft.padding.symmetric(horizontal=8, vertical=4),
                                         border_radius=8,
                                     ),
                                 ]
                             ),
-                            ft.Column([ft.Text(feature, size=13, color=colors["ON_SURFACE_VARIANT"]) for feature in features], spacing=4),
+                            ft.Column(
+                                [ft.Text(feature, size=13, color=colors["ON_SURFACE_VARIANT"]) for feature in features],
+                                spacing=4,
+                            ),
                         ],
                         spacing=10,
                     ),
-                    bgcolor=colors["SETTINGS_CARD"],
-                    border=ft.border.all(1, colors["OUTLINE"]),
+                    bgcolor=self._alpha(colors["ACCENT"], 0.10) if is_latest else colors["SETTINGS_CARD"],
+                    border=ft.border.all(2 if is_latest else 1, colors["ACCENT"] if is_latest else colors["OUTLINE"]),
                     border_radius=12,
                     padding=18,
                     margin=ft.margin.only(bottom=12),
@@ -1065,7 +1805,11 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
         return ft.Column(
             [
-                ft.Text("История обновлений Launcher Hab", size=18, weight=ft.FontWeight.BOLD),
+                ft.Text(
+                    "Полная история обновлений Launcher Hab (Версии 1.0 — 2.5)",
+                    size=18,
+                    weight=ft.FontWeight.BOLD,
+                ),
                 *version_items,
             ],
             scroll=ft.ScrollMode.ADAPTIVE,
@@ -1080,15 +1824,19 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 content=ft.Row(
                     [
                         ft.Icon("extension", color=colors["ACCENT"], size=24),
-                        ft.Text("Центр плагинов и магазин расширений (API 2.4)", size=19, weight=ft.FontWeight.BOLD),
+                        ft.Text(
+                            "Центр плагинов и магазин расширений (API 2.5)",
+                            size=19,
+                            weight=ft.FontWeight.BOLD,
+                        ),
                     ]
                 ),
                 padding=ft.padding.only(bottom=8),
             ),
             content=ft.Container(
                 content=plugins_content,
-                width=740,
-                height=580,
+                width=760,
+                height=590,
             ),
             actions=[ft.FilledButton("Закрыть", on_click=lambda e: self.core.page.close(plugins_dialog))],
         )
@@ -1125,7 +1873,11 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                                 ft.Column(
                                     [
                                         ft.Text(fname, weight=ft.FontWeight.BOLD, size=13),
-                                        ft.Text(f"Файлов: {b.get('files_count', 0)}", size=11, color=colors["ON_SURFACE_VARIANT"]),
+                                        ft.Text(
+                                            f"Файлов: {b.get('files_count', 0)}",
+                                            size=11,
+                                            color=colors["ON_SURFACE_VARIANT"],
+                                        ),
                                     ],
                                     spacing=2,
                                     expand=True,
@@ -1219,8 +1971,21 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                 )
             )
 
-        combo_field = ft.TextField(label="Новая комбинация", hint_text="ctrl+alt+1", filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
-        action_field = ft.Dropdown(label="Действие", value="open_workspace", options=[ft.dropdown.Option(a) for a in actions], filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
+        combo_field = ft.TextField(
+            label="Новая комбинация",
+            hint_text="ctrl+alt+1",
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_color="transparent",
+        )
+        action_field = ft.Dropdown(
+            label="Действие",
+            value="open_workspace",
+            options=[ft.dropdown.Option(a) for a in actions],
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_color="transparent",
+        )
 
         def add_hotkey(_):
             combo = (combo_field.value or "").lower().strip()
@@ -1279,7 +2044,9 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                     self.core.update_main_content()
                     self.core.update_sidebar()
                     self.core.show_toast(
-                        f"🟢 Таймер для {app['name']} запущен" if started else f"⏹ Таймер для {app['name']} остановлен"
+                        f"🟢 Таймер для {app['name']} запущен"
+                        if started
+                        else f"⏹ Таймер для {app['name']} остановлен"
                     )
             close_dialog()
 
@@ -1354,7 +2121,9 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             ),
             ft.ListTile(
                 leading=ft.Icon("timer", color=colors["ERROR"] if is_running else colors["ACCENT"], size=20),
-                title=ft.Text("Остановить таймер сессии" if is_running else "Запустить таймер сессии (с 0)", size=14),
+                title=ft.Text(
+                    "Остановить таймер сессии" if is_running else "Запустить таймер сессии (с 0)", size=14
+                ),
                 on_click=toggle_tracker_timer,
                 dense=True,
             ),
@@ -1422,7 +2191,9 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
                         ft.Row(
                             [
                                 ft.Icon(app["icon"], size=24, color=colors["ACCENT"]),
-                                ft.Text(app["name"], size=16, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
+                                ft.Text(
+                                    app["name"], size=16, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]
+                                ),
                             ],
                             spacing=10,
                         ),
@@ -1462,8 +2233,20 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
 
     def show_edit_custom_app_dialog(self, app):
         colors = self.core.get_colors()
-        app_name = ft.TextField(label="Название приложения", value=app["name"], filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
-        app_url = ft.TextField(label="URL или путь к приложению", value=app["url"], filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
+        app_name = ft.TextField(
+            label="Название приложения",
+            value=app["name"],
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_color="transparent",
+        )
+        app_url = ft.TextField(
+            label="URL или путь к приложению",
+            value=app["url"],
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_color="transparent",
+        )
 
         def save_changes(_):
             if app_name.value and app_url.value:
@@ -1489,8 +2272,22 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
     def show_edit_tags_dialog(self, app):
         colors = self.core.get_colors()
         tags_info = self.core.app_manager.get_app_tags(app)
-        tags_field = ft.TextField(label="Теги (через запятую)", value=tags_info.get("tags", ""), filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
-        notes_field = ft.TextField(label="Заметки", value=tags_info.get("notes", ""), multiline=True, min_lines=3, filled=True, bgcolor=colors["SURFACE_VARIANT"], border_color="transparent")
+        tags_field = ft.TextField(
+            label="Теги (через запятую)",
+            value=tags_info.get("tags", ""),
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_color="transparent",
+        )
+        notes_field = ft.TextField(
+            label="Заметки",
+            value=tags_info.get("notes", ""),
+            multiline=True,
+            min_lines=3,
+            filled=True,
+            bgcolor=colors["SURFACE_VARIANT"],
+            border_color="transparent",
+        )
 
         def save_tags(_):
             self.core.app_manager.save_app_tags(app, tags_field.value, notes_field.value)
@@ -1547,14 +2344,21 @@ class UIDialogs(AddAppDialogMixin, WorkspaceDialogMixin):
             self.core.update_main_content()
             self.core.update_sidebar()
             self.core.page.close(dialog)
-            self.core.show_toast("✅ Все настройки сброшены к значениям по умолчанию")
+            self.core.show_toast("✅ Все настройки сброшены к значениям по умолчанию v2.5")
 
         dialog = ft.AlertDialog(
             title=ft.Text("Сброс настроек"),
-            content=ft.Text("Сбросить все настройки темы, часов и интерфейса к стандартным значениям v2.4?", color=colors["ON_SURFACE_VARIANT"]),
+            content=ft.Text(
+                "Сбросить все настройки темы, часов и интерфейса к стандартным значениям v2.5?",
+                color=colors["ON_SURFACE_VARIANT"],
+            ),
             actions=[
                 ft.TextButton("Отмена", on_click=lambda e: self.core.page.close(dialog)),
-                ft.FilledButton("Сбросить", on_click=reset_settings, style=ft.ButtonStyle(bgcolor=colors["ERROR"], color="#ffffff")),
+                ft.FilledButton(
+                    "Сбросить",
+                    on_click=reset_settings,
+                    style=ft.ButtonStyle(bgcolor=colors["ERROR"], color="#ffffff"),
+                ),
             ],
         )
         self.core.page.open(dialog)

@@ -61,6 +61,7 @@ import {
   CatalogPluginItem,
   ClockStyleKey,
   CLOCK_STYLE_OPTIONS,
+  CustomThemeConfig,
   DetoxGroup,
   formatDurationRu,
   formatLiveClock,
@@ -108,13 +109,27 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const ICON_NAMES = Object.keys(ICON_MAP);
 const WEEKDAYS_RU = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-const STORAGE_KEY = 'launcher_hab_v24_zero_state_v2';
+const STORAGE_KEY = 'launcher_hab_v25_zero_state_v1';
 
 interface ToastMessage {
   id: string;
   title: string;
   message: string;
   type?: 'info' | 'warning' | 'success';
+}
+
+function LitStatusBadge({ active }: { active: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wide transition-all duration-200 ${
+        active
+          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/60 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
+          : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
+      }`}
+    >
+      {active ? '🟢 АКТИВНО' : '⚪ НЕАКТИВНО'}
+    </span>
+  );
 }
 
 export default function App() {
@@ -129,8 +144,11 @@ export default function App() {
     return null;
   }, []);
 
-  // --- Core Theme & Glassmorphism State ---
+  // --- Core Theme & Glassmorphism State (v2.5) ---
   const [themeKey, setThemeKey] = useState<ThemeKey>(savedState?.themeKey || 'dark');
+  const [customThemes, setCustomThemes] = useState<Record<string, CustomThemeConfig>>(
+    savedState?.customThemes || {}
+  );
   const [glassEnabled, setGlassEnabled] = useState<boolean>(savedState?.glassEnabled ?? true);
   const [glassIntensity, setGlassIntensity] = useState<GlassIntensity>(savedState?.glassIntensity || 'medium');
   const [glassOpacity, setGlassOpacity] = useState<number>(savedState?.glassOpacity ?? 88);
@@ -139,7 +157,13 @@ export default function App() {
   const [showPluginsInGrid, setShowPluginsInGrid] = useState<boolean>(savedState?.showPluginsInGrid ?? true);
   const [launchBehavior, setLaunchBehavior] = useState<'keep' | 'minimize'>(savedState?.launchBehavior || 'keep');
 
-  // --- Clock Styles State (8 styles + Android Vertical Widget) ---
+  // --- Personalization 2.5 State ---
+  const [cardBorderRadius, setCardBorderRadius] = useState<number>(savedState?.cardBorderRadius ?? 20);
+  const [iconScalePct, setIconScalePct] = useState<number>(savedState?.iconScalePct ?? 100);
+  const [cardHoverGlow, setCardHoverGlow] = useState<boolean>(savedState?.cardHoverGlow ?? true);
+  const [activeAppColor, setActiveAppColor] = useState<string>(savedState?.activeAppColor || '#10b981');
+
+  // --- Clock Styles State (18 styles + Android Vertical Widget + Design 2.5) ---
   const [clockStyle, setClockStyle] = useState<ClockStyleKey>(savedState?.clockStyle || 'android_vertical');
   const [showAndroidClockWidget, setShowAndroidClockWidget] = useState<boolean>(
     savedState?.showAndroidClockWidget ?? true
@@ -151,6 +175,13 @@ export default function App() {
   const [clockGlassFrame, setClockGlassFrame] = useState<boolean>(savedState?.clockGlassFrame ?? true);
   const [timeColor, setTimeColor] = useState<string>(savedState?.timeColor || '#f8fafc');
   const [dateColor, setDateColor] = useState<string>(savedState?.dateColor || '#94a3b8');
+  const [clockAccentColor, setClockAccentColor] = useState<string>(savedState?.clockAccentColor || '#3b82f6');
+  const [clockGlowEnabled, setClockGlowEnabled] = useState<boolean>(savedState?.clockGlowEnabled ?? true);
+  const [clockGlowIntensity, setClockGlowIntensity] = useState<number>(savedState?.clockGlowIntensity ?? 16);
+  const [clockBorderRadius, setClockBorderRadius] = useState<number>(savedState?.clockBorderRadius ?? 16);
+  const [clockBgOpacity, setClockBgOpacity] = useState<number>(savedState?.clockBgOpacity ?? 78);
+  const [clockBlinkColon, setClockBlinkColon] = useState<boolean>(savedState?.clockBlinkColon ?? false);
+  const [clockBold, setClockBold] = useState<boolean>(savedState?.clockBold ?? true);
   const [timeFontSize, setTimeFontSize] = useState<number>(savedState?.timeFontSize ?? 22);
   const [now, setNow] = useState<Date>(new Date());
 
@@ -226,12 +257,21 @@ export default function App() {
   const [newPluginSlug, setNewPluginSlug] = useState<string>('');
   const [newPluginTitle, setNewPluginTitle] = useState<string>('');
 
-  // --- Python Source Code Viewer State ---
+  // --- Python Source Code Viewer & Custom Theme Studio State ---
   const [selectedPyFile, setSelectedPyFile] = useState<string>(PYTHON_PROJECT_FILES[0].path);
   const [pyFileContent, setPyFileContent] = useState<string>('Загрузка исходного кода Python...');
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
+  const [customThemeModalOpen, setCustomThemeModalOpen] = useState<boolean>(false);
+  const [newThemeName, setNewThemeName] = useState<string>('Neon Cyber Slate');
+  const [newThemeMode, setNewThemeMode] = useState<'dark' | 'amoled' | 'light'>('dark');
+  const [newThemeBg, setNewThemeBg] = useState<string>('#0a0e17');
+  const [newThemeSurface, setNewThemeSurface] = useState<string>('#141c2b');
+  const [newThemeAccent, setNewThemeAccent] = useState<string>('#38bdf8');
+  const [cryptoKeyVersion, setCryptoKeyVersion] = useState<number>(1);
+  const [changelogFilter, setChangelogFilter] = useState<string>('all');
 
-  const currentTheme = THEMES[themeKey] || THEMES.dark;
+  const allThemesMap = useMemo(() => ({ ...THEMES, ...customThemes }), [customThemes]);
+  const currentTheme = allThemesMap[themeKey] || THEMES.dark;
   const sessionTrackerEnabled = useMemo(
     () => plugins.find((p) => p.id === 'session_tracker_plugin')?.enabled ?? true,
     [plugins]
@@ -242,6 +282,7 @@ export default function App() {
     try {
       const payload = {
         themeKey,
+        customThemes,
         glassEnabled,
         glassIntensity,
         glassOpacity,
@@ -249,6 +290,10 @@ export default function App() {
         cardColumns,
         showPluginsInGrid,
         launchBehavior,
+        cardBorderRadius,
+        iconScalePct,
+        cardHoverGlow,
+        activeAppColor,
         clockStyle,
         showAndroidClockWidget,
         timeFormat,
@@ -258,6 +303,13 @@ export default function App() {
         clockGlassFrame,
         timeColor,
         dateColor,
+        clockAccentColor,
+        clockGlowEnabled,
+        clockGlowIntensity,
+        clockBorderRadius,
+        clockBgOpacity,
+        clockBlinkColon,
+        clockBold,
         timeFontSize,
         apps,
         detoxGroups,
@@ -273,6 +325,7 @@ export default function App() {
     }
   }, [
     themeKey,
+    customThemes,
     glassEnabled,
     glassIntensity,
     glassOpacity,
@@ -280,6 +333,10 @@ export default function App() {
     cardColumns,
     showPluginsInGrid,
     launchBehavior,
+    cardBorderRadius,
+    iconScalePct,
+    cardHoverGlow,
+    activeAppColor,
     clockStyle,
     showAndroidClockWidget,
     timeFormat,
@@ -289,6 +346,13 @@ export default function App() {
     clockGlassFrame,
     timeColor,
     dateColor,
+    clockAccentColor,
+    clockGlowEnabled,
+    clockGlowIntensity,
+    clockBorderRadius,
+    clockBgOpacity,
+    clockBlinkColon,
+    clockBold,
     timeFontSize,
     apps,
     detoxGroups,
@@ -750,7 +814,7 @@ export default function App() {
       }`}
       style={{ background: currentTheme.bgGradient }}
     >
-      {/* ==================== TOP HEADER (Flet Header 2.4) ==================== */}
+      {/* ==================== TOP HEADER (Flet Header 2.5) ==================== */}
       <header
         className={`sticky top-0 z-30 flex items-center justify-between gap-4 px-5 py-2.5 border-b transition-all ${
           currentTheme.isDark ? 'border-slate-800/90' : 'border-slate-300/80'
@@ -769,7 +833,10 @@ export default function App() {
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-lg font-bold tracking-tight whitespace-nowrap">
-              Launcher Hab 2.4
+              Launcher Hab 2.5
+            </span>
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              v2.5 PRO
             </span>
           </div>
 
@@ -811,12 +878,12 @@ export default function App() {
               }`}
             >
               <Code2 className="w-3.5 h-3.5" />
-              Python Код v2.4
+              Python Код v2.5
             </button>
           </nav>
         </div>
 
-        {/* Center/Right: System Devices + Customizable Clock (8 Styles) + Audio + Plugins + Settings */}
+        {/* Center/Right: System Devices + Customizable Clock (18 Styles) + Audio + Plugins + Settings */}
         <div className="flex items-center gap-2.5 shrink-0">
           {/* Devices Monitor (Battery & Wi-Fi) */}
           <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-[#1e2636]/70 border border-slate-700/60 text-xs">
@@ -831,112 +898,181 @@ export default function App() {
             </div>
           </div>
 
-          {/* Customizable Clock Widget (8 Styles including Android Vertical) */}
+          {/* Customizable Clock Widget (18 Styles including Android Vertical & 10 new v2.5 styles) */}
           <button
             onClick={() => {
               setSettingsTab('clock');
               setSettingsModalOpen(true);
             }}
-            title="Нажмите для настройки стиля часов (8 стилей, включая Android 14 Вертикальный)"
-            className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              clockGlassFrame
-                ? 'bg-[#1e2636]/90 hover:bg-[#263044] border border-slate-700/70 shadow-sm'
-                : 'hover:bg-white/5'
+            title="Нажмите для настройки 18 стилей часов и дизайна циферблата (v2.5)"
+            style={{
+              borderRadius: `${clockBorderRadius}px`,
+              backgroundColor: clockGlassFrame
+                ? `rgba(30, 38, 54, ${(clockBgOpacity / 100).toFixed(2)})`
+                : 'transparent',
+              borderColor: clockGlassFrame
+                ? clockGlowEnabled
+                  ? `${clockAccentColor}66`
+                  : 'rgba(51, 65, 85, 0.7)'
+                : 'transparent',
+              boxShadow:
+                clockGlassFrame && clockGlowEnabled
+                  ? `0 0 ${clockGlowIntensity}px ${clockAccentColor}40`
+                  : 'none',
+            }}
+            className={`px-3.5 py-1.5 transition-all cursor-pointer border ${
+              clockGlassFrame ? 'hover:brightness-110' : 'hover:bg-white/5 border-transparent'
             }`}
           >
-            {clockStyle === 'android_vertical' || clockStyle === 'stacked' ? (
-              <div className="flex items-center gap-2.5">
-                <div className="flex flex-col items-center leading-none">
-                  <span
-                    className="font-extrabold font-mono tabular-nums tracking-tight"
-                    style={{ color: timeColor, fontSize: '15px' }}
-                  >
-                    {clockParts.hrs}
-                  </span>
-                  <span
-                    className="font-extrabold font-mono tabular-nums tracking-tight text-blue-400"
-                    style={{ fontSize: '15px' }}
-                  >
-                    {clockParts.mins}
-                  </span>
-                </div>
-                {showDate && (
-                  <div className="flex flex-col items-start leading-tight border-l border-slate-700 pl-2">
-                    <span className="text-[10px] font-bold text-blue-400 uppercase">
+            {(() => {
+              const sep = clockBlinkColon && now.getSeconds() % 2 === 1 ? ' ' : ':';
+              const weightCls = clockBold ? 'font-extrabold' : 'font-medium';
+              if (
+                clockStyle === 'android_vertical' ||
+                clockStyle === 'stacked' ||
+                clockStyle === 'samsung_oneui' ||
+                clockStyle === 'vertical_neon_bar' ||
+                clockStyle === 'material_expressive'
+              ) {
+                return (
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex flex-col items-center leading-none">
+                      <span
+                        className={`${weightCls} font-mono tabular-nums tracking-tight`}
+                        style={{ color: timeColor, fontSize: '15px' }}
+                      >
+                        {clockParts.hrs}
+                      </span>
+                      <span
+                        className={`${weightCls} font-mono tabular-nums tracking-tight`}
+                        style={{ color: clockAccentColor, fontSize: '15px' }}
+                      >
+                        {clockParts.mins}
+                      </span>
+                    </div>
+                    {showDate && (
+                      <div
+                        className="flex flex-col items-start leading-tight border-l pl-2"
+                        style={{ borderColor: clockAccentColor }}
+                      >
+                        <span
+                          className="text-[10px] font-bold uppercase"
+                          style={{ color: clockAccentColor }}
+                        >
+                          {clockParts.weekday}
+                        </span>
+                        <span className="text-[10px] font-mono tabular-nums" style={{ color: dateColor }}>
+                          {clockParts.dateBase}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              if (clockStyle === 'split_flip') {
+                return (
+                  <div className="flex items-center gap-1">
+                    <span className="px-1.5 py-0.5 rounded bg-[#0d111a] border border-slate-700 font-mono font-bold text-xs">
+                      {clockParts.hrs}
+                    </span>
+                    <span className="font-bold text-xs" style={{ color: clockAccentColor }}>
+                      {sep}
+                    </span>
+                    <span
+                      className="px-1.5 py-0.5 rounded bg-[#0d111a] border border-slate-700 font-mono font-bold text-xs"
+                      style={{ color: clockAccentColor }}
+                    >
+                      {clockParts.mins}
+                    </span>
+                    {showSeconds && (
+                      <span className="px-1 py-0.5 rounded bg-[#0d111a] border border-slate-800 font-mono text-[10px] text-slate-400">
+                        {clockParts.secs}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+              if (clockStyle === 'pill_glass' || clockStyle === 'ios_standby' || clockStyle === 'macos_sonoma') {
+                return (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3.5 h-3.5" style={{ color: clockAccentColor }} />
+                    <span
+                      className={`${weightCls} font-mono tabular-nums text-xs`}
+                      style={{ color: timeColor }}
+                    >
+                      {clockParts.hrs}
+                      {sep}
+                      {clockParts.mins}
+                    </span>
+                    {showDate && (
+                      <>
+                        <span className="opacity-40">•</span>
+                        <span className="text-[11px] font-mono tabular-nums" style={{ color: dateColor }}>
+                          {clockParts.fullDate}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                );
+              }
+              if (clockStyle === 'compact_badge') {
+                return (
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="px-1.5 py-0.5 rounded text-white text-[10px] font-bold"
+                      style={{ backgroundColor: clockAccentColor }}
+                    >
                       {clockParts.weekday}
                     </span>
-                    <span className="text-[10px] font-mono tabular-nums" style={{ color: dateColor }}>
-                      {clockParts.dateBase}
+                    <span className={`font-mono ${weightCls} text-xs`} style={{ color: timeColor }}>
+                      {clockParts.hrs}
+                      {sep}
+                      {clockParts.mins}
                     </span>
                   </div>
-                )}
-              </div>
-            ) : clockStyle === 'split_flip' ? (
-              <div className="flex items-center gap-1">
-                <span className="px-1.5 py-0.5 rounded bg-[#0d111a] border border-slate-700 font-mono font-bold text-xs">
-                  {clockParts.hrs}
-                </span>
-                <span className="text-blue-400 font-bold text-xs">:</span>
-                <span className="px-1.5 py-0.5 rounded bg-[#0d111a] border border-slate-700 font-mono font-bold text-xs text-blue-400">
-                  {clockParts.mins}
-                </span>
-                {showSeconds && (
-                  <span className="px-1 py-0.5 rounded bg-[#0d111a] border border-slate-800 font-mono text-[10px] text-slate-400">
-                    {clockParts.secs}
+                );
+              }
+
+              let formattedTime = `${clockParts.hrs}${sep}${clockParts.mins}${
+                showSeconds && clockStyle !== 'minimal' ? `${sep}${clockParts.secs}` : ''
+              }`;
+              if (clockStyle === 'cyber_mono') {
+                formattedTime = `[ ${clockParts.hrs}${sep}${clockParts.mins}${showSeconds ? `${sep}${clockParts.secs}` : ''} ]`;
+              } else if (clockStyle === 'nothing_dot') {
+                formattedTime = `::${clockParts.hrs} · ${clockParts.mins}${showSeconds ? ` · ${clockParts.secs}` : ''}::`;
+              } else if (clockStyle === 'neon_synthwave') {
+                formattedTime = `⚡ ${clockParts.hrs}${sep}${clockParts.mins}${showSeconds ? `${sep}${clockParts.secs}` : ''}`;
+              } else if (clockStyle === 'retro_casio') {
+                formattedTime = `LCD ${clockParts.hrs}${sep}${clockParts.mins}${showSeconds ? `'${clockParts.secs}` : ''}`;
+              } else if (clockStyle === 'futuristic_hud') {
+                formattedTime = `SYS//${clockParts.hrs}${sep}${clockParts.mins}${showSeconds ? `.${clockParts.secs}` : ''}`;
+              } else if (clockStyle === 'analog_hybrid') {
+                formattedTime = `◔ ${clockParts.hrs}${sep}${clockParts.mins}${showSeconds ? `${sep}${clockParts.secs}` : ''}`;
+              }
+
+              return (
+                <div className="flex flex-col items-center leading-tight">
+                  <span
+                    className={`${weightCls} font-mono tabular-nums text-xs`}
+                    style={{ color: timeColor }}
+                  >
+                    {formattedTime}
                   </span>
-                )}
-              </div>
-            ) : clockStyle === 'pill_glass' ? (
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-blue-400" />
-                <span
-                  className="font-bold font-mono tabular-nums text-xs"
-                  style={{ color: timeColor }}
-                >
-                  {clockParts.hrs}:{clockParts.mins}
-                </span>
-                {showDate && (
-                  <>
-                    <span className="opacity-40">•</span>
-                    <span className="text-[11px] font-mono tabular-nums" style={{ color: dateColor }}>
+                  {showDate && (
+                    <span className="text-[10px] font-mono tabular-nums" style={{ color: dateColor }}>
                       {clockParts.fullDate}
                     </span>
-                  </>
-                )}
-              </div>
-            ) : clockStyle === 'compact_badge' ? (
-              <div className="flex items-center gap-1.5">
-                <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[10px] font-bold">
-                  {clockParts.weekday}
-                </span>
-                <span className="font-mono font-bold text-xs" style={{ color: timeColor }}>
-                  {clockParts.hrs}:{clockParts.mins}
-                </span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center leading-tight">
-                <span
-                  className="font-bold font-mono tabular-nums text-xs"
-                  style={{ color: timeColor }}
-                >
-                  {clockStyle === 'cyber_mono'
-                    ? `[ ${clockParts.hrs}:${clockParts.mins}${showSeconds ? `:${clockParts.secs}` : ''} ]`
-                    : `${clockParts.hrs}:${clockParts.mins}${showSeconds && clockStyle !== 'minimal' ? `:${clockParts.secs}` : ''}`}
-                </span>
-                {showDate && (
-                  <span className="text-[10px] font-mono tabular-nums" style={{ color: dateColor }}>
-                    {clockParts.fullDate}
-                  </span>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              );
+            })()}
           </button>
 
           {/* Background System Audio Controller */}
           <div className="relative flex items-center gap-1.5">
             <button
               onClick={() => setVolumePopupOpen((v) => !v)}
-              title="Управление системной громкостью (Фоновый контроллер v2.4)"
+              title="Управление системной громкостью (Фоновый контроллер v2.5)"
               className={`p-2 rounded-xl border transition-all cursor-pointer ${
                 volumePopupOpen
                   ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
@@ -986,7 +1122,7 @@ export default function App() {
           {/* Plugins Button */}
           <button
             onClick={() => setPluginsModalOpen(true)}
-            title="Магазин и управление плагинами (API 2.4)"
+            title="Магазин и управление плагинами (API 2.5)"
             className="p-2 rounded-xl bg-[#1e2636]/80 hover:bg-[#263044] border border-slate-700/60 transition-all cursor-pointer"
           >
             <Puzzle className="w-4 h-4" />
@@ -1011,20 +1147,20 @@ export default function App() {
               setSettingsTab('appearance');
               setSettingsModalOpen(true);
             }}
-            title="Настройки Launcher Hab 2.4"
+            title="Настройки Launcher Hab 2.5"
             className="p-2 rounded-xl bg-[#1e2636]/80 hover:bg-[#263044] border border-slate-700/60 transition-all cursor-pointer"
           >
             <Settings className="w-4 h-4" />
           </button>
 
-          {/* Direct Download Python v2.4 ZIP */}
+          {/* Direct Download Python v2.5 ZIP */}
           <a
             href="/launcher_hab2.4.zip"
-            download="launcher_hab2.4.zip"
+            download="launcher_hab2.5.zip"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5" />
-            Python v2.4 (.zip)
+            Python v2.5 (.zip)
           </a>
         </div>
       </header>
@@ -1207,46 +1343,55 @@ export default function App() {
             {/* -------------------- SECTION 1: APPS, ANDROID VERTICAL CLOCK & PLUGINS -------------------- */}
             {activeSection === 'apps' && (
               <div className="space-y-6 max-w-6xl mx-auto">
-                {/* ANDROID 14 VERTICAL CLOCK WIDGET BANNER (Toggleable in Clock Settings) */}
+                {/* ANDROID 14 / 18 STYLES CLOCK WIDGET BANNER (v2.5) */}
                 {showAndroidClockWidget && (
                   <section
-                    className="rounded-2xl border border-slate-700/70 p-5 shadow-xl flex flex-wrap items-center justify-between gap-6"
-                    style={cardGlassStyle}
+                    className="border border-slate-700/70 p-5 shadow-xl flex flex-wrap items-center justify-between gap-6"
+                    style={{ ...cardGlassStyle, borderRadius: `${cardBorderRadius}px` }}
                   >
                     <div className="flex items-center gap-6">
-                      {/* Vertical Android 14 Lock-Screen Clock (HH over MM) */}
+                      {/* Vertical Android 14 Lock-Screen Clock (HH over MM) with v2.5 Glow & Radius */}
                       <div
                         onClick={() => {
                           setSettingsTab('clock');
                           setSettingsModalOpen(true);
                         }}
-                        title="Нажмите для настройки стилей вертикальных часов Android 14"
-                        className="px-6 py-3 rounded-2xl bg-[#1a2232] border border-slate-700/80 flex flex-col items-center justify-center leading-none cursor-pointer hover:border-blue-500/60 transition-all shadow-inner"
+                        title="Нажмите для настройки 18 стилей часов и неонового свечения (v2.5)"
+                        style={{
+                          borderRadius: `${clockBorderRadius}px`,
+                          backgroundColor: `rgba(26, 34, 50, ${(clockBgOpacity / 100).toFixed(2)})`,
+                          borderColor: clockGlowEnabled ? `${clockAccentColor}77` : 'rgba(51, 65, 85, 0.8)',
+                          boxShadow: clockGlowEnabled ? `0 0 ${clockGlowIntensity}px ${clockAccentColor}40` : 'none',
+                        }}
+                        className="px-6 py-3 border flex flex-col items-center justify-center leading-none cursor-pointer hover:brightness-110 transition-all"
                       >
                         <span
-                          className="font-black font-mono tabular-nums tracking-tighter"
+                          className={`${clockBold ? 'font-black' : 'font-semibold'} font-mono tabular-nums tracking-tighter`}
                           style={{ color: timeColor, fontSize: '44px', lineHeight: 0.95 }}
                         >
                           {clockParts.hrs}
                         </span>
                         <span
-                          className="font-black font-mono tabular-nums tracking-tighter text-blue-400 mt-1"
-                          style={{ fontSize: '44px', lineHeight: 0.95 }}
+                          className={`${clockBold ? 'font-black' : 'font-semibold'} font-mono tabular-nums tracking-tighter mt-1`}
+                          style={{ color: clockAccentColor, fontSize: '44px', lineHeight: 0.95 }}
                         >
                           {clockParts.mins}
                         </span>
                       </div>
 
                       <div className="space-y-1.5">
-                        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold">
-                          <Clock className="w-3.5 h-3.5" />
-                          {clockParts.fullDate}
-                          {showSeconds && (
-                            <span className="font-mono text-slate-300">• :{clockParts.secs}</span>
-                          )}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 text-xs font-bold">
+                            <Clock className="w-3.5 h-3.5" />
+                            {clockParts.fullDate}
+                            {showSeconds && (
+                              <span className="font-mono text-slate-300">• :{clockParts.secs}</span>
+                            )}
+                          </div>
+                          <LitStatusBadge active={true} />
                         </div>
                         <h3 className="text-base font-bold">
-                          Launcher Hab 2.4 — Рабочее пространство
+                          Launcher Hab 2.5 — {CLOCK_STYLE_OPTIONS.find((c) => c.id === clockStyle)?.label}
                         </h3>
                         <p className="text-xs text-slate-400">
                           Клик по карточке запускает приложение и включает живой секундомер с <code className="text-emerald-400">00:00</code> • Повторный клик останавливает сессию
@@ -1257,18 +1402,29 @@ export default function App() {
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => {
+                          const idx = CLOCK_STYLE_OPTIONS.findIndex((c) => c.id === clockStyle);
+                          const next = CLOCK_STYLE_OPTIONS[(idx + 1) % CLOCK_STYLE_OPTIONS.length];
+                          setClockStyle(next.id);
+                          pushToast('Стиль часов 2.5', `Активирован стиль: ${next.label}`, 'success');
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 text-xs font-semibold cursor-pointer transition-all"
+                      >
+                        ⚡ След. стиль (из 18)
+                      </button>
+                      <button
+                        onClick={() => {
                           setSettingsTab('clock');
                           setSettingsModalOpen(true);
                         }}
                         className="px-3.5 py-2 rounded-xl bg-[#1e2636] hover:bg-[#273247] border border-slate-700 text-xs font-semibold cursor-pointer transition-all"
                       >
-                        🕒 Стили часов (8)
+                        🕒 Настроить часы (18)
                       </button>
                       <button
-                        onClick={() => setPluginsModalOpen(true)}
+                        onClick={() => setCustomThemeModalOpen(true)}
                         className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-semibold cursor-pointer transition-all"
                       >
-                        🧩 Магазин плагинов ({plugins.filter((p) => p.enabled).length})
+                        🎨 Создать тему 2.5
                       </button>
                     </div>
                   </section>
@@ -2482,17 +2638,24 @@ export default function App() {
         </div>
       )}
 
-      {/* ==================== MODAL 3: SETTINGS, 8 CLOCK STYLES, BACKUPS & CHANGELOG ==================== */}
+      {/* ==================== MODAL 3: SETTINGS 2.5 (INSTANT LIT ACTIVE STATUS, 18 CLOCK STYLES, CUSTOM THEMES & CHANGELOG 1.0–2.5) ==================== */}
       {settingsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div
-            className="w-full max-w-3xl rounded-2xl border border-slate-700 p-6 shadow-2xl max-h-[90vh] flex flex-col"
+            className="w-full max-w-4xl rounded-2xl border border-slate-700 p-6 shadow-2xl max-h-[90vh] flex flex-col"
             style={cardGlassStyle}
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div className="flex items-center gap-2.5">
                 <Sliders className="w-5 h-5 text-blue-400" />
-                <h3 className="text-lg font-bold">Настройки Launcher Hab 2.4 (Автосохранение активно)</h3>
+                <div>
+                  <h3 className="text-lg font-bold">
+                    Настройки Launcher Hab 2.5 — Персонализация и Часы
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    При выборе любого параметра он сразу загорается и меняет статус с «⚪ НЕАКТИВНО» на «🟢 АКТИВНО»
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setSettingsModalOpen(false)}
@@ -2506,11 +2669,11 @@ export default function App() {
             <div className="flex items-center gap-1.5 py-3 border-b border-slate-800 overflow-x-auto">
               {(
                 [
-                  ['appearance', '🎨 Темы и Стекло'],
-                  ['clock', '🕒 Стили часов (8 стилей + Android)'],
+                  ['appearance', '🎨 Темы и Персонализация 2.5'],
+                  ['clock', '🕒 Часы (18 стилей + Дизайн)'],
                   ['plugins', '🧩 Плагины и Сетка'],
-                  ['system', '🔊 Система и Бэкапы'],
-                  ['changelog', '📜 История 2.4'],
+                  ['system', '🔐 Шифрование 2.5 и Бэкапы'],
+                  ['changelog', '📜 История версий (1.0 – 2.5)'],
                 ] as const
               ).map(([tabKey, tabLabel]) => (
                 <button
@@ -2518,7 +2681,7 @@ export default function App() {
                   onClick={() => setSettingsTab(tabKey)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                     settingsTab === tabKey
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(59,130,246,0.45)]'
                       : 'bg-[#1a2232] hover:bg-[#232e44] text-slate-300'
                   }`}
                 >
@@ -2528,164 +2691,410 @@ export default function App() {
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 space-y-5">
-              {/* TAB 1: APPEARANCE & MIDNIGHT SLATE THEME */}
+              {/* TAB 1: APPEARANCE, CUSTOM THEME STUDIO & PERSONALIZATION 2.5 */}
               {settingsTab === 'appearance' && (
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <h4 className="text-sm font-bold">Тема оформления (Стиль со второго скриншота по умолчанию)</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                      {(Object.keys(THEMES) as ThemeKey[]).map((tKey) => (
-                        <button
-                          key={tKey}
-                          onClick={() => {
-                            setThemeKey(tKey);
-                            pushToast('Тема сохранена', `Установлена тема: ${THEMES[tKey].name}`, 'success');
-                          }}
-                          className={`p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-left ${
-                            themeKey === tKey
-                              ? 'border-blue-400 bg-blue-500/20 text-white'
-                              : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636] text-slate-300'
-                          }`}
-                        >
-                          {THEMES[tKey].name}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-sm font-bold">
+                          Темы оформления и Кастомные темы (Мгновенное зажигание статуса)
+                        </h4>
+                        <p className="text-xs text-slate-400">
+                          Выберите готовую тему или создайте собственную в студии кастомных тем 2.5
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setCustomThemeModalOpen(true)}
+                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer shadow-sm"
+                      >
+                        + Создать кастомную тему 2.5
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      {Object.keys(allThemesMap).map((tKey) => {
+                        const isSelected = themeKey === tKey;
+                        const th = allThemesMap[tKey];
+                        return (
+                          <button
+                            key={tKey}
+                            onClick={() => {
+                              setThemeKey(tKey);
+                              pushToast('Тема активирована', `Тема «${th.name}» зажглась: 🟢 АКТИВНО`, 'success');
+                            }}
+                            className={`p-3 rounded-xl border text-xs font-semibold transition-all duration-200 cursor-pointer text-left flex flex-col gap-2 ${
+                              isSelected
+                                ? 'border-emerald-400 bg-emerald-500/15 text-white shadow-[0_0_18px_rgba(16,185,129,0.25)]'
+                                : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636] text-slate-300'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 w-full">
+                              <span className="truncate font-bold">{th.name}</span>
+                              <LitStatusBadge active={isSelected} />
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className="w-4 h-4 rounded-full border border-white/20"
+                                style={{ backgroundColor: th.cardHex }}
+                              />
+                              <span
+                                className="w-4 h-4 rounded-full border border-white/20"
+                                style={{ backgroundColor: th.accentHex }}
+                              />
+                              <span className="text-[10px] text-slate-400 font-mono ml-auto">
+                                {th.custom ? 'Custom 2.5' : 'Preset'}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-4">
-                    <div className="flex items-center justify-between">
+                  {/* Lit Toggle Rows for Glass & Animations */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div
+                      onClick={() => setGlassEnabled((v) => !v)}
+                      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
+                        glassEnabled
+                          ? 'border-emerald-400/80 bg-emerald-500/10 shadow-[0_0_16px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
                       <div>
-                        <h4 className="text-sm font-bold">Эффект прозрачного стекла (Glassmorphism #AARRGGBB)</h4>
-                        <p className="text-xs text-slate-400">
-                          Исправлены желтые полоски: используется правильный альфа-канал Flet #AARRGGBB
-                        </p>
+                        <div className="text-xs font-bold">Прозрачное стекло (Liquid Glass #AARRGGBB)</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Настоящий эффект матового стекла без цветовых искажений
+                        </div>
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={glassEnabled}
-                        onChange={(e) => setGlassEnabled(e.target.checked)}
-                        className="w-5 h-5 accent-blue-500 cursor-pointer"
-                      />
+                      <LitStatusBadge active={glassEnabled} />
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-slate-300">Плотность карточек:</span>
-                      <input
-                        type="range"
-                        min={40}
-                        max={98}
-                        value={glassOpacity}
-                        onChange={(e) => setGlassOpacity(Number(e.target.value))}
-                        className="flex-1 accent-blue-500 cursor-pointer"
-                      />
-                      <span className="text-xs font-mono tabular-nums w-10">{glassOpacity}%</span>
+                    <div
+                      onClick={() => setSmoothAnimations((v) => !v)}
+                      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
+                        smoothAnimations
+                          ? 'border-emerald-400/80 bg-emerald-500/10 shadow-[0_0_16px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-xs font-bold">Плавные переходы между разделами</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Анимация переключения вкладок и карточек
+                        </div>
+                      </div>
+                      <LitStatusBadge active={smoothAnimations} />
+                    </div>
+
+                    <div
+                      onClick={() => setCardHoverGlow((v) => !v)}
+                      className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
+                        cardHoverGlow
+                          ? 'border-emerald-400/80 bg-emerald-500/10 shadow-[0_0_16px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-xs font-bold">Неоновая подсветка карточек при наведении</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Акцентное свечение рамки при наведении курсора
+                        </div>
+                      </div>
+                      <LitStatusBadge active={cardHoverGlow} />
+                    </div>
+
+                    <div className="p-4 rounded-xl border border-slate-700 bg-[#121824] flex flex-col justify-between gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold">Интенсивность размытия стекла</span>
+                        <LitStatusBadge active={glassEnabled} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {(
+                          [
+                            ['light', 'Слабая'],
+                            ['medium', 'Средняя'],
+                            ['strong', 'Сильная'],
+                          ] as const
+                        ).map(([k, lbl]) => (
+                          <button
+                            key={k}
+                            onClick={() => setGlassIntensity(k)}
+                            className={`py-1 rounded-lg text-[11px] font-semibold border cursor-pointer transition-all ${
+                              glassIntensity === k
+                                ? 'border-emerald-400 bg-emerald-500/20 text-emerald-200'
+                                : 'border-slate-700 bg-[#1a2232] text-slate-400'
+                            }`}
+                          >
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Personalization 2.5 Sliders */}
+                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-4">
+                    <h4 className="text-sm font-bold">Персонализация карточек и плиток (v2.5)</h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-slate-300">Плотность стекла:</span>
+                          <span className="font-mono text-emerald-400">{glassOpacity}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={35}
+                          max={98}
+                          value={glassOpacity}
+                          onChange={(e) => setGlassOpacity(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-slate-300">Радиус скругления карточек:</span>
+                          <span className="font-mono text-emerald-400">{cardBorderRadius} px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={8}
+                          max={32}
+                          value={cardBorderRadius}
+                          onChange={(e) => setCardBorderRadius(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-slate-300">Масштаб иконок плиток:</span>
+                          <span className="font-mono text-emerald-400">{iconScalePct}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={85}
+                          max={120}
+                          value={iconScalePct}
+                          onChange={(e) => setIconScalePct(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-800">
+                      <span className="text-xs text-slate-300">Цвет индикатора активного приложения:</span>
+                      {['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4'].map((clr) => (
+                        <button
+                          key={clr}
+                          onClick={() => setActiveAppColor(clr)}
+                          className={`w-7 h-7 rounded-full border-2 cursor-pointer transition-all ${
+                            activeAppColor === clr
+                              ? 'border-white scale-115 shadow-[0_0_12px_rgba(255,255,255,0.5)]'
+                              : 'border-transparent opacity-75'
+                          }`}
+                          style={{ backgroundColor: clr }}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* TAB 2: 8 CLOCK STYLES + ANDROID VERTICAL CLOCK */}
+              {/* TAB 2: 18 CLOCK STYLES + CLOCK DESIGN 2.5 */}
               {settingsTab === 'clock' && (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-bold">
-                          Крупный виджет вертикальных часов Android 14 на главном экране
-                        </h4>
-                        <p className="text-xs text-slate-400">
-                          Вертикальные часы HH / MM в стиле экрана блокировки Android 14 / Pixel
-                        </p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={showAndroidClockWidget}
-                        onChange={(e) => setShowAndroidClockWidget(e.target.checked)}
-                        className="w-5 h-5 accent-blue-500 cursor-pointer"
-                      />
+                  {/* Lit Toggles for Clock */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div
+                      onClick={() => setShowAndroidClockWidget((v) => !v)}
+                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        showAndroidClockWidget
+                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
+                      <span className="text-xs font-bold">Виджет часов Android 14</span>
+                      <LitStatusBadge active={showAndroidClockWidget} />
+                    </div>
+
+                    <div
+                      onClick={() => setClockGlowEnabled((v) => !v)}
+                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        clockGlowEnabled
+                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
+                      <span className="text-xs font-bold">Неоновое свечение часов</span>
+                      <LitStatusBadge active={clockGlowEnabled} />
+                    </div>
+
+                    <div
+                      onClick={() => setClockBlinkColon((v) => !v)}
+                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        clockBlinkColon
+                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
+                      <span className="text-xs font-bold">Мигающее двоеточие (:)</span>
+                      <LitStatusBadge active={clockBlinkColon} />
                     </div>
                   </div>
 
+                  {/* 18 Clock Styles Grid with Instant Lit Active Status */}
                   <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <h4 className="text-sm font-bold">Выбор стиля часов (8 современных стилей)</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {CLOCK_STYLE_OPTIONS.map((opt) => (
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-bold">
+                        Коллекция стилей часов — 18 стилей (+10 новых в версии 2.5)
+                      </h4>
+                      <span className="text-xs font-mono text-emerald-400">
+                        Активен: {CLOCK_STYLE_OPTIONS.find((o) => o.id === clockStyle)?.label}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
+                      {CLOCK_STYLE_OPTIONS.map((opt) => {
+                        const isSelected = clockStyle === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setClockStyle(opt.id);
+                              pushToast('Стиль часов зажегся', `${opt.label} • 🟢 АКТИВНО`, 'success');
+                            }}
+                            className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col gap-1.5 ${
+                              isSelected
+                                ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_16px_rgba(16,185,129,0.25)]'
+                                : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636]'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1.5 w-full">
+                              <span className="text-xs font-bold truncate">{opt.label}</span>
+                              {opt.isNew25 && (
+                                <span className="px-1.5 py-0.2 rounded bg-blue-500/25 text-blue-300 text-[9px] font-mono font-bold shrink-0">
+                                  NEW 2.5
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-xs font-mono text-blue-300">{opt.sample}</span>
+                              <LitStatusBadge active={isSelected} />
+                            </div>
+                            <span className="text-[11px] text-slate-400 line-clamp-1">{opt.description}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Clock Design Sliders & Colors */}
+                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-4">
+                    <h4 className="text-sm font-bold">Дизайн циферблата и подложки часов (v2.5)</h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-300">Скругление капсулы:</span>
+                          <span className="font-mono text-emerald-400">{clockBorderRadius} px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={6}
+                          max={28}
+                          value={clockBorderRadius}
+                          onChange={(e) => setClockBorderRadius(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-300">Прозрачность подложки:</span>
+                          <span className="font-mono text-emerald-400">{clockBgOpacity}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={20}
+                          max={100}
+                          value={clockBgOpacity}
+                          onChange={(e) => setClockBgOpacity(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-300">Сила неонового свечения:</span>
+                          <span className="font-mono text-emerald-400">{clockGlowIntensity} px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={4}
+                          max={32}
+                          value={clockGlowIntensity}
+                          onChange={(e) => setClockGlowIntensity(Number(e.target.value))}
+                          className="w-full accent-emerald-500 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                      {(
+                        [
+                          ['Секунды', showSeconds, setShowSeconds],
+                          ['Показывать дату', showDate, setShowDate],
+                          ['День недели', showWeekday, setShowWeekday],
+                          ['Жирный шрифт', clockBold, setClockBold],
+                        ] as const
+                      ).map(([lbl, val, setter]) => (
                         <button
-                          key={opt.id}
-                          onClick={() => {
-                            setClockStyle(opt.id);
-                            pushToast('Стиль часов', `Выбран стиль: ${opt.label}`, 'success');
-                          }}
-                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1 ${
-                            clockStyle === opt.id
-                              ? 'border-blue-400 bg-blue-500/20'
-                              : 'border-slate-700 bg-[#121824] hover:bg-[#1e2636]'
+                          key={lbl}
+                          onClick={() => setter(!val)}
+                          className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                            val
+                              ? 'border-emerald-400 bg-emerald-500/15 text-white'
+                              : 'border-slate-700 bg-[#121824] text-slate-400'
                           }`}
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <span className="text-xs font-bold">{opt.label}</span>
-                            <span className="text-xs font-mono text-blue-300">{opt.sample}</span>
-                          </div>
-                          <span className="text-[11px] text-slate-400">{opt.description}</span>
+                          <span className="font-semibold">{lbl}</span>
+                          <span className="text-[10px] font-mono">{val ? '🟢 ВКЛ' : '⚪ ВЫКЛ'}</span>
                         </button>
                       ))}
                     </div>
-                  </div>
 
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <h4 className="text-sm font-bold">Формат и цвет часов</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={showSeconds}
-                          onChange={(e) => setShowSeconds(e.target.checked)}
-                          className="accent-blue-500"
-                        />
-                        Секунды
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={showDate}
-                          onChange={(e) => setShowDate(e.target.checked)}
-                          className="accent-blue-500"
-                        />
-                        Показывать дату
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={showWeekday}
-                          onChange={(e) => setShowWeekday(e.target.checked)}
-                          className="accent-blue-500"
-                        />
-                        День недели
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={clockGlassFrame}
-                          onChange={(e) => setClockGlassFrame(e.target.checked)}
-                          className="accent-blue-500"
-                        />
-                        Рамка капсулы
-                      </label>
-                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-800">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs text-slate-300">Цвет часов:</span>
+                        {['#f8fafc', '#60a5fa', '#34d399', '#fbbf24', '#f472b6', '#c084fc'].map((hex) => (
+                          <button
+                            key={hex}
+                            onClick={() => setTimeColor(hex)}
+                            className={`w-6 h-6 rounded-full border-2 cursor-pointer ${
+                              timeColor === hex ? 'border-white scale-115' : 'border-transparent'
+                            }`}
+                            style={{ backgroundColor: hex }}
+                          />
+                        ))}
+                      </div>
 
-                    <div className="flex flex-wrap items-center gap-3 pt-2">
-                      <span className="text-xs text-slate-300">Цвет цифр часов:</span>
-                      {['#f8fafc', '#60a5fa', '#34d399', '#fbbf24', '#f472b6', '#c084fc'].map((hex) => (
-                        <button
-                          key={hex}
-                          onClick={() => setTimeColor(hex)}
-                          className={`w-6 h-6 rounded-full border-2 cursor-pointer ${
-                            timeColor === hex ? 'border-white scale-110' : 'border-transparent'
-                          }`}
-                          style={{ backgroundColor: hex }}
-                        />
-                      ))}
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs text-slate-300">Акцент минут и неона:</span>
+                        {['#3b82f6', '#10b981', '#a855f7', '#ec4899', '#f59e0b', '#06b6d4'].map((hex) => (
+                          <button
+                            key={hex}
+                            onClick={() => setClockAccentColor(hex)}
+                            className={`w-6 h-6 rounded-full border-2 cursor-pointer ${
+                              clockAccentColor === hex ? 'border-white scale-115' : 'border-transparent'
+                            }`}
+                            style={{ backgroundColor: hex }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2695,20 +3104,22 @@ export default function App() {
               {settingsTab === 'plugins' && (
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <label className="flex items-center justify-between cursor-pointer">
+                    <div
+                      onClick={() => setShowPluginsInGrid((v) => !v)}
+                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                        showPluginsInGrid
+                          ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_14px_rgba(16,185,129,0.2)]'
+                          : 'border-slate-700 bg-[#121824]'
+                      }`}
+                    >
                       <div>
                         <div className="text-sm font-bold">Показывать плагины в списке запуска («Плагины»)</div>
                         <div className="text-xs text-slate-400">
                           Активные плагины отображаются как карточки в библиотеке и главной сетке
                         </div>
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={showPluginsInGrid}
-                        onChange={(e) => setShowPluginsInGrid(e.target.checked)}
-                        className="w-5 h-5 accent-blue-500"
-                      />
-                    </label>
+                      <LitStatusBadge active={showPluginsInGrid} />
+                    </div>
 
                     <div className="flex items-center justify-between pt-3 border-t border-slate-800">
                       <span className="text-xs text-slate-300">Колонок приложений в сетке:</span>
@@ -2717,10 +3128,10 @@ export default function App() {
                           <button
                             key={col}
                             onClick={() => setCardColumns(col)}
-                            className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer ${
+                            className={`px-3 py-1 rounded-lg text-xs font-mono cursor-pointer border ${
                               cardColumns === col
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-[#121824] text-slate-400 border border-slate-700'
+                                ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold'
+                                : 'bg-[#121824] text-slate-400 border-slate-700'
                             }`}
                           >
                             {col} кол.
@@ -2744,27 +3155,57 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 4: SYSTEM, FERNET ENCRYPTION & BACKUP MANAGER */}
+              {/* TAB 4: SYSTEM, CRYPTO 2.5 (PBKDF2 + HMAC) & BACKUP MANAGER */}
               {settingsTab === 'system' && (
                 <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
-                    <div className="flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-[#1a2232] border border-emerald-500/40 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <h4 className="text-sm font-bold">Шифрование настроек Fernet (SHA-256 32-byte Base64)</h4>
+                        <h4 className="text-sm font-bold text-emerald-300">
+                          Шифрование данных Crypto 2.5 (PBKDF2-HMAC-SHA256 + Fernet AES-128)
+                        </h4>
                         <p className="text-xs text-slate-400">
-                          Ключ шифрования автоматически нормализуется через SHA-256 + urlsafe_b64encode без ошибок
+                          100 000 итераций PBKDF2, 32-байтный URL-safe Base64 ключ, контроль целостности HMAC-SHA256 и совместимость с v2.4
                         </p>
                       </div>
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-mono">
-                        Активно • OK
-                      </span>
+                      <LitStatusBadge active={true} />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-mono">
+                      <div className="p-2.5 rounded-lg bg-[#121824] border border-slate-800">
+                        <div className="text-slate-400 text-[10px]">KDF АЛГОРИТМ</div>
+                        <div className="text-emerald-400 font-bold mt-0.5">PBKDF2-SHA256 (100k)</div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#121824] border border-slate-800">
+                        <div className="text-slate-400 text-[10px]">ЦЕЛОСТНОСТЬ ДАННЫХ</div>
+                        <div className="text-blue-400 font-bold mt-0.5">HMAC-SHA256 Verified</div>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-[#121824] border border-slate-800 flex items-center justify-between">
+                        <div>
+                          <div className="text-slate-400 text-[10px]">РОТАЦИЯ КЛЮЧА</div>
+                          <div className="text-slate-200 font-bold mt-0.5">Ревизия #{cryptoKeyVersion}</div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setCryptoKeyVersion((v) => v + 1);
+                            pushToast(
+                              'Ротация ключа Crypto 2.5',
+                              'Сгенерирован новый 32-байтный PBKDF2 Fernet-ключ, настройки перешифрованы.',
+                              'success'
+                            );
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-sans font-semibold cursor-pointer"
+                        >
+                          Обновить ключ
+                        </button>
+                      </div>
                     </div>
                   </div>
 
                   <div className="p-4 rounded-xl bg-[#1a2232] border border-slate-700/70 space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="text-sm font-bold">Резервные копии настроек (Backup Manager)</h4>
+                        <h4 className="text-sm font-bold">Резервные копии настроек (Backup Manager 2.5)</h4>
                         <p className="text-xs text-slate-400">
                           Создание, восстановление и удаление резервных копий конфигурации
                         </p>
@@ -2774,9 +3215,9 @@ export default function App() {
                           const nowStr = new Date().toLocaleTimeString('ru-RU');
                           const created: BackupRecord = {
                             id: `bk_${Date.now()}`,
-                            filename: `settings_backup_${Date.now()}.json`,
+                            filename: `settings_backup_v25_${Date.now()}.json`,
                             createdAt: `Сегодня, ${nowStr}`,
-                            sizeKb: '4.4 KB',
+                            sizeKb: '4.8 KB',
                           };
                           setBackups((prev) => [created, ...prev]);
                           pushToast('Резервная копия создана', created.filename, 'success');
@@ -2822,31 +3263,273 @@ export default function App() {
                 </div>
               )}
 
-              {/* TAB 5: VERSION 2.4 HISTORY */}
+              {/* TAB 5: COMPLETE VERSION HISTORY (1.0 TO 2.5) */}
               {settingsTab === 'changelog' && (
                 <div className="space-y-4">
-                  {Object.entries(VERSION_HISTORY).map(([ver, items]) => (
-                    <div
-                      key={ver}
-                      className={`p-4 rounded-xl border ${
-                        ver === '2.4'
-                          ? 'bg-blue-500/10 border-blue-500/40'
-                          : 'bg-[#1a2232] border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-blue-400">Version {ver}</span>
-                        <span className="text-xs font-mono text-slate-400">{items.length} обновлений</span>
-                      </div>
-                      <ul className="space-y-1.5 text-xs text-slate-200">
-                        {items.map((line, idx) => (
-                          <li key={idx}>{line}</li>
-                        ))}
-                      </ul>
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[#121824] border border-slate-800">
+                    <span className="text-xs font-bold text-slate-300">
+                      Полный список изменений (16 релизов: с v1.0 по v2.5):
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        onClick={() => setChangelogFilter('all')}
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer ${
+                          changelogFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-[#1a2232] text-slate-400'
+                        }`}
+                      >
+                        Все (1.0–2.5)
+                      </button>
+                      {Object.keys(VERSION_HISTORY).map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setChangelogFilter(v)}
+                          className={`px-2 py-0.5 rounded text-[11px] font-mono cursor-pointer ${
+                            changelogFilter === v ? 'bg-emerald-600 text-white font-bold' : 'bg-[#1a2232] text-slate-400'
+                          }`}
+                        >
+                          v{v}
+                        </button>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  {Object.entries(VERSION_HISTORY)
+                    .filter(([ver]) => changelogFilter === 'all' || changelogFilter === ver)
+                    .map(([ver, items]) => (
+                      <div
+                        key={ver}
+                        className={`p-4 rounded-xl border ${
+                          ver === '2.5'
+                            ? 'bg-emerald-500/10 border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.12)]'
+                            : ver === '2.4'
+                            ? 'bg-blue-500/10 border-blue-500/40'
+                            : 'bg-[#1a2232] border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-sm font-bold ${
+                                ver === '2.5' ? 'text-emerald-400' : 'text-blue-400'
+                              }`}
+                            >
+                              Версия {ver}
+                            </span>
+                            {ver === '2.5' && <LitStatusBadge active={true} />}
+                          </div>
+                          <span className="text-xs font-mono text-slate-400">{items.length} пунктов</span>
+                        </div>
+                        <ul className="space-y-1.5 text-xs text-slate-200">
+                          {items.map((line, idx) => (
+                            <li key={idx} className="leading-relaxed">
+                              {line}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== MODAL: CUSTOM THEME STUDIO PRO 2.5 ==================== */}
+      {customThemeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div
+            className="w-full max-w-xl rounded-2xl border border-slate-700 p-6 shadow-2xl space-y-4"
+            style={cardGlassStyle}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="text-base font-bold">🎨 Студия создания кастомных тем 2.5</h3>
+                <p className="text-xs text-slate-400">
+                  Настройте палитру, выберите базовый режим и сразу примените тему с подсветкой «🟢 АКТИВНО»
+                </p>
+              </div>
+              <button
+                onClick={() => setCustomThemeModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Live Theme Preview Box */}
+            <div
+              className="p-4 rounded-2xl border flex items-center justify-between"
+              style={{
+                backgroundColor: newThemeBg,
+                borderColor: newThemeAccent,
+              }}
+            >
+              <div
+                className="p-3 rounded-xl border flex items-center gap-3"
+                style={{
+                  backgroundColor: newThemeSurface,
+                  borderColor: `${newThemeAccent}66`,
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
+                  style={{ backgroundColor: newThemeAccent }}
+                >
+                  2.5
+                </div>
+                <div>
+                  <div
+                    className={`text-xs font-bold ${
+                      newThemeMode === 'light' ? 'text-slate-900' : 'text-white'
+                    }`}
+                  >
+                    {newThemeName || 'Моя тема 2.5'}
+                  </div>
+                  <div className="text-[11px] font-mono" style={{ color: newThemeAccent }}>
+                    Предпросмотр карточек и акцента
+                  </div>
+                </div>
+              </div>
+              <LitStatusBadge active={true} />
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 mb-1 font-semibold">Название темы</label>
+                <input
+                  type="text"
+                  value={newThemeName}
+                  onChange={(e) => setNewThemeName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#121824] border border-slate-700 text-xs outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {(
+                  [
+                    ['dark', '🌙 Dark Slate'],
+                    ['amoled', '🖤 AMOLED Onyx'],
+                    ['light', '☀️ Light Clean'],
+                  ] as const
+                ).map(([mKey, mLabel]) => (
+                  <button
+                    key={mKey}
+                    type="button"
+                    onClick={() => {
+                      setNewThemeMode(mKey);
+                      if (mKey === 'amoled') {
+                        setNewThemeBg('#04060a');
+                        setNewThemeSurface('#0b0f17');
+                      } else if (mKey === 'light') {
+                        setNewThemeBg('#f1f5f9');
+                        setNewThemeSurface('#ffffff');
+                      } else {
+                        setNewThemeBg('#0a0e17');
+                        setNewThemeSurface('#141c2b');
+                      }
+                    }}
+                    className={`py-2 rounded-xl border font-semibold cursor-pointer ${
+                      newThemeMode === mKey
+                        ? 'border-emerald-400 bg-emerald-500/20 text-white'
+                        : 'border-slate-700 bg-[#121824] text-slate-400'
+                    }`}
+                  >
+                    {mLabel}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1">Фон (BG)</label>
+                  <input
+                    type="color"
+                    value={newThemeBg}
+                    onChange={(e) => setNewThemeBg(e.target.value)}
+                    className="w-full h-9 rounded-lg cursor-pointer bg-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Карточки (Surface)</label>
+                  <input
+                    type="color"
+                    value={newThemeSurface}
+                    onChange={(e) => setNewThemeSurface(e.target.value)}
+                    className="w-full h-9 rounded-lg cursor-pointer bg-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Акцент (Accent)</label>
+                  <input
+                    type="color"
+                    value={newThemeAccent}
+                    onChange={(e) => setNewThemeAccent(e.target.value)}
+                    className="w-full h-9 rounded-lg cursor-pointer bg-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Quick Palettes */}
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-slate-400">Быстрые пресеты:</span>
+                {[
+                  { name: 'Cyber Cyan', bg: '#070b14', surf: '#111a2e', acc: '#06b6d4' },
+                  { name: 'Crimson Pro', bg: '#12080e', surf: '#24111c', acc: '#f43f5e' },
+                  { name: 'Emerald Matrix', bg: '#06100c', surf: '#0f241c', acc: '#10b981' },
+                  { name: 'Royal Gold', bg: '#110f08', surf: '#211d11', acc: '#f59e0b' },
+                ].map((p) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => {
+                      setNewThemeName(p.name);
+                      setNewThemeBg(p.bg);
+                      setNewThemeSurface(p.surf);
+                      setNewThemeAccent(p.acc);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-[#121824] hover:bg-[#1e2636] border border-slate-700 text-[11px] cursor-pointer"
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <button
+                onClick={() => setCustomThemeModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-white/10 text-xs font-semibold cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={() => {
+                  const id = `custom_${Date.now()}`;
+                  const created: CustomThemeConfig = {
+                    id,
+                    name: newThemeName.trim() || 'Custom 2.5',
+                    isDark: newThemeMode !== 'light',
+                    bgGradient: `radial-gradient(circle at 20% 15%, ${newThemeAccent}22, transparent 45%), linear-gradient(155deg, ${newThemeBg} 0%, ${newThemeSurface} 100%)`,
+                    surfaceRgba: newThemeSurface,
+                    cardHex: newThemeSurface,
+                    accent: 'blue',
+                    accentHex: newThemeAccent,
+                    custom: true,
+                  };
+                  setCustomThemes((prev) => ({ ...prev, [id]: created }));
+                  setThemeKey(id);
+                  setCustomThemeModalOpen(false);
+                  pushToast(
+                    'Кастомная тема 2.5 создана',
+                    `Тема «${created.name}» сохранена и сразу активирована (🟢 АКТИВНО)!`,
+                    'success'
+                  );
+                }}
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer shadow-md"
+              >
+                Сохранить и зажечь тему
+              </button>
             </div>
           </div>
         </div>

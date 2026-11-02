@@ -3,7 +3,7 @@ import flet as ft
 
 
 class GlassMorphism:
-    """Модуль прозрачного стекла (Glassmorphism 2.4) в стиле темного графита (Flet #AARRGGBB)."""
+    """Модуль прозрачного стекла (Glassmorphism 2.5) в стиле темного графита (Flet #AARRGGBB)."""
 
     GLASS_STYLES = {
         "light": {
@@ -42,7 +42,6 @@ class GlassMorphism:
             return color
         hex_part = clean[1:]
         if len(hex_part) == 8:
-            # Уже #AARRGGBB -> берем последние 6 символов RRGGBB
             rgb = hex_part[2:]
         elif len(hex_part) == 6:
             rgb = hex_part
@@ -120,15 +119,20 @@ class GlassMorphism:
         session_badge_text=None,
         is_running=False,
         intensity="medium",
+        card_border_radius=20,
+        active_app_color=None,
+        icon_scale_pct=100,
     ):
         """
-        Создание карточки-плитки приложения в темном графитовом стиле (как на скриншоте 2):
-        - скругленная темно-синяя/графитовая плитка иконки;
-        - при активном запуске (is_running) — изумрудная рамка и мягкое свечение;
+        Создание карточки-плитки приложения в темном графитовом стиле (v2.5):
+        - поддерживает кастомное скругление (card_border_radius), масштаб иконок (icon_scale_pct)
+          и цвет подсветки активного приложения (active_app_color);
         - подпись времени сессии снизу.
         """
         style = GlassMorphism.GLASS_STYLES.get(intensity, GlassMorphism.GLASS_STYLES["medium"])
         is_plugin = app.get("type") == "plugin"
+        active_clr = active_app_color or colors.get("SUCCESS", "#10b981")
+        scale_factor = max(0.8, min(1.3, float(icon_scale_pct or 100) / 100.0))
 
         if is_running:
             icon_color = "#ffffff"
@@ -140,8 +144,8 @@ class GlassMorphism:
             icon_color = colors["ON_SURFACE"] if is_installed else colors["ERROR"]
 
         if is_running:
-            tile_bg = GlassMorphism._apply_opacity(colors["SUCCESS"], 0.18)
-            tile_border = ft.border.all(1.5, colors["SUCCESS"])
+            tile_bg = GlassMorphism._apply_opacity(active_clr, 0.22)
+            tile_border = ft.border.all(1.5, active_clr)
         elif is_plugin:
             tile_bg = GlassMorphism._apply_opacity("#8b5cf6", 0.16)
             tile_border = ft.border.all(1, GlassMorphism._apply_opacity("#a78bfa", 0.35))
@@ -155,7 +159,7 @@ class GlassMorphism:
         tile_blur = GlassMorphism._make_blur(style["bg_blur"]) if glass_effect else None
 
         if is_running:
-            status_icon = ft.Icon(name="play_circle_outline", size=16, color=colors["SUCCESS"])
+            status_icon = ft.Icon(name="play_circle_outline", size=16, color=active_clr)
         elif is_favorite:
             status_icon = ft.Icon(name="star", size=15, color="#f59e0b")
         elif is_plugin:
@@ -167,11 +171,14 @@ class GlassMorphism:
                 color=colors["SUCCESS"] if is_installed else colors["ERROR"],
             )
 
+        tile_size = int(round(78 * scale_factor))
+        icon_px = int(round(36 * scale_factor))
+
         icon_container = ft.Container(
             content=ft.Stack(
                 [
                     ft.Container(
-                        content=ft.Icon(name=app.get("icon", "apps"), size=36, color=icon_color),
+                        content=ft.Icon(name=app.get("icon", "apps"), size=icon_px, color=icon_color),
                         alignment=ft.alignment.center,
                     ),
                     ft.Container(
@@ -181,16 +188,18 @@ class GlassMorphism:
                     ),
                 ]
             ),
-            width=78,
-            height=78,
+            width=tile_size,
+            height=tile_size,
             alignment=ft.alignment.center,
             bgcolor=tile_bg,
             blur=tile_blur,
-            border_radius=20,
+            border_radius=int(card_border_radius),
             border=tile_border,
             shadow=ft.BoxShadow(
-                blur_radius=12,
-                color=colors.get("GLASS_SHADOW", "#55000000"),
+                blur_radius=14 if is_running else 12,
+                color=GlassMorphism._apply_opacity(active_clr, 0.30)
+                if is_running
+                else colors.get("GLASS_SHADOW", "#55000000"),
                 offset=ft.Offset(0, 4),
             ),
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
@@ -198,7 +207,7 @@ class GlassMorphism:
 
         subtitle_text = session_badge_text if session_badge_text is not None else ("ПЛАГИН" if is_plugin else "0 мин")
         subtitle_color = (
-            colors["SUCCESS"]
+            active_clr
             if is_running
             else ("#a78bfa" if is_plugin else colors["ON_SURFACE_VARIANT"])
         )
@@ -240,7 +249,7 @@ class GlassMorphism:
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=4,
-            height=126,
+            height=130,
         )
 
         tooltip_lines = [f"Запустить {app.get('name', '')}"]
@@ -250,12 +259,12 @@ class GlassMorphism:
         app_container = ft.Container(
             content=app_content,
             width=116,
-            height=144,
+            height=148,
             padding=8,
             on_click=on_click,
             on_long_press=on_long_press,
             tooltip="\n".join(tooltip_lines),
-            border_radius=16,
+            border_radius=max(12, int(card_border_radius) - 4),
             bgcolor="transparent",
             scale=1.0,
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
@@ -265,7 +274,14 @@ class GlassMorphism:
         return app_container
 
     @staticmethod
-    def create_card(content, colors, hover_effect=False, intensity="medium", custom_opacity=None):
+    def create_card(
+        content,
+        colors,
+        hover_effect=False,
+        intensity="medium",
+        custom_opacity=None,
+        border_radius=20,
+    ):
         """Создание секционной карточки в темно-графитовом стиле без желтых рамок."""
         style = GlassMorphism.GLASS_STYLES.get(intensity, GlassMorphism.GLASS_STYLES["medium"])
         opacity = (custom_opacity / 100.0) if custom_opacity is not None else style["bg_opacity"]
@@ -278,7 +294,7 @@ class GlassMorphism:
             bgcolor=base_bg,
             blur=GlassMorphism._make_blur(style["bg_blur"]),
             border=ft.border.all(1, base_border),
-            border_radius=20,
+            border_radius=int(border_radius),
             padding=20,
             margin=10,
             scale=1.0,

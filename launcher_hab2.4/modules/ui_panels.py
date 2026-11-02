@@ -30,13 +30,19 @@ class UIPanels:
         colors = self.core.get_colors()
         self.create_time_elements()
 
-        clock_frame_enabled = getattr(self.core.theme_manager, "clock_glass_frame", True)
-        clock_style = getattr(self.core.theme_manager, "clock_style", "android_vertical")
+        tm = self.core.theme_manager
+        clock_frame_enabled = getattr(tm, "clock_glass_frame", True)
+        clock_style = getattr(tm, "clock_style", "android_vertical")
+        clock_accent = getattr(tm, "clock_accent_color", colors["ACCENT"])
+        clock_radius = int(getattr(tm, "clock_border_radius", 16))
+        clock_opacity = int(getattr(tm, "clock_bg_opacity", 75)) / 100.0
+        clock_glow = getattr(tm, "clock_glow_enabled", True)
+        clock_glow_intensity = int(getattr(tm, "clock_glow_intensity", 14))
 
         if clock_style == "pill_glass":
             time_inner = ft.Row(
                 [
-                    ft.Icon("schedule", size=16, color=colors["ACCENT"]),
+                    ft.Icon("schedule", size=16, color=clock_accent),
                     self.current_time_text,
                     ft.Text("•", size=12, color=colors["ON_SURFACE_VARIANT"]),
                     self.current_date_text,
@@ -45,17 +51,48 @@ class UIPanels:
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 tight=True,
             )
-        elif clock_style in ("android_vertical", "stacked"):
+        elif clock_style in (
+            "android_vertical",
+            "stacked",
+            "samsung_oneui",
+            "vertical_neon_bar",
+            "material_expressive",
+        ):
             time_inner = ft.Row(
                 [
                     self.current_time_text,
                     ft.Container(
-                        width=2,
-                        height=28,
-                        bgcolor=colors["ACCENT"],
+                        width=3 if clock_style == "vertical_neon_bar" else 2,
+                        height=30,
+                        bgcolor=clock_accent,
                         border_radius=2,
+                        shadow=ft.BoxShadow(
+                            blur_radius=clock_glow_intensity,
+                            color=GlassMorphism._apply_opacity(clock_accent, 0.45),
+                        )
+                        if clock_glow
+                        else None,
                     ),
                     self.current_date_text,
+                ],
+                spacing=8,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                tight=True,
+            )
+        elif clock_style in ("ios_standby", "macos_sonoma", "analog_hybrid"):
+            time_inner = ft.Row(
+                [
+                    ft.Icon(
+                        "watch_later" if clock_style == "analog_hybrid" else "access_time_filled",
+                        size=16,
+                        color=clock_accent,
+                    ),
+                    ft.Column(
+                        [self.current_time_text, self.current_date_text],
+                        spacing=0,
+                        horizontal_alignment=ft.CrossAxisAlignment.START,
+                        tight=True,
+                    ),
                 ],
                 spacing=8,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -73,14 +110,28 @@ class UIPanels:
             content=time_inner,
             padding=ft.padding.symmetric(horizontal=14, vertical=6),
             alignment=ft.alignment.center,
-            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.65) if clock_frame_enabled else "transparent",
-            border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ON_SURFACE"], 0.10)) if clock_frame_enabled else None,
-            border_radius=14,
+            bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], clock_opacity)
+            if clock_frame_enabled
+            else "transparent",
+            border=ft.border.all(
+                1.2 if clock_glow else 1.0,
+                GlassMorphism._apply_opacity(clock_accent if clock_glow else colors["ON_SURFACE"], 0.35 if clock_glow else 0.12),
+            )
+            if clock_frame_enabled
+            else None,
+            border_radius=clock_radius,
+            shadow=ft.BoxShadow(
+                blur_radius=clock_glow_intensity,
+                color=GlassMorphism._apply_opacity(clock_accent, 0.25),
+                offset=ft.Offset(0, 2),
+            )
+            if (clock_frame_enabled and clock_glow)
+            else None,
             on_click=self.core.show_settings,
-            tooltip="Нажмите для настройки стиля часов (Android Vertical, Flip, Капсула и др.)",
+            tooltip="Нажмите для настройки 18 стилей часов и дизайна циферблата (v2.5)",
         )
 
-        # Навигационный переключатель разделов (v2.4)
+        # Навигационный переключатель разделов (v2.5)
         active_sec = getattr(self.core, "active_section", "apps")
         section_switcher = ft.Container(
             bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.65),
@@ -149,7 +200,7 @@ class UIPanels:
             icon="extension",
             icon_color=colors["ON_SURFACE"],
             on_click=self.core.show_plugins_manager,
-            tooltip="Платформа плагинов и магазин расширений (API 2.4)",
+            tooltip="Платформа плагинов и магазин расширений (API 2.5)",
         )
 
         current_vol = self.core.audio_controller.get_volume_level()
@@ -235,7 +286,7 @@ class UIPanels:
             ft.Row(
                 [
                     workspace_button,
-                    ft.Text("Launcher Hab 2.4", size=21, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
+                    ft.Text("Launcher Hab 2.5", size=21, weight=ft.FontWeight.BOLD, color=colors["ON_SURFACE"]),
                     ft.Container(width=10),
                     section_switcher,
                 ],
@@ -252,7 +303,7 @@ class UIPanels:
                 icon="settings",
                 icon_color=colors["ON_SURFACE"],
                 on_click=self.core.show_settings,
-                tooltip="Настройки",
+                tooltip="Настройки (v2.5)",
             ),
         ]
 
@@ -269,84 +320,103 @@ class UIPanels:
 
     def create_time_elements(self):
         colors = self.core.get_colors()
-        clock_style = getattr(self.core.theme_manager, "clock_style", "android_vertical")
-        base_size = getattr(self.core.theme_manager, "time_font_size", 20)
+        tm = self.core.theme_manager
+        clock_style = getattr(tm, "clock_style", "android_vertical")
+        base_size = getattr(tm, "time_font_size", 20)
+        clock_bold = getattr(tm, "clock_bold", True)
 
-        if clock_style in ("android_vertical", "stacked"):
+        if clock_style in (
+            "android_vertical",
+            "stacked",
+            "samsung_oneui",
+            "vertical_neon_bar",
+            "material_expressive",
+        ):
             font_size = max(17, min(26, base_size))
         elif clock_style == "pill_glass":
             font_size = max(14, base_size - 2)
         else:
             font_size = base_size
 
+        mono_styles = ("cyber_mono", "split_flip", "nothing_dot", "retro_casio", "futuristic_hud")
+
         self.current_time_text = ft.Text(
             "",
             size=font_size,
             font_family="Consolas"
-            if clock_style in ("cyber_mono", "split_flip")
-            else getattr(self.core.theme_manager, "time_font_family", self.core.theme_manager.font_family),
+            if clock_style in mono_styles
+            else getattr(tm, "time_font_family", tm.font_family),
             text_align=ft.TextAlign.CENTER,
-            weight=ft.FontWeight.BOLD,
-            color=getattr(self.core.theme_manager, "time_color", colors["ON_SURFACE"]),
+            weight=ft.FontWeight.W_900 if clock_bold else ft.FontWeight.W_500,
+            color=getattr(tm, "time_color", colors["ON_SURFACE"]),
         )
         self.current_date_text = ft.Text(
             "",
-            size=getattr(self.core.theme_manager, "date_font_size", 11),
-            font_family=getattr(self.core.theme_manager, "date_font_family", self.core.theme_manager.font_family),
+            size=getattr(tm, "date_font_size", 11),
+            font_family=getattr(tm, "date_font_family", tm.font_family),
             text_align=ft.TextAlign.CENTER,
-            color=getattr(self.core.theme_manager, "date_color", colors["ON_SURFACE_VARIANT"]),
-            visible=getattr(self.core.theme_manager, "show_date", True),
+            color=getattr(tm, "date_color", colors["ON_SURFACE_VARIANT"]),
+            visible=getattr(tm, "show_date", True),
         )
 
     def create_android_vertical_clock_banner(self):
         """
-        Вертикальный виджет часов в стиле Android 14 Lockscreen + быстрый переключатель стилей часов.
-        Отображается, если выбран вертикальный стиль часов или включен виджет часов.
+        Крупный виджет часов (Android 14 / 18 стилей) + быстрый переключатель стилей часов v2.5.
         """
         colors = self.core.get_colors()
+        tm = self.core.theme_manager
         now = datetime.now()
-        is_12h = getattr(self.core.theme_manager, "time_format", "24") == "12"
+        is_12h = getattr(tm, "time_format", "24") == "12"
         hours_str = now.strftime("%I" if is_12h else "%H")
         mins_str = now.strftime("%M")
         weekday_ru = self.WEEKDAYS_RU[now.weekday()]
         date_str = f"{weekday_ru}, {now.strftime('%d.%m.%Y')}"
 
+        clock_accent = getattr(tm, "clock_accent_color", colors["ACCENT"])
+        clock_glow = getattr(tm, "clock_glow_enabled", True)
+        clock_glow_intensity = int(getattr(tm, "clock_glow_intensity", 14))
+        clock_radius = int(getattr(tm, "clock_border_radius", 16))
+        clock_opacity = int(getattr(tm, "clock_bg_opacity", 75)) / 100.0
+        clock_bold = getattr(tm, "clock_bold", True)
+
         self.android_clock_hours = ft.Text(
             hours_str,
             size=44,
-            weight=ft.FontWeight.W_900,
-            color=getattr(self.core.theme_manager, "time_color", colors["ON_SURFACE"]),
+            weight=ft.FontWeight.W_900 if clock_bold else ft.FontWeight.W_600,
+            color=getattr(tm, "time_color", colors["ON_SURFACE"]),
             height=48,
         )
         self.android_clock_minutes = ft.Text(
             mins_str,
             size=44,
-            weight=ft.FontWeight.W_900,
-            color=colors["ACCENT"],
+            weight=ft.FontWeight.W_900 if clock_bold else ft.FontWeight.W_600,
+            color=clock_accent,
             height=48,
         )
         self.android_clock_date = ft.Text(
             date_str,
             size=13,
             weight=ft.FontWeight.W_500,
-            color=getattr(self.core.theme_manager, "date_color", colors["ON_SURFACE_VARIANT"]),
+            color=getattr(tm, "date_color", colors["ON_SURFACE_VARIANT"]),
         )
 
-        current_style = getattr(self.core.theme_manager, "clock_style", "android_vertical")
-        style_Name = self.core.theme_manager.CLOCK_STYLES.get(current_style, current_style)
+        current_style = getattr(tm, "clock_style", "android_vertical")
+        style_name = tm.CLOCK_STYLES.get(current_style, current_style)
 
         def _cycle_clock_style(_):
-            keys = list(self.core.theme_manager.CLOCK_STYLES.keys())
+            keys = list(tm.CLOCK_STYLES.keys())
             idx = keys.index(current_style) if current_style in keys else 0
             next_style = keys[(idx + 1) % len(keys)]
-            self.core.theme_manager.set_clock_preferences(style=next_style)
+            tm.set_clock_preferences(style=next_style)
+            if hasattr(self.core.plugin_manager, "notify_clock_style_changed"):
+                self.core.plugin_manager.notify_clock_style_changed(next_style)
             self.core.update_header()
             self.core.update_main_content()
             self.core.update_time()
+            self.core.show_toast(f"🕒 Стиль часов: {tm.CLOCK_STYLES.get(next_style, next_style)}")
 
         banner_content = ft.Row(
             [
-                # Вертикальный блок часов как на Android 14 (Часы сверху, Минуты снизу)
                 ft.Container(
                     content=ft.Column(
                         [
@@ -357,21 +427,43 @@ class UIPanels:
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         tight=True,
                     ),
-                    padding=ft.padding.symmetric(horizontal=18, vertical=8),
-                    bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], 0.75),
-                    border=ft.border.all(1, GlassMorphism._apply_opacity(colors["ACCENT"], 0.30)),
-                    border_radius=18,
+                    padding=ft.padding.symmetric(horizontal=20, vertical=8),
+                    bgcolor=GlassMorphism._apply_opacity(colors["SURFACE_VARIANT"], clock_opacity),
+                    border=ft.border.all(
+                        1.5 if clock_glow else 1,
+                        GlassMorphism._apply_opacity(clock_accent, 0.45 if clock_glow else 0.25),
+                    ),
+                    border_radius=clock_radius,
+                    shadow=ft.BoxShadow(
+                        blur_radius=clock_glow_intensity,
+                        color=GlassMorphism._apply_opacity(clock_accent, 0.30),
+                        offset=ft.Offset(0, 3),
+                    )
+                    if clock_glow
+                    else None,
                 ),
                 ft.Column(
                     [
                         ft.Row(
                             [
-                                ft.Icon("schedule", size=16, color=colors["ACCENT"]),
+                                ft.Icon("schedule", size=16, color=clock_accent),
                                 ft.Text(
-                                    f"Стиль часов: {style_Name}",
+                                    f"Стиль часов: {style_name}",
                                     size=14,
                                     weight=ft.FontWeight.BOLD,
                                     color=colors["ON_SURFACE"],
+                                ),
+                                ft.Container(
+                                    content=ft.Text(
+                                        "🟢 АКТИВНО",
+                                        size=10,
+                                        weight=ft.FontWeight.BOLD,
+                                        color=colors["SUCCESS"],
+                                    ),
+                                    bgcolor=GlassMorphism._apply_opacity(colors["SUCCESS"], 0.16),
+                                    border=ft.border.all(1, GlassMorphism._apply_opacity(colors["SUCCESS"], 0.45)),
+                                    border_radius=999,
+                                    padding=ft.padding.symmetric(horizontal=8, vertical=2),
                                 ),
                             ],
                             spacing=6,
@@ -380,12 +472,12 @@ class UIPanels:
                         ft.Row(
                             [
                                 ft.TextButton(
-                                    "Сменить стиль часов",
+                                    "Следующий стиль (из 18)",
                                     icon="style",
                                     on_click=_cycle_clock_style,
                                 ),
                                 ft.TextButton(
-                                    "Настроить часы",
+                                    "Дизайн и настройки часов",
                                     icon="tune",
                                     on_click=self.core.show_settings,
                                 ),
@@ -404,8 +496,9 @@ class UIPanels:
         return GlassMorphism.create_card(
             banner_content,
             colors,
-            hover_effect=False,
-            intensity=self.core.theme_manager.glass_intensity,
+            hover_effect=getattr(tm, "card_hover_glow", True),
+            intensity=tm.glass_intensity,
+            border_radius=getattr(tm, "card_border_radius", 20),
         )
 
     def create_sidebar(self):
@@ -478,6 +571,7 @@ class UIPanels:
 
     def create_app_list_item(self, app):
         colors = self.core.get_colors()
+        tm = self.core.theme_manager
         is_plugin = app.get("type") == "plugin"
         is_installed = True if is_plugin else self.core.app_manager.is_app_installed(app)
         is_running = (
@@ -490,10 +584,11 @@ class UIPanels:
             if hasattr(self.core.plugin_manager, "get_app_card_badge")
             else "0 мин"
         )
+        active_clr = getattr(tm, "active_app_color", colors["SUCCESS"])
 
         if is_running:
-            bg_color = GlassMorphism._apply_opacity(colors["ACCENT"], 0.16)
-            border_color = GlassMorphism._apply_opacity(colors["ACCENT"], 0.55)
+            bg_color = GlassMorphism._apply_opacity(active_clr, 0.18)
+            border_color = GlassMorphism._apply_opacity(active_clr, 0.55)
         elif is_plugin:
             bg_color = GlassMorphism._apply_opacity("#8b5cf6", 0.12)
             border_color = GlassMorphism._apply_opacity("#a78bfa", 0.25)
@@ -515,7 +610,7 @@ class UIPanels:
         ]
         if is_running:
             title_row_controls.append(
-                ft.Text("• Активно", color=colors["SUCCESS"], size=11, weight=ft.FontWeight.W_600)
+                ft.Text("• Активно", color=active_clr, size=11, weight=ft.FontWeight.W_600)
             )
         elif is_plugin:
             title_row_controls.append(
@@ -549,7 +644,7 @@ class UIPanels:
                             ft.Row(title_row_controls, spacing=6),
                             ft.Text(
                                 subtitle_str,
-                                color=colors["SUCCESS"]
+                                color=active_clr
                                 if is_running
                                 else (colors["ON_SURFACE_VARIANT"] if is_installed else colors["ERROR"]),
                                 size=11,
@@ -677,6 +772,9 @@ class UIPanels:
 
     def create_main_content_internal(self):
         colors = self.core.get_colors()
+        tm = self.core.theme_manager
+        card_radius = getattr(tm, "card_border_radius", 20)
+        hover_glow = getattr(tm, "card_hover_glow", True)
 
         # Вкладка «Трекер времени»
         if getattr(self.core, "active_section", "apps") == "tracker":
@@ -693,11 +791,10 @@ class UIPanels:
             tracker_card = GlassMorphism.create_card(
                 tracker_ui,
                 colors,
-                hover_effect=False,
-                intensity=self.core.theme_manager.glass_intensity,
-                custom_opacity=self.core.theme_manager.advanced_glass_opacity
-                if self.core.theme_manager.advanced_glass_enabled
-                else None,
+                hover_effect=hover_glow,
+                intensity=tm.glass_intensity,
+                custom_opacity=tm.advanced_glass_opacity if tm.advanced_glass_enabled else None,
+                border_radius=card_radius,
             )
             return ft.Container(
                 key="section_tracker",
@@ -707,8 +804,7 @@ class UIPanels:
 
         main_content_list = []
 
-        # Показываем крупный вертикальный виджет часов Android 14 если включено
-        if getattr(self.core.theme_manager, "show_android_clock_widget", True):
+        if getattr(tm, "show_android_clock_widget", True):
             main_content_list.append(self.create_android_vertical_clock_banner())
 
         favorites_content = self.create_favorites_panel()
@@ -735,8 +831,9 @@ class UIPanels:
             no_apps_card = GlassMorphism.create_card(
                 no_apps_content,
                 colors,
-                hover_effect=False,
-                intensity=self.core.theme_manager.glass_intensity,
+                hover_effect=hover_glow,
+                intensity=tm.glass_intensity,
+                border_radius=card_radius,
             )
             main_content_list.append(no_apps_card)
 
@@ -752,7 +849,7 @@ class UIPanels:
             hud = ft.Container(
                 content=ft.Column(
                     [
-                        ft.Text("Floating HUD 2.4", weight=ft.FontWeight.BOLD, size=12, color=colors["ACCENT"]),
+                        ft.Text("Floating HUD 2.5", weight=ft.FontWeight.BOLD, size=12, color=colors["ACCENT"]),
                         self.core.floating_hud_cpu_text,
                         self.core.floating_hud_ram_text,
                         self.core.floating_hud_apps_text,
@@ -780,8 +877,13 @@ class UIPanels:
 
     def create_favorites_panel(self):
         colors = self.core.get_colors()
+        tm = self.core.theme_manager
         favorite_apps = self.core.app_manager.favorite_apps
-        runs_cnt = getattr(self.core.theme_manager, "card_columns", 6)
+        runs_cnt = getattr(tm, "card_columns", 6)
+        card_radius = getattr(tm, "card_border_radius", 20)
+        hover_glow = getattr(tm, "card_hover_glow", True)
+        active_clr = getattr(tm, "active_app_color", colors["SUCCESS"])
+        icon_scale = getattr(tm, "icon_scale_pct", 100)
 
         header_row = ft.Container(
             content=ft.Row(
@@ -825,7 +927,11 @@ class UIPanels:
                 ]
             )
             return GlassMorphism.create_card(
-                empty_content, colors, hover_effect=False, intensity=self.core.theme_manager.glass_intensity
+                empty_content,
+                colors,
+                hover_effect=hover_glow,
+                intensity=tm.glass_intensity,
+                border_radius=card_radius,
             )
 
         favorites_grid = ft.GridView(
@@ -855,12 +961,15 @@ class UIPanels:
                 colors=colors,
                 is_installed=is_installed,
                 is_favorite=True,
-                glass_effect=self.core.theme_manager.glass_effect_enabled,
+                glass_effect=tm.glass_effect_enabled,
                 on_click=lambda e, app=app: self.core.launch_app(app),
                 on_long_press=lambda e, app=app: self.core.show_favorite_app_menu_dialog(app),
                 session_badge_text=badge,
                 is_running=running,
-                intensity=self.core.theme_manager.glass_intensity,
+                intensity=tm.glass_intensity,
+                card_border_radius=card_radius,
+                active_app_color=active_clr,
+                icon_scale_pct=icon_scale,
             )
 
             def create_hover_handler(button):
@@ -878,21 +987,24 @@ class UIPanels:
         return GlassMorphism.create_card(
             favorites_content,
             colors,
-            hover_effect=False,
-            intensity=self.core.theme_manager.glass_intensity,
-            custom_opacity=self.core.theme_manager.advanced_glass_opacity
-            if self.core.theme_manager.advanced_glass_enabled
-            else None,
+            hover_effect=hover_glow,
+            intensity=tm.glass_intensity,
+            custom_opacity=tm.advanced_glass_opacity if tm.advanced_glass_enabled else None,
+            border_radius=card_radius,
         )
 
     def create_category_sections(self):
         colors = self.core.get_colors()
+        tm = self.core.theme_manager
         all_available_apps = self.core.get_all_launchable_items()
         filtered_apps = self.filter_apps_by_type(all_available_apps)
-        runs_cnt = getattr(self.core.theme_manager, "card_columns", 6)
+        runs_cnt = getattr(tm, "card_columns", 6)
+        card_radius = getattr(tm, "card_border_radius", 20)
+        hover_glow = getattr(tm, "card_hover_glow", True)
+        active_clr = getattr(tm, "active_app_color", colors["SUCCESS"])
+        icon_scale = getattr(tm, "icon_scale_pct", 100)
 
         categories = {}
-        # Сначала выводим Плагины и Games вверху для быстрого доступа, затем остальные категории
         preferred_order = ["Плагины", "Games", "Browser", "Social", "Media", "Music", "Development", "Office", "System"]
         for cat in preferred_order:
             categories[cat] = []
@@ -935,7 +1047,7 @@ class UIPanels:
                     app,
                     colors,
                     is_installed,
-                    glass_effect=self.core.theme_manager.glass_effect_enabled,
+                    glass_effect=tm.glass_effect_enabled,
                     on_click=lambda e, app=app: self.core.launch_app(app),
                     on_long_press=lambda e, app=app: (
                         self.core.plugin_manager.show_plugin_settings_modal(app["package"])
@@ -944,7 +1056,10 @@ class UIPanels:
                     ),
                     session_badge_text=badge,
                     is_running=running,
-                    intensity=self.core.theme_manager.glass_intensity,
+                    intensity=tm.glass_intensity,
+                    card_border_radius=card_radius,
+                    active_app_color=active_clr,
+                    icon_scale_pct=icon_scale,
                 )
 
                 def create_hover_handler(button):
@@ -957,7 +1072,6 @@ class UIPanels:
                 app_button.on_hover = create_hover_handler(app_button)
                 apps_grid.controls.append(app_button)
 
-            # Заголовок категории как на скриншоте 2 (с синей вертикальной полоской-акцентом)
             category_header = ft.Container(
                 content=ft.Row(
                     [
@@ -982,11 +1096,10 @@ class UIPanels:
             category_card = GlassMorphism.create_card(
                 category_content,
                 colors,
-                hover_effect=False,
-                intensity=self.core.theme_manager.glass_intensity,
-                custom_opacity=self.core.theme_manager.advanced_glass_opacity
-                if self.core.theme_manager.advanced_glass_enabled
-                else None,
+                hover_effect=hover_glow,
+                intensity=tm.glass_intensity,
+                custom_opacity=tm.advanced_glass_opacity if tm.advanced_glass_enabled else None,
+                border_radius=card_radius,
             )
             category_sections.append(category_card)
 
@@ -1027,7 +1140,12 @@ class UIPanels:
 
     def show_search_results(self, results, query):
         colors = self.core.get_colors()
-        runs_cnt = getattr(self.core.theme_manager, "card_columns", 6)
+        tm = self.core.theme_manager
+        runs_cnt = getattr(tm, "card_columns", 6)
+        card_radius = getattr(tm, "card_border_radius", 20)
+        hover_glow = getattr(tm, "card_hover_glow", True)
+        active_clr = getattr(tm, "active_app_color", colors["SUCCESS"])
+        icon_scale = getattr(tm, "icon_scale_pct", 100)
 
         if not results:
             no_results_content = ft.Column(
@@ -1044,7 +1162,12 @@ class UIPanels:
                 content=ft.Column(
                     [
                         self.create_favorites_panel(),
-                        GlassMorphism.create_card(no_results_content, colors, hover_effect=False),
+                        GlassMorphism.create_card(
+                            no_results_content,
+                            colors,
+                            hover_effect=hover_glow,
+                            border_radius=card_radius,
+                        ),
                     ],
                     scroll=ft.ScrollMode.ADAPTIVE,
                 ),
@@ -1086,10 +1209,13 @@ class UIPanels:
                     app,
                     colors,
                     is_installed,
-                    glass_effect=self.core.theme_manager.glass_effect_enabled,
+                    glass_effect=tm.glass_effect_enabled,
                     on_click=lambda e, app=app: self.core.launch_app(app),
                     session_badge_text=badge,
-                    intensity=self.core.theme_manager.glass_intensity,
+                    intensity=tm.glass_intensity,
+                    card_border_radius=card_radius,
+                    active_app_color=active_clr,
+                    icon_scale_pct=icon_scale,
                 )
                 results_grid.controls.append(app_button)
 
@@ -1097,8 +1223,9 @@ class UIPanels:
             search_card = GlassMorphism.create_card(
                 search_results_content,
                 colors,
-                hover_effect=False,
-                intensity=self.core.theme_manager.glass_intensity,
+                hover_effect=hover_glow,
+                intensity=tm.glass_intensity,
+                border_radius=card_radius,
             )
 
             new_view = ft.Container(

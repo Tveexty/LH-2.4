@@ -1,4 +1,4 @@
-export type ThemeKey = 'dark' | 'amoled' | 'light' | 'purple' | 'spring';
+export type ThemeKey = 'dark' | 'amoled' | 'light' | 'purple' | 'spring' | string;
 export type ClockStyleKey =
   | 'android_vertical'
   | 'stacked'
@@ -7,9 +7,31 @@ export type ClockStyleKey =
   | 'split_flip'
   | 'cyber_mono'
   | 'minimal'
-  | 'compact_badge';
+  | 'compact_badge'
+  | 'nothing_dot'
+  | 'ios_standby'
+  | 'samsung_oneui'
+  | 'neon_synthwave'
+  | 'retro_casio'
+  | 'macos_sonoma'
+  | 'futuristic_hud'
+  | 'analog_hybrid'
+  | 'vertical_neon_bar'
+  | 'material_expressive';
 export type GlassIntensity = 'light' | 'medium' | 'strong';
 export type AppType = 'app' | 'web' | 'system' | 'plugin';
+
+export interface CustomThemeConfig {
+  id: string;
+  name: string;
+  isDark: boolean;
+  bgGradient: string;
+  surfaceRgba: string;
+  cardHex: string;
+  accent: string;
+  accentHex: string;
+  custom?: boolean;
+}
 
 export interface AppItem {
   id: string;
@@ -82,19 +104,9 @@ export interface BackupRecord {
   sizeKb: string;
 }
 
-export const THEMES: Record<
-  ThemeKey,
-  {
-    name: string;
-    isDark: boolean;
-    bgGradient: string;
-    surfaceRgba: string;
-    cardHex: string;
-    accent: string;
-    accentHex: string;
-  }
-> = {
+export const THEMES: Record<string, CustomThemeConfig> = {
   dark: {
+    id: 'dark',
     name: 'Темная (Midnight Slate)',
     isDark: true,
     bgGradient:
@@ -105,6 +117,7 @@ export const THEMES: Record<
     accentHex: '#3b82f6',
   },
   amoled: {
+    id: 'amoled',
     name: 'Черный Оникс (AMOLED)',
     isDark: true,
     bgGradient:
@@ -115,6 +128,7 @@ export const THEMES: Record<
     accentHex: '#10b981',
   },
   light: {
+    id: 'light',
     name: 'Светлая',
     isDark: false,
     bgGradient:
@@ -125,6 +139,7 @@ export const THEMES: Record<
     accentHex: '#2563eb',
   },
   purple: {
+    id: 'purple',
     name: 'Фиолетовая',
     isDark: true,
     bgGradient:
@@ -135,6 +150,7 @@ export const THEMES: Record<
     accentHex: '#a855f7',
   },
   spring: {
+    id: 'spring',
     name: 'Весна',
     isDark: false,
     bgGradient:
@@ -151,6 +167,7 @@ export const CLOCK_STYLE_OPTIONS: {
   label: string;
   sample: string;
   description: string;
+  isNew25?: boolean;
 }[] = [
   {
     id: 'android_vertical',
@@ -199,6 +216,77 @@ export const CLOCK_STYLE_OPTIONS: {
     label: 'Компактный бейдж с днем недели',
     sample: 'Пн • 14:32',
     description: 'Акцентный бейдж дня недели и текущее время',
+  },
+  // +10 НОВЫХ СТИЛЕЙ В ВЕРСИИ 2.5
+  {
+    id: 'nothing_dot',
+    label: 'Nothing OS (Dot-Matrix)',
+    sample: '::14 · 32 · 08::',
+    description: 'Точечно-матричный индустриальный шрифт в стиле Nothing Phone (2)',
+    isNew25: true,
+  },
+  {
+    id: 'ios_standby',
+    label: 'iOS 17 StandBy (Ночной док)',
+    sample: '14:32 STANDBY',
+    description: 'Крупные контрастные часы ночного режима iOS 17 StandBy',
+    isNew25: true,
+  },
+  {
+    id: 'samsung_oneui',
+    label: 'Samsung OneUI 6 Lock',
+    sample: '14 / 32 OneUI',
+    description: 'Фирменный двойной блок Samsung One UI 6 с акцентом минут',
+    isNew25: true,
+  },
+  {
+    id: 'neon_synthwave',
+    label: 'Neon Synthwave 80s',
+    sample: '⚡ 14:32:08',
+    description: 'Неоновый ретро-футуризм с мягким свечением цифр',
+    isNew25: true,
+  },
+  {
+    id: 'retro_casio',
+    label: 'Retro LCD (Casio F-91W)',
+    sample: "LCD 14:32'08",
+    description: 'Кварцевый ЖК-индикатор в стиле классических часов Casio',
+    isNew25: true,
+  },
+  {
+    id: 'macos_sonoma',
+    label: 'macOS Sonoma Lockscreen',
+    sample: '14:32 Sonoma',
+    description: 'Элегантная типографика экрана блокировки macOS Sonoma',
+    isNew25: true,
+  },
+  {
+    id: 'futuristic_hud',
+    label: 'Sci-Fi Tactical HUD',
+    sample: 'SYS//14:32.08',
+    description: 'Тактический телеметрический дисплей с системным префиксом',
+    isNew25: true,
+  },
+  {
+    id: 'analog_hybrid',
+    label: 'Гибридный Хронограф',
+    sample: '◔ 14:32:08',
+    description: 'Сочетание часового индикатора хронографа и цифрового блока',
+    isNew25: true,
+  },
+  {
+    id: 'vertical_neon_bar',
+    label: 'Неоновая Вертикаль (Бар)',
+    sample: '14 ┃ 32',
+    description: 'Вертикальная колонка с яркой неоновой полосой акцента',
+    isNew25: true,
+  },
+  {
+    id: 'material_expressive',
+    label: 'Material You Expressive (Pixel 9)',
+    sample: '14 / 32 Pixel',
+    description: 'Выразительный адаптивный стиль Google Pixel 9 Material You',
+    isNew25: true,
   },
 ];
 
@@ -505,7 +593,7 @@ export const INITIAL_PLUGINS: PluginItem[] = [
   {
     id: 'session_tracker_plugin',
     name: 'Game & App Session Tracker',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Team',
     category: 'Аналитика и Детокс',
     icon: 'BarChart3',
@@ -521,7 +609,7 @@ export const INITIAL_PLUGINS: PluginItem[] = [
   {
     id: 'focus_mode_plugin',
     name: 'Focus Mode (Pomodoro)',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Team',
     category: 'Продуктивность',
     icon: 'Clock',
@@ -537,7 +625,7 @@ export const INITIAL_PLUGINS: PluginItem[] = [
   {
     id: 'smart_music_controller',
     name: 'Smart Music Controller',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Team',
     category: 'Медиа',
     icon: 'Music',
@@ -552,7 +640,7 @@ export const INITIAL_PLUGINS: PluginItem[] = [
   {
     id: 'smart_weather_plugin',
     name: 'Smart Weather Plugin',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Team',
     category: 'Виджеты',
     icon: 'Cloud',
@@ -567,7 +655,7 @@ export const INITIAL_PLUGINS: PluginItem[] = [
   {
     id: 'idea_notebook_plugin',
     name: 'Idea Notebook',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Team',
     category: 'Утилиты',
     icon: 'FileText',
@@ -582,7 +670,7 @@ export const INITIAL_PLUGINS: PluginItem[] = [
   {
     id: 'smart_file_finder',
     name: 'Smart File Finder',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Team',
     category: 'Система',
     icon: 'Search',
@@ -600,7 +688,7 @@ export const PLUGIN_CATALOG: CatalogPluginItem[] = [
   {
     id: 'system_cleaner_plugin',
     name: 'System Cleaner & RAM Optimizer',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Store',
     category: 'Система',
     icon: 'Activity',
@@ -611,7 +699,7 @@ export const PLUGIN_CATALOG: CatalogPluginItem[] = [
   {
     id: 'game_booster_plugin',
     name: 'Game Booster Pro (FPS & Ping)',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Store',
     category: 'Игры',
     icon: 'Gamepad2',
@@ -622,7 +710,7 @@ export const PLUGIN_CATALOG: CatalogPluginItem[] = [
   {
     id: 'quick_clipboard_plugin',
     name: 'Quick Clipboard History',
-    version: '2.4.0',
+    version: '2.5.0',
     author: 'LauncherHab Store',
     category: 'Продуктивность',
     icon: 'Copy',
@@ -658,72 +746,72 @@ export const INITIAL_WORKSPACES: WorkspacePreset[] = [
 
 export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string; summary: string }[] = [
   {
-    path: 'modules/encryption_manager.py',
-    title: 'modules/encryption_manager.py',
-    badge: 'FIXED v2.4',
-    summary:
-      'Исправлена ошибка Fernet key must be 32 url-safe base64-encoded bytes (SHA-256 -> 32-байтный URL-safe Base64 ключ для надежного сохранения настроек).',
-  },
-  {
-    path: 'modules/glass_morphism.py',
-    title: 'modules/glass_morphism.py',
-    badge: 'FIXED v2.4',
-    summary:
-      'Исправлены желтые полоски: формат цветов Flet переведен на #AARRGGBB, стиль темной темы приведен к Midnight Slate как на скриншоте 2.',
-  },
-  {
-    path: 'plugins/session_tracker_plugin.py',
-    title: 'plugins/session_tracker_plugin.py',
-    badge: 'ZERO-START v2.4',
-    summary:
-      'Трекер времени начинается с 0 мин и запускает живой посекундный таймер (🟢 00:00:15) при старте приложения или игры.',
-  },
-  {
-    path: 'modules/plugin_manager.py',
-    title: 'modules/plugin_manager.py',
-    badge: 'STORE & API v2.4',
-    summary:
-      'Расширенный PluginAPI 2.4: плагины в списке запуска («Плагины»), магазин расширений (скачать/установить/настроить/удалить).',
-  },
-  {
-    path: 'modules/ui_panels.py',
-    title: 'modules/ui_panels.py',
-    badge: 'ANDROID CLOCK v2.4',
-    summary:
-      'Вертикальные часы Android 14 (HH / MM), 8 стилей часов и вывод активных плагинов в библиотеке и сетке.',
-  },
-  {
     path: 'modules/ui_dialogs.py',
     title: 'modules/ui_dialogs.py',
-    badge: 'UPDATED v2.4',
+    badge: 'NEW v2.5',
     summary:
-      '5 вкладок настроек, менеджер резервных копий (восстановление/удаление), 8 стилей часов и устранение show_snack_bar.',
-  },
-  {
-    path: 'modules/ui_manager_core.py',
-    title: 'modules/ui_manager_core.py',
-    badge: 'UPDATED v2.4',
-    summary:
-      'Ядро Launcher Hab 2.4: ежесекундный тик таймера запущенных приложений, метод show_toast через page.open(ft.SnackBar).',
+      'Полная история версий 1.0–2.5, мгновенное «зажигание» активного статуса (🟢 АКТИВНО), 18 стилей часов и Custom Theme Studio Pro.',
   },
   {
     path: 'modules/theme_manager.py',
     title: 'modules/theme_manager.py',
-    badge: 'UPDATED v2.4',
+    badge: 'NEW v2.5',
     summary:
-      'Сохранение всех настроек в launcher_settings.json, 8 стилей часов и темы Midnight Slate / Черный Оникс.',
+      '18 стилей часов (+10 новых в 2.5), настройки неонового свечения, радиуса и прозрачности часов, кастомизация карточек и кастомных тем.',
+  },
+  {
+    path: 'modules/encryption_manager.py',
+    title: 'modules/encryption_manager.py',
+    badge: 'CRYPTO v2.5',
+    summary:
+      'PBKDF2-HMAC-SHA256 (100 000 итераций), контроль целостности HMAC-SHA256, ротация ключей и обратная совместимость с 2.4.',
+  },
+  {
+    path: 'modules/plugin_manager.py',
+    title: 'modules/plugin_manager.py',
+    badge: 'API v2.5',
+    summary:
+      'PluginAPI 2.5.0: зашифрованные секреты плагинов (get_secure_secret / set_secure_secret), хуки смены темы и часов, магазин расширений.',
+  },
+  {
+    path: 'modules/ui_panels.py',
+    title: 'modules/ui_panels.py',
+    badge: 'CLOCKS v2.5',
+    summary:
+      'Рендеринг 18 стилей часов, неоновая подсветка циферблата, радиус карточек и масштаб иконок.',
+  },
+  {
+    path: 'modules/glass_morphism.py',
+    title: 'modules/glass_morphism.py',
+    badge: 'GLASS v2.5',
+    summary:
+      'Поддержка кастомного скругления карточек, масштаба иконок (85–120%), подсветки активных приложений и формата #AARRGGBB.',
+  },
+  {
+    path: 'plugins/session_tracker_plugin.py',
+    title: 'plugins/session_tracker_plugin.py',
+    badge: 'ZERO-START',
+    summary:
+      'Трекер времени начинается с 0 мин и запускает живой посекундный таймер (🟢 00:00:15) при старте приложения или игры.',
+  },
+  {
+    path: 'modules/ui_manager_core.py',
+    title: 'modules/ui_manager_core.py',
+    badge: 'CORE v2.5',
+    summary:
+      'Ядро Launcher Hab 2.5: форматирование всех 18 стилей часов, мигающее двоеточие и живой тик таймера.',
   },
   {
     path: 'modules/file_manager.py',
     title: 'modules/file_manager.py',
-    badge: 'FIXED v2.4',
+    badge: 'STORAGE',
     summary:
       'Надежное чтение и запись зашифрованных/JSON настроек без повреждения файла при сбое.',
   },
   {
     path: 'modules/audio_controller.py',
     title: 'modules/audio_controller.py',
-    badge: 'UPDATED v2.4',
+    badge: 'AUDIO',
     summary:
       'Неблокирующий фоновый контроллер системной громкости (pycaw CoreAudio COM в фоновом потоке + Mute).',
   },
@@ -731,29 +819,152 @@ export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string;
     path: 'main.py',
     title: 'main.py',
     badge: 'ENTRY',
-    summary: 'Точка входа Flet-приложения Launcher Hab 2.4 на языке Python.',
+    summary: 'Точка входа Flet-приложения Launcher Hab 2.5 на языке Python.',
   },
 ];
 
+// Полная история версий с 1.0 до 2.5
 export const VERSION_HISTORY: Record<string, string[]> = {
+  '2.5': [
+    '🚀 LAUNCHER HAB 2.5 — МЕГА-ПЕРСОНАЛИЗАЦИЯ, 18 СТИЛЕЙ ЧАСОВ, КАСТОМНЫЕ ТЕМЫ PRO, API 2.5 И PBKDF2 ШИФРОВАНИЕ',
+    '💡 МГНОВЕННАЯ ПОДСВЕТКА АКТИВНЫХ НАСТРОЕК («ЗАЖИГАНИЕ» СТАТУСА) — при выборе любого стиля, переключателя или пресета элемент мгновенно загорается неоновой рамкой и меняет статус с «⚪ НЕАКТИВНО» на «🟢 АКТИВНО»',
+    '🕒 +10 НОВЫХ СТИЛЕЙ ЧАСОВ (ВСЕГО 18 СТИЛЕЙ) — добавлены Nothing OS (Dot-Matrix), iOS 17 StandBy, Samsung OneUI 6, Neon Synthwave 80s, Retro LCD Casio F-91W, macOS Sonoma, Sci-Fi Tactical HUD, Гибридный Хронограф, Неоновая Вертикаль и Material You Expressive',
+    '✨ РАСШИРЕННЫЙ ДИЗАЙН ЧАСОВ — настройка неонового свечения (Glow), скругления рамки часов, прозрачности подложки, акцентного цвета минут, жирности шрифта и мигающего разделителя',
+    '🎨 СТУДИЯ СОЗДАНИЯ КАСТОМНЫХ ТЕМ 2.5 — живое интерактивное превью темы, выбор режима (Dark / AMOLED / Light), настройка цветовых каналов, радиуса скругления карточек, масштаба иконок и свечения при наведении',
+    '🔐 ОБНОВЛЕННОЕ ШИФРОВАНИЕ ДАННЫХ 2.5 — деривация ключей PBKDF2-HMAC-SHA256 (100 000 итераций), контроль целостности HMAC-SHA256, ротация ключей и обратная совместимость с v2.4',
+    '🔌 УЛУЧШЕННЫЙ APPLICATION & PLUGIN API 2.5 — шифрованное хранилище секретов для плагинов, хуки смены темы/часов (on_theme_changed, on_clock_style_changed) и диагностика безопасности',
+    '📜 ПОЛНАЯ ИСТОРИЯ ОБНОВЛЕНИЙ — добавлен полный архив изменений всех версий программы с 1.0 по 2.5',
+  ],
   '2.4': [
-    '🚀 LAUNCHER HUB 2.4 – MIDNIGHT SLATE, ANDROID VERTICAL CLOCK, ZERO-START TRACKER & PLUGIN STORE',
-    '🛡 ИСПРАВЛЕНО ШИФРОВАНИЕ FERNET И СОХРАНЕНИЕ НАСТРОЕК – корректный 32-байтный URL-safe Base64 ключ через SHA-256',
-    '🎨 УБРАНЫ ЖЕЛТЫЕ ПОЛОСКИ И ОБНОВЛЕНА ТЕМНАЯ ТЕМА – исправлен порядок байтов #AARRGGBB в Flet и внедрен дизайн Midnight Slate (как на скриншоте 2)',
-    '🔔 ИСПРАВЛЕНА ОШИБКА SHOW_SNACK_BAR – все уведомления переведены на современный метод page.open(ft.SnackBar(...))',
-    '⏱ ТРЕКЕР ВРЕМЕНИ С НУЛЯ (0 МИН) + ЖИВОЙ СЕКУНДОМЕР – отсчет начинается с 00:00 строго после запуска приложения',
-    '🧩 ПЛАГИНЫ В СПИСКЕ ЗАПУСКА + МАГАЗИН ПЛАГИНОВ – запуск любого плагина из категории «Плагины», скачивание, настройка и удаление',
-    '📱 ВЕРТИКАЛЬНЫЕ ЧАСЫ КАК НА ANDROID 14 + 8 СТИЛЕЙ ЧАСОВ – крупные часы HH / MM, Flip-карточки, Стеклянная капсула и Кибер-Моно',
+    '🚀 LAUNCHER HAB 2.4 — DARK SLATE PRO, LIVE SESSION TRACKER (С 0) И ANDROID 14 ЧАСЫ',
+    '🎨 ИСПРАВЛЕНЫ ЦВЕТА И РАМКИ (#AARRGGBB) — убраны желтые полосы, внедрен графитовый стиль Midnight Slate',
+    '🔐 ИСПРАВЛЕНО СОХРАНЕНИЕ И ШИФРОВАНИЕ НАСТРОЕК — валидный 32-байтовый ключ Fernet без потери данных',
+    '⏱️ GAME & APP SESSION TRACKER С 0 — честный отсчет времени с 00:00 при запуске приложения и живой таймер на карточках',
+    '🧩 ПЛАГИНЫ В СПИСКЕ ЗАПУСКА И МАГАЗИН РАСШИРЕНИЙ — скачивание, настройка, включение и удаление плагинов в 1 клик',
+    '🕒 ВЕРТИКАЛЬНЫЕ ЧАСЫ ANDROID 14 — крупный вертикальный виджет часов (HH / MM) и 8 современных стилей',
+    '🔊 ФОНОВЫЙ КОНТРОЛЛЕР СИСТЕМНОЙ ГРОМКОСТИ — плавная регулировка громкости в фоновом потоке',
   ],
   '2.3': [
-    '🎨 УЛУЧШЕННЫЙ LIQUID GLASS ИНТЕРФЕЙС – переработанный стеклянный дизайн и эффекты прозрачности',
-    '🖥 FLOATING HUD – плавающая панель с системной информацией CPU/RAM',
-    '🗑 ФИКСИРОВАННАЯ КОРЗИНА – быстрый доступ к корзине в правом нижнем углу',
-    '🔌 СИСТЕМА ПЛАГИНОВ – базовая поддержка расширений LauncherHub',
+    '🎨 УЛУЧШЕННЫЙ LIQUID GLASS ИНТЕРФЕЙС – переработанный стеклянный дизайн, плавные эффекты прозрачности и более современный внешний вид',
+    '🖥 FLOATING HUD – новая плавающая панель с системной информацией и быстрым доступом к функциям',
+    '🗑 ФИКСИРОВАННАЯ КОРЗИНА – корзина закреплена в правом нижнем углу интерфейса',
+    '🔎 ИСТОРИЯ ПОИСКА – система поиска теперь сохраняет предыдущие запросы для более быстрого доступа',
+    '💾 УЛУЧШЕННАЯ СИСТЕМА РЕЗЕРВНОГО КОПИРОВАНИЯ – стабильное сохранение и восстановление настроек и данных пользователя',
+    '🕒 НОВЫЕ СТИЛИ ЧАСОВ – добавлены дополнительные варианты отображения времени и даты с кастомизацией цвета',
+    '🎨 УЛУЧШЕННАЯ ПАНЕЛЬ НАСТРОЕК – более гармоничный дизайн и удобная навигация',
+    '🔌 СИСТЕМА ПЛАГИНОВ – поддержка расширений LauncherHub для добавления новых возможностей',
+    '🎯 FOCUS MODE PLUGIN – режим концентрации с Pomodoro таймером и минималистичным интерфейсом',
+    '🌦 SMART WEATHER PLUGIN – отображение температуры, влажности и скорости ветра',
+    '🎵 SMART MUSIC CONTROLLER – управление музыкой через встроенный мини-плеер',
+    '📂 SMART FILE FINDER И IDEA NOTEBOOK – быстрый поиск файлов и встроенный блокнот для идей',
   ],
   '2.2': [
-    '⚡ ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ – кэширование поиска и виртуализация списков',
-    '💾 СИСТЕМА РЕЗЕРВНОГО КОПИРОВАНИЯ – автоматическое сохранение и восстановление настроек',
+    '🚀 LAUNCHER HAB 2.2 - ОПТИМИЗАЦИЯ И КАСТОМИЗАЦИЯ',
+    '⚡ ОПТИМИЗАЦИЯ ПРОИЗВОДИТЕЛЬНОСТИ - снижение потребления памяти на 25% и ускорение загрузки',
+    '🎨 КАСТОМИЗАЦИЯ ВРЕМЕНИ И ДАТЫ - выбор шрифтов, размеров, цветов и форматов отображения',
+    '💾 СИСТЕМА РЕЗЕРВНОГО КОПИРОВАНИЯ - автоматическое и ручное создание бэкапов настроек',
+    '🔍 КЭШИРОВАНИЕ ПОИСКА - мгновенный поиск по приложениям с интеллектуальным кэшированием',
+    '🎯 ВИРТУАЛИЗАЦИЯ СПИСКОВ - плавная работа с большими библиотеками приложений (1000+)',
+    '🛠️ УЛУЧШЕННОЕ УПРАВЛЕНИЕ ПАМЯТЬЮ - автоматическая очистка неиспользуемых ресурсов',
+    '📊 МОНИТОРИНГ ПРОИЗВОДИТЕЛЬНОСТИ - отслеживание использования CPU, памяти и кэша',
+    '🔧 ГИБКИЕ НАСТРОЙКИ ПРОИЗВОДИТЕЛЬНОСТИ - индивидуальная настройка кэширования и виртуализации',
+  ],
+  '2.1': [
+    '🚀 LAUNCHER HAB 2.1 - НОВЫЕ ВОЗМОЖНОСТИ И РАСШИРЕНИЯ',
+    '🔌 СИСТЕМА ПЛАГИНОВ - поддержка сторонних расширений и модулей',
+    '🔊 УПРАВЛЕНИЕ АУДИО - встроенный контроллер громкости с поддержкой всех ОС',
+    '🎨 СОЗДАНИЕ ТЕМ - визуальный редактор пользовательских цветовых схем',
+    '💫 РАСШИРЕННОЕ СТЕКЛО - тонкая настройка прозрачности стеклянного эффекта',
+    '🏷️ СИСТЕМА ТЕГОВ - организация приложений с помощью пользовательских меток',
+    '🔍 ПОИСК ПО ТЕГАМ - быстрая фильтрация приложений по категориям и тегам',
+    '📊 ПРОДВИНУТЫЕ НАСТРОЙКИ - новые вкладки для управления всеми функциями',
+    '🛠️ УЛУЧШЕННАЯ АРХИТЕКТУРА - модульная структура для легкого расширения',
+    '🔒 БЕЗОПАСНОСТЬ ПЛАГИНОВ - изолированная среда выполнения стороннего кода',
+    '🎯 АВТОМАТИЧЕСКОЕ ОБНАРУЖЕНИЕ - сканирование папки plugins при запуске',
+  ],
+  '2.0': [
+    '🎉 КРУПНОЕ ОБНОВЛЕНИЕ LAUNCHER HAB 2.0!',
+    '✨ Полностью переработанный дизайн с эффектом жидкого стекла (Glass Morphism)',
+    '🎬 Плавные анимации в стиле Android с поддержкой кривых Безье',
+    '🔐 Шифрование пользовательских данных с использованием алгоритма Fernet',
+    '📡 Расширенный мониторинг системы: отслеживание Bluetooth, Wi-Fi и геолокации',
+    '🎨 7 предустановленных цветовых тем (Темная, Светлая, Синяя, Зеленая, Фиолетовая, Оранжевая, Розовая)',
+    '⚡ Настройка интенсивности стеклянного эффекта (Слабая, Средняя, Сильная)',
+    '🔄 Улучшенная система фильтрации с диалоговым меню',
+    '📱 Адаптивная сетка карточек приложений с эффектами наведения',
+    '🔔 Интеллектуальная система уведомлений о действиях пользователя',
+    '🛡️ Повышенная стабильность работы и обработка ошибок',
+    '💾 Автоматическое сохранение всех настроек в зашифрованном виде',
+  ],
+  '1.9': [
+    'Добавлен мониторинг системных ресурсов (CPU, память, батарея, сеть)',
+    'Реализована система автоматического определения установленных приложений',
+    'Улучшена производительность при работе с большими списками приложений',
+    'Добавлена поддержка пользовательских путей к приложениям',
+    'Исправлены ошибки при запуске веб-приложений',
+  ],
+  '1.8': [
+    'Внедрена система избранных приложений (до 10 элементов)',
+    'Добавлена панель быстрого доступа к часто используемым программам',
+    'Реализовано контекстное меню для управления приложениями',
+    'Улучшен поиск с поддержкой фильтрации по категориям',
+    'Обновлен интерфейс боковой панели',
+  ],
+  '1.7': [
+    'Добавлена возможность добавления собственных приложений и сайтов',
+    'Реализован выбор иконок для пользовательских элементов',
+    'Внедрена система категорий (Браузеры, Медиа, Музыка, Соцсети, Игры, Система, Офис)',
+    'Улучшена навигация по категориям приложений',
+    'Добавлены подсказки при наведении на элементы интерфейса',
+  ],
+  '1.6': [
+    'Разработана базовая система тем оформления (Темная и Светлая)',
+    'Добавлены часы и дата в заголовок приложения',
+    'Реализовано автообновление времени каждую секунду',
+    'Улучшена адаптивность интерфейса при изменении размера окна',
+    'Исправлены проблемы с отображением кириллицы',
+  ],
+  '1.5': [
+    'Добавлена функция поиска по приложениям в реальном времени',
+    'Реализована фильтрация приложений по типам (Все, Приложения, Сайты, Система)',
+    'Улучшена визуальная обратная связь при взаимодействии с элементами',
+    'Оптимизирована загрузка иконок приложений',
+    'Добавлена поддержка горячих клавиш',
+  ],
+  '1.4': [
+    'Расширена база предустановленных приложений (более 30 программ)',
+    'Добавлена проверка наличия приложений в системе',
+    'Реализовано перенаправление на официальные сайты для неустановленных программ',
+    'Улучшена обработка ошибок при запуске приложений',
+    'Обновлен дизайн карточек приложений',
+  ],
+  '1.3': [
+    'Добавлена поддержка запуска системных утилит Windows и Linux',
+    'Реализована кроссплатформенная совместимость (Windows, Linux, macOS)',
+    'Улучшена система определения путей к исполняемым файлам',
+    'Добавлен индикатор загрузки при запуске тяжелых приложений',
+    'Исправлены ошибки при работе в различных окружениях',
+  ],
+  '1.2': [
+    'Внедрено сохранение настроек между сеансами работы',
+    'Добавлено диалоговое окно настроек приложения',
+    'Реализована возможность сброса избранного и пользовательских путей',
+    'Улучшена структура хранения конфигурационных файлов',
+    'Повышена общая стабильность приложения',
+  ],
+  '1.1': [
+    'Добавлена боковая панель со списком всех приложений',
+    'Реализовано разделение интерфейса на функциональные зоны',
+    'Улучшено отображение статуса статуса установки приложений',
+    'Добавлены базовые анимации при наведении курсора',
+    'Исправлены мелкие визуальные недочеты',
+  ],
+  '1.0': [
+    '🚀 Первый официальный релиз Launcher Hab!',
+    'Базовый функционал запуска приложений и веб-сайтов',
+    'Простой и понятный пользовательский интерфейс на базе Flet',
+    'Поддержка основных браузеров и медиа-плееров',
+    'Фундамент для будущих обновлений и расширений',
   ],
 };
 

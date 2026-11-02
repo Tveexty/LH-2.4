@@ -188,7 +188,7 @@ class UIManagerCore:
             threading.Thread(target=self.backup_manager.auto_backup, daemon=True).start()
 
     def setup_page(self):
-        self.page.title = "Launcher Hab 2.4"
+        self.page.title = "Launcher Hab 2.5"
         self.page.padding = 0
         self.page.spacing = 0
         self.page.theme_mode = ft.ThemeMode.DARK
@@ -292,32 +292,48 @@ class UIManagerCore:
         threading.Thread(target=backup_timer, daemon=True).start()
 
     def update_time(self):
-        """Обновление времени и даты с поддержкой вертикальных часов Android 14 и 8 стилей."""
+        """Обновление времени и даты с поддержкой всех 18 стилей часов (v2.5)."""
         if hasattr(self.panels, "current_time_text") and self.panels.current_time_text:
             now = datetime.now()
             clock_style = getattr(self.theme_manager, "clock_style", "android_vertical")
             show_sec = getattr(self.theme_manager, "show_seconds", True)
             show_weekday = getattr(self.theme_manager, "show_weekday", True)
             is_12h = getattr(self.theme_manager, "time_format", "24") == "12"
+            blink_colon = getattr(self.theme_manager, "clock_blink_colon", False)
 
             hours_str = now.strftime("%I" if is_12h else "%H")
             mins_str = now.strftime("%M")
             secs_str = now.strftime("%S")
+            sep = (" " if (blink_colon and now.second % 2 == 1) else ":")
 
-            if clock_style in ("android_vertical", "stacked"):
+            if clock_style in (
+                "android_vertical",
+                "stacked",
+                "samsung_oneui",
+                "vertical_neon_bar",
+                "material_expressive",
+            ):
                 time_str = f"{hours_str}\n{mins_str}"
-            elif clock_style in ("minimal", "pill_glass"):
-                time_str = now.strftime("%I:%M %p" if is_12h else "%H:%M")
+            elif clock_style in ("minimal", "pill_glass", "ios_standby", "macos_sonoma"):
+                suffix = f" {now.strftime('%p')}" if is_12h else ""
+                time_str = f"{hours_str}{sep}{mins_str}{suffix}"
             elif clock_style == "split_flip":
-                time_str = f"[{hours_str}] : [{mins_str}]" + (f" : [{secs_str}]" if show_sec else "")
+                time_str = f"[{hours_str}] {sep} [{mins_str}]" + (f" {sep} [{secs_str}]" if show_sec else "")
             elif clock_style == "cyber_mono":
-                fmt = "%I : %M : %S" if (is_12h and show_sec) else ("%H : %M : %S" if show_sec else "%H : %M")
-                time_str = f"[ {now.strftime(fmt)} ]"
+                time_str = f"[ {hours_str} {sep} {mins_str}" + (f" {sep} {secs_str} ]" if show_sec else " ]")
+            elif clock_style == "nothing_dot":
+                time_str = f"::{hours_str} · {mins_str}" + (f" · {secs_str}::" if show_sec else "::")
+            elif clock_style == "neon_synthwave":
+                time_str = f"⚡ {hours_str}{sep}{mins_str}" + (f"{sep}{secs_str}" if show_sec else "")
+            elif clock_style == "retro_casio":
+                time_str = f"LCD {hours_str}{sep}{mins_str}" + (f"'{secs_str}" if show_sec else "")
+            elif clock_style == "futuristic_hud":
+                time_str = f"SYS//{hours_str}{sep}{mins_str}" + (f".{secs_str}" if show_sec else "")
+            elif clock_style == "analog_hybrid":
+                time_str = f"◔ {hours_str}{sep}{mins_str}" + (f"{sep}{secs_str}" if show_sec else "")
             else:
-                if is_12h:
-                    time_str = now.strftime("%I:%M:%S %p" if show_sec else "%I:%M %p")
-                else:
-                    time_str = now.strftime("%H:%M:%S" if show_sec else "%H:%M")
+                suffix = f" {now.strftime('%p')}" if is_12h else ""
+                time_str = f"{hours_str}{sep}{mins_str}" + (f"{sep}{secs_str}" if show_sec else "") + suffix
 
             date_format = getattr(self.theme_manager, "date_format", "dd.mm.yyyy")
             if date_format == "mm/dd/yyyy":
@@ -344,7 +360,6 @@ class UIManagerCore:
                     self.theme_manager, "date_color", self.get_colors()["ON_SURFACE_VARIANT"]
                 )
 
-            # Обновляем крупный вертикальный виджет часов Android 14 (если он включен)
             if hasattr(self.panels, "android_clock_hours") and self.panels.android_clock_hours:
                 self.panels.android_clock_hours.value = hours_str
                 self.panels.android_clock_hours.color = getattr(
@@ -352,7 +367,9 @@ class UIManagerCore:
                 )
             if hasattr(self.panels, "android_clock_minutes") and self.panels.android_clock_minutes:
                 self.panels.android_clock_minutes.value = mins_str
-                self.panels.android_clock_minutes.color = self.get_colors()["ACCENT"]
+                self.panels.android_clock_minutes.color = getattr(
+                    self.theme_manager, "clock_accent_color", self.get_colors()["ACCENT"]
+                )
             if hasattr(self.panels, "android_clock_date") and self.panels.android_clock_date:
                 self.panels.android_clock_date.value = f"{date_str}" + (f" • {secs_str} сек" if show_sec else "")
 

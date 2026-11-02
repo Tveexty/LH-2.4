@@ -7,7 +7,7 @@ logger = get_logger(__name__)
 
 
 class ThemeManager:
-    # Расширенные стили часов v2.4 (включая вертикальные часы Android 14 и популярные веб-стили)
+    # 18 стилей часов в версии 2.5 (8 базовых + 10 новых дизайнерских стилей!)
     CLOCK_STYLES = {
         "android_vertical": "Android 14 Вертикальный (Крупный HH / MM)",
         "stacked": "Компактный вертикальный (14 / 32)",
@@ -17,6 +17,17 @@ class ThemeManager:
         "cyber_mono": "Киберпанк Моно ([ 14 : 32 : 08 ])",
         "minimal": "Минималистичный тонкий (14:32)",
         "compact_badge": "Бейдж с днем недели",
+        # --- 10 НОВЫХ СТИЛЕЙ ЧАСОВ В ВЕРСИИ 2.5 ---
+        "nothing_dot": "Nothing OS (Dot-Matrix 14·32·08)",
+        "ios_standby": "iOS 17 StandBy (Ночной Неон)",
+        "samsung_oneui": "Samsung OneUI 6 Lock",
+        "neon_synthwave": "Neon Synthwave 80s",
+        "retro_casio": "Retro LCD (Casio F-91W)",
+        "macos_sonoma": "macOS Sonoma Widget",
+        "futuristic_hud": "Sci-Fi Tactical HUD",
+        "analog_hybrid": "Гибридный Хронограф (Кольцо)",
+        "vertical_neon_bar": "Неоновая Вертикаль (Бар)",
+        "material_expressive": "Material You Expressive",
     }
 
     # Все прозрачные цвета записаны в формате Flet #AARRGGBB (Alpha в начале!)
@@ -149,7 +160,7 @@ class ThemeManager:
         self.smooth_animations = bool(settings.get("smooth_animations", True))
         self.android_animations = bool(settings.get("android_animations", True))
 
-        # Настройки времени, часов и шрифтов (v2.4)
+        # Настройки времени, часов и шрифтов (v2.5)
         self.time_format = settings.get("time_format", "24")
         self.date_format = settings.get("date_format", "dd.mm.yyyy")
         self.font_family = settings.get("font_family", "Segoe UI")
@@ -163,7 +174,7 @@ class ThemeManager:
         self.search_cache_enabled = bool(settings.get("search_cache_enabled", True))
         self.virtualization_enabled = bool(settings.get("virtualization_enabled", True))
 
-        # Расширенные настройки стилей часов v2.4 (по умолчанию вертикальные часы как на Android)
+        # 18 стилей часов и расширенный дизайн часов v2.5
         self.clock_style = settings.get("clock_style", "android_vertical")
         if self.clock_style not in self.CLOCK_STYLES:
             self.clock_style = "android_vertical"
@@ -178,11 +189,25 @@ class ThemeManager:
         self.date_color = settings.get(
             "date_color", self.get_theme(self.current_theme).get("ON_SURFACE_VARIANT", "#8b9bb4")
         )
+        self.clock_accent_color = settings.get("clock_accent_color", "#3b82f6")
+        self.clock_glow_enabled = bool(settings.get("clock_glow_enabled", True))
+        self.clock_glow_intensity = int(settings.get("clock_glow_intensity", 16))
+        self.clock_border_radius = int(settings.get("clock_border_radius", 14))
+        self.clock_bg_opacity = int(settings.get("clock_bg_opacity", 70))
+        self.clock_bold = bool(settings.get("clock_bold", True))
+        self.clock_blink_colon = bool(settings.get("clock_blink_colon", False))
+
         self.search_history_enabled = bool(settings.get("search_history_enabled", True))
 
-        # Новые важные настройки программы v2.4
+        # Расширенные настройки персонализации карточек и интерфейса v2.5
+        self.card_border_radius = int(settings.get("card_border_radius", 18))
+        self.card_hover_glow = bool(settings.get("card_hover_glow", True))
+        self.active_app_color = settings.get("active_app_color", "#10b981")
+        self.icon_scale_pct = int(settings.get("icon_scale_pct", 100))
+
+        # Настройки программы
         self.show_plugins_in_grid = bool(settings.get("show_plugins_in_grid", True))
-        self.launch_behavior = settings.get("launch_behavior", "keep")  # "keep" | "minimize"
+        self.launch_behavior = settings.get("launch_behavior", "keep")
         self.card_columns = int(settings.get("card_columns", 6))
         self.detox_notifications = bool(settings.get("detox_notifications", True))
         self.auto_update_enabled = bool(settings.get("auto_update_enabled", True))
@@ -219,7 +244,18 @@ class ThemeManager:
             "show_android_clock_widget": self.show_android_clock_widget,
             "time_color": self.time_color,
             "date_color": self.date_color,
+            "clock_accent_color": self.clock_accent_color,
+            "clock_glow_enabled": self.clock_glow_enabled,
+            "clock_glow_intensity": self.clock_glow_intensity,
+            "clock_border_radius": self.clock_border_radius,
+            "clock_bg_opacity": self.clock_bg_opacity,
+            "clock_bold": self.clock_bold,
+            "clock_blink_colon": self.clock_blink_colon,
             "search_history_enabled": self.search_history_enabled,
+            "card_border_radius": self.card_border_radius,
+            "card_hover_glow": self.card_hover_glow,
+            "active_app_color": self.active_app_color,
+            "icon_scale_pct": self.icon_scale_pct,
             "show_plugins_in_grid": self.show_plugins_in_grid,
             "launch_behavior": self.launch_behavior,
             "card_columns": self.card_columns,
@@ -254,7 +290,7 @@ class ThemeManager:
 
         if page:
             page.bgcolor = theme["BG"]
-            if theme_name in ["light", "spring"]:
+            if theme_name in ["light", "spring"] or theme.get("MODE") == "light":
                 page.theme_mode = ft.ThemeMode.LIGHT
             else:
                 page.theme_mode = ft.ThemeMode.DARK
@@ -376,6 +412,13 @@ class ThemeManager:
         clock_glass_frame=None,
         time_font_size=None,
         show_android_clock_widget=None,
+        clock_accent_color=None,
+        clock_glow_enabled=None,
+        clock_glow_intensity=None,
+        clock_border_radius=None,
+        clock_bg_opacity=None,
+        clock_bold=None,
+        clock_blink_colon=None,
     ):
         if style in self.CLOCK_STYLES:
             self.clock_style = style
@@ -390,11 +433,42 @@ class ThemeManager:
         if show_android_clock_widget is not None:
             self.show_android_clock_widget = bool(show_android_clock_widget)
         if time_font_size is not None:
-            self.time_font_size = max(14, min(48, int(time_font_size)))
+            self.time_font_size = max(14, min(52, int(time_font_size)))
         if isinstance(time_color, str) and time_color.startswith("#"):
             self.time_color = time_color
         if isinstance(date_color, str) and date_color.startswith("#"):
             self.date_color = date_color
+        if isinstance(clock_accent_color, str) and clock_accent_color.startswith("#"):
+            self.clock_accent_color = clock_accent_color
+        if clock_glow_enabled is not None:
+            self.clock_glow_enabled = bool(clock_glow_enabled)
+        if clock_glow_intensity is not None:
+            self.clock_glow_intensity = max(4, min(36, int(clock_glow_intensity)))
+        if clock_border_radius is not None:
+            self.clock_border_radius = max(4, min(32, int(clock_border_radius)))
+        if clock_bg_opacity is not None:
+            self.clock_bg_opacity = max(0, min(100, int(clock_bg_opacity)))
+        if clock_bold is not None:
+            self.clock_bold = bool(clock_bold)
+        if clock_blink_colon is not None:
+            self.clock_blink_colon = bool(clock_blink_colon)
+        self.save_settings()
+
+    def set_personalization_preferences(
+        self,
+        card_border_radius=None,
+        card_hover_glow=None,
+        active_app_color=None,
+        icon_scale_pct=None,
+    ):
+        if card_border_radius is not None:
+            self.card_border_radius = max(8, min(32, int(card_border_radius)))
+        if card_hover_glow is not None:
+            self.card_hover_glow = bool(card_hover_glow)
+        if isinstance(active_app_color, str) and active_app_color.startswith("#"):
+            self.active_app_color = active_app_color
+        if icon_scale_pct is not None:
+            self.icon_scale_pct = max(80, min(130, int(icon_scale_pct)))
         self.save_settings()
 
     def set_program_preferences(
