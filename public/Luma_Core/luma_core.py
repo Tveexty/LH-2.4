@@ -6,13 +6,15 @@ Luma Beta — Headless Core Engine (luma_core.py)
 Независимое фоновое ядро (Headless Daemon) для модульного десктопного лаунчера.
 Работает полностью без графических библиотек (GUI), обеспечивая:
   - Минимальное потребление памяти (~12–18 МБ RAM на Python, 0.0% CPU в простое)
-  - Локальный асинхронный IPC-сервер (TCP 127.0.0.1:45890) по протоколу JSON-RPC 2.0
-  - Полную отказоустойчивость: падение или перезапуск GUI-клиента не влияет на работу ядра
-  - Встроенный WidgetEngine (сбор нагрузки CPU/RAM 1 раз в секунду в фоновом потоке/корутине)
+  - Локальный асинхронный IPC-сервер (TCP 127.0.0.1:49215) по протоколу JSON-RPC 2.0
+  - Полную отказоустойчивость: падение или закрытие GUI-клиента (включая Flet Дашборд плиток)
+    не влияет на работу ядра
+  - Модульный сервис виджетов WidgetManager (SystemStatsWidget + QuickNoteWidget)
+    с поддержкой методов `widgets.get_all` и `widgets.update_note`
   - Модульные сервисы: ProcessManager, ConfigManager, WidgetService, HotkeyManager
 
 Запуск:
-  python luma_core.py --host 127.0.0.1 --port 45890
+  python luma_core.py --host 127.0.0.1 --port 49215
   python luma_core.py --self-test
 """
 
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import inspect
 import json
 import logging
 import os
@@ -27,21 +30,29 @@ import platform
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-# Опциональный импорт psutil (если установлен — дает точные метрики ОС,
-# если нет — используется легковесный встроенный системный сборщик без внешних зависимостей)
-try:
-    import psutil  # type: ignore
-except ImportError:
-    psutil = None
+# Обеспечиваем корректный импорт пакета core при запуске из любой рабочей директории
+CORE_ROOT = Path(__file__).resolve().parent
+if str(CORE_ROOT) not in sys.path:
+    sys.path.insert(0, str(CORE_ROOT))
 
-LUMA_VERSION = "0.9.4-beta"
+from core.widget_service import (  # noqa: E402
+    BaseWidget,
+    QuickNoteWidget,
+    SystemMetricsCollector,
+    SystemMetricsSnapshot,
+    SystemStatsWidget,
+    WidgetManager,
+)
+
+LUMA_VERSION = "0.9.5-beta"
 LUMA_CODENAME = "Nebula Headless"
 LUMA_KERNEL_VERSION = "6.8.0-luma-beta-x86_64 #1 SMP PREEMPT_DYNAMIC"
-LUMA_SECURITY_PATCH = "2026-11-01 (LumaGuard IPC ACL + PBKDF2-SHA256)"
+LUMA_SECURITY_PATCH = "2026-11-02 (LumaGuard IPC ACL + LiveTiles Engine)"
+DEFAULT_IPC_HOST = "127.0.0.1"
+DEFAULT_IPC_PORT = 49215
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,148 +63,7 @@ logger = logging.getLogger("LumaCore")
 
 
 # ============================================================================
-# 1. WIDGET ENGINE (Сбор системных метрик CPU / RAM раз в секунду)
-# ============================================================================
-@dataclass
-class SystemMetricsSnapshot:
-    cpu_percent: float
-    ram_percent: float
-    ram_used_mb: float
-    ram_total_mb: float
-    core_rss_mb: float
-    uptime_sec: int
-    timestamp: float
-
-
-class SystemMetricsCollector:
-    """
-    Простой и сверхлегкий класс внутри ядра Luma Beta, собирающий нагрузку CPU и RAM
-    ровно 1 раз в секунду в фоновом цикле и отдающий данные по JSON-RPC запросу
-    {"method": "widgets.get_data"}.
-    """
-
-    def __init__(self) -> None:
-        self._start_time = time.time()
-        self._running = False
-        self._task: Optional[asyncio.Task] = None
-        self._latest = SystemMetricsSnapshot(
-            cpu_percent=0.0,
-            ram_percent=0.0,
-            ram_used_mb=0.0,
-            ram_total_mb=16384.0,
-            core_rss_mb=14.2,
-            uptime_sec=0,
-            timestamp=time.time(),
-        )
-
-    def sample_once(self) -> SystemMetricsSnapshot:
-        """Снимает мгновенный срез нагрузки CPU и RAM с минимальными накладными расходами."""
-        uptime = int(time.time() - self._start_time)
-
-        if psutil is not None:
-            try:
-                cpu = float(psutil.cpu_percent(interval=None))
-                vm = psutil.virtual_memory()
-                proc = psutil.Process(os.getpid())
-                rss_mb = round(proc.memory_info().rss / (1024 * 1024), 2)
-                self._latest = SystemMetricsSnapshot(
-                    cpu_percent=round(cpu, 1),
-                    ram_percent=round(float(vm.percent), 1),
-                    ram_used_mb=round(vm.used / (1024 * 1024), 1),
-                    ram_total_mb=round(vm.total / (1024 * 1024), 1),
-                    core_rss_mb=rss_mb,
-                    uptime_sec=uptime,
-                    timestamp=round(time.time(), 3),
-                )
-                return self._latest
-            except Exception as exc:
-                logger.debug("Ошибка чтения psutil: %s", exc)
-
-        # Fallback без сторонних библиотек (Linux /proc или детерминированная телеметрия)
-        cpu_Load = 0.0
-        ram_pct = 41.5
-        ram_used = 6800.0
-        ram_total = 16384.0
-
-        if hasattr(os, "getloadavg"):
-            try:
-                load1, _, _ = os.getloadavg()
-                cores = os.cpu_count() or 4
-                cpu_Load = round(min(100.0, (load1 / cores) * 100.0), 1)
-            except OSError:
-                cpu_Load = 8.4
-
-        self._latest = SystemMetricsSnapshot(
-            cpu_percent=cpu_Load,
-            ram_percent=ram_pct,
-            ram_used_mb=ram_used,
-            ram_total_mb=ram_total,
-            core_rss_mb=14.2,
-            uptime_sec=uptime,
-            timestamp=round(time.time(), 3),
-        )
-        return self._latest
-
-    async def _sampling_loop(self) -> None:
-        """Фоновая корутина: опрашивает датчики строго раз в 1.0 секунду (0.0% CPU в простое)."""
-        self.sample_once()
-        while self._running:
-            await asyncio.sleep(1.0)
-            self.sample_once()
-
-    def start(self) -> None:
-        if not self._running:
-            self._running = True
-            self._task = asyncio.create_task(self._sampling_loop())
-            logger.info("WidgetEngine: фоновый сборщик CPU/RAM запущен (интервал 1.0 сек).")
-
-    async def stop(self) -> None:
-        self._running = False
-        if self._task:
-            self._task.cancel()
-            try:
-                await self._task
-            except asyncio.CancelledError:
-                pass
-
-    def get_widget_payload(self) -> Dict[str, Any]:
-        snap = self._latest
-        return {
-            "engine": "Luma WidgetService 1.0",
-            "interval_sec": 1,
-            "metrics": asdict(snap),
-            "widgets": [
-                {
-                    "id": "sys.cpu_monitor",
-                    "title": "Нагрузка ЦП (CPU)",
-                    "type": "gauge",
-                    "value": snap.cpu_percent,
-                    "unit": "%",
-                    "status": "normal" if snap.cpu_percent < 80 else "high",
-                },
-                {
-                    "id": "sys.ram_monitor",
-                    "title": "Оперативная память (RAM)",
-                    "type": "gauge",
-                    "value": snap.ram_percent,
-                    "used_mb": snap.ram_used_mb,
-                    "total_mb": snap.ram_total_mb,
-                    "unit": "%",
-                },
-                {
-                    "id": "luma.core_footprint",
-                    "title": "Потребление Luma Core (Headless)",
-                    "type": "badge",
-                    "value": snap.core_rss_mb,
-                    "unit": "MB",
-                    "idle_cpu_percent": 0.0,
-                },
-            ],
-        }
-
-
-# ============================================================================
-# 2. МОДУЛЬНЫЕ СЕРВИСЫ ЯДРА (ProcessManager, ConfigManager, HotkeyManager)
+# МОДУЛЬНЫЕ СЕРВИСЫ ЯДРА (ProcessManager, ConfigManager, HotkeyManager)
 # ============================================================================
 class ProcessManager:
     """Управление дочерними процессами (.exe / бинарниками), отслеживание PID и завершение."""
@@ -243,15 +113,15 @@ class ConfigManager:
 
     DEFAULT_CONFIG: Dict[str, Any] = {
         "core_version": LUMA_VERSION,
-        "ipc_host": "127.0.0.1",
-        "ipc_port": 45890,
+        "ipc_host": DEFAULT_IPC_HOST,
+        "ipc_port": DEFAULT_IPC_PORT,
         "metrics_interval_sec": 1.0,
         "max_ram_budget_mb": 25,
         "security_mode": "localhost_strict",
     }
 
     def __init__(self, config_path: Optional[Path] = None) -> None:
-        self.config_path = config_path or (Path(__file__).parent / "luma_config.json")
+        self.config_path = config_path or (CORE_ROOT / "luma_config.json")
         self._config: Dict[str, Any] = dict(self.DEFAULT_CONFIG)
         self.load()
 
@@ -292,6 +162,7 @@ class HotkeyManager:
         self._bindings: Dict[str, str] = {
             "Alt+Space": "ui.toggle_launcher",
             "Ctrl+Shift+L": "island.open_center",
+            "Ctrl+Shift+T": "ui.open_tiles_dashboard",
             "Ctrl+Shift+D": "core.diagnostics",
         }
 
@@ -304,29 +175,37 @@ class HotkeyManager:
 
 
 # ============================================================================
-# 3. JSON-RPC 2.0 СЕРВЕР И РОУТЕР ЯДРА LUMA BETA
+# JSON-RPC 2.0 СЕРВЕР И РОУТЕР ЯДРА LUMA BETA
 # ============================================================================
 class LumaCoreServer:
     """
-    Асинхронный локальный IPC-сервер Luma Beta по спецификации JSON-RPC 2.0.
+    Асинхронный локальный IPC-сервер Luma Beta по спецификации JSON-RPC 2.0 (127.0.0.1:49215).
     Каждое сообщение передается в виде JSON-строки (NDJSON / Line-delimited JSON-RPC).
-    Падение или принудительное закрытие GUI-клиента обрабатывается изолированно
-    и никогда не останавливает ядро.
+    Падение или закрытие любого GUI-клиента (основного окна или Flet-дашборда плиток)
+    обрабатывается изолированно и никогда не останавливает ядро.
     """
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 45890) -> None:
+    def __init__(self, host: str = DEFAULT_IPC_HOST, port: int = DEFAULT_IPC_PORT) -> None:
         self.host = host
         self.port = port
         self.metrics = SystemMetricsCollector()
+        self.widget_manager = WidgetManager(register_defaults=True)
         self.process_manager = ProcessManager()
         self.config_manager = ConfigManager()
         self.hotkey_manager = HotkeyManager()
         self._server: Optional[asyncio.AbstractServer] = None
+
+        # Таблица маршрутизации JSON-RPC 2.0 методов
         self._methods: Dict[str, Callable[[Dict[str, Any]], Any]] = {
             "system.ping": self._rpc_ping,
             "system.info": self._rpc_system_info,
+            # Новые методы сервиса виджетов (WidgetManager)
+            "widgets.get_all": self._rpc_widgets_get_all,
+            "widgets.update_note": self._rpc_widgets_update_note,
+            # Совместимость с базовыми вызовами виджетов
             "widgets.list": self._rpc_widgets_list,
             "widgets.get_data": self._rpc_widgets_get_data,
+            # Управление процессами, конфигом и хоткеями
             "process.list": lambda params: self.process_manager.list_processes(),
             "process.spawn": lambda params: self.process_manager.spawn_process(
                 params.get("command", ""), params.get("args", [])
@@ -346,6 +225,7 @@ class LumaCoreServer:
             "pong": True,
             "engine": "Luma Beta Headless Core",
             "version": LUMA_VERSION,
+            "endpoint": f"{self.host}:{self.port}",
             "timestamp": round(time.time(), 3),
         }
 
@@ -364,36 +244,42 @@ class LumaCoreServer:
             "core_rss_mb": snap.core_rss_mb,
             "idle_cpu_percent": 0.0,
             "uptime_sec": snap.uptime_sec,
+            "registered_widgets": [w["id"] for w in self.widget_manager.list_metadata()],
         }
 
+    async def _rpc_widgets_get_all(self, params: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """
+        IPC-метод `widgets.get_all`:
+        Возвращает полный словарь всех зарегистрированных в WidgetManager виджетов
+        и их актуальные данные (SystemStatsWidget, QuickNoteWidget и др.).
+        """
+        return await self.widget_manager.get_all_dump()
+
+    def _rpc_widgets_update_note(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        IPC-метод `widgets.update_note`:
+        Сохраняет переданный текст (`text` или `note`) в виджет `QuickNoteWidget`
+        внутри памяти работающего ядра.
+        """
+        new_text = params.get("text")
+        if new_text is None:
+            new_text = params.get("note", "")
+        result = self.widget_manager.update_note(str(new_text))
+        logger.info("WidgetManager: заметка в памяти ядра обновлена (%d симв.)", len(str(new_text)))
+        return result
+
     def _rpc_widgets_list(self, params: Dict[str, Any]) -> List[Dict[str, Any]]:
-        return [
-            {
-                "id": "sys.cpu_monitor",
-                "name": "CPU Load Monitor",
-                "interval_sec": 1,
-                "provider": "LumaCore.WidgetEngine",
-            },
-            {
-                "id": "sys.ram_monitor",
-                "name": "RAM Usage Monitor",
-                "interval_sec": 1,
-                "provider": "LumaCore.WidgetEngine",
-            },
-            {
-                "id": "luma.core_footprint",
-                "name": "Luma Headless Memory Footprint",
-                "interval_sec": 1,
-                "provider": "LumaCore.WidgetEngine",
-            },
-        ]
+        return self.widget_manager.list_metadata()
 
-    def _rpc_widgets_get_data(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        """Отдает актуальный JSON с нагрузкой CPU/RAM по запросу {"method": "widgets.get_data"}."""
-        return self.metrics.get_widget_payload()
+    async def _rpc_widgets_get_data(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Отдает метрики и срез всех виджетов для совместимости."""
+        widgets_dump = await self.widget_manager.get_all_dump()
+        payload = self.metrics.get_widget_payload()
+        payload["widgets_all"] = widgets_dump
+        return payload
 
-    def handle_jsonrpc_payload(self, raw_json: str) -> Optional[str]:
-        """Обрабатывает один JSON-RPC 2.0 запрос и возвращает сериализованный JSON-RPC ответ."""
+    async def handle_jsonrpc_payload_async(self, raw_json: str) -> Optional[str]:
+        """Асинхронно обрабатывает JSON-RPC 2.0 запрос и возвращает JSON-строку ответа."""
         req_id: Any = None
         try:
             payload = json.loads(raw_json)
@@ -446,8 +332,8 @@ class LumaCoreServer:
             if not isinstance(params, dict):
                 params = {}
             result = handler(params)
-            # Если запрос без id (Notification по стандарту JSON-RPC 2.0), но клиент вызвал короткую форму
-            # вроде {"method": "widgets.get_data"}, все равно возвращаем ответ для удобства IPC:
+            if inspect.isawaitable(result):
+                result = await result
             return json.dumps(
                 {
                     "jsonrpc": "2.0",
@@ -480,7 +366,7 @@ class LumaCoreServer:
                 raw_str = line.decode("utf-8", errors="replace").strip()
                 if not raw_str:
                     continue
-                response_str = self.handle_jsonrpc_payload(raw_str)
+                response_str = await self.handle_jsonrpc_payload_async(raw_str)
                 if response_str:
                     writer.write((response_str + "\n").encode("utf-8"))
                     await writer.drain()
@@ -494,7 +380,7 @@ class LumaCoreServer:
                 await writer.wait_closed()
             except Exception:
                 pass
-            logger.info("IPC-сессия закрыта: %s (ядро активно)", peer)
+            logger.info("IPC-сессия закрыта: %s (ядро активно в фоне)", peer)
 
     async def start(self) -> None:
         self.metrics.start()
@@ -513,29 +399,43 @@ class LumaCoreServer:
 
 
 async def run_self_test() -> int:
-    """Автономный самотест IPC-сервера Luma Beta (проверяет ping, widgets.list и widgets.get_data)."""
-    server = LumaCoreServer(host="127.0.0.1", port=45899)
+    """Автономный самотест IPC-сервера Luma Beta (проверяет widgets.get_all и widgets.update_note)."""
+    server = LumaCoreServer(host="127.0.0.1", port=DEFAULT_IPC_PORT)
     server.metrics.sample_once()
 
-    r1 = json.loads(server.handle_jsonrpc_payload('{"jsonrpc": "2.0", "method": "system.ping", "id": 1}') or "{}")
-    r2 = json.loads(server.handle_jsonrpc_payload('{"jsonrpc": "2.0", "method": "widgets.list", "id": 2}') or "{}")
-    r3 = json.loads(server.handle_jsonrpc_payload('{"method": "widgets.get_data"}') or "{}")
-    r4 = json.loads(server.handle_jsonrpc_payload('{"jsonrpc": "2.0", "method": "system.info", "id": 4}') or "{}")
+    r_ping = json.loads(
+        await server.handle_jsonrpc_payload_async('{"jsonrpc": "2.0", "method": "system.ping", "id": 1}') or "{}"
+    )
+    r_all_initial = json.loads(
+        await server.handle_jsonrpc_payload_async('{"jsonrpc": "2.0", "method": "widgets.get_all", "id": 2}') or "{}"
+    )
+    r_note_update = json.loads(
+        await server.handle_jsonrpc_payload_async(
+            '{"jsonrpc": "2.0", "method": "widgets.update_note", "params": {"text": "Тестовая заметка в ядре Luma!"}, "id": 3}'
+        )
+        or "{}"
+    )
+    r_all_after = json.loads(
+        await server.handle_jsonrpc_payload_async('{"jsonrpc": "2.0", "method": "widgets.get_all", "id": 4}') or "{}"
+    )
 
-    assert r1.get("result", {}).get("pong") is True, "Ping check failed"
-    assert len(r2.get("result", [])) >= 3, "widgets.list check failed"
-    assert "metrics" in r3.get("result", {}), "widgets.get_data check failed"
-    assert r4.get("result", {}).get("luma_version") == LUMA_VERSION, "system.info check failed"
+    assert r_ping.get("result", {}).get("pong") is True, "Ping check failed"
+    assert "system_stats" in r_all_initial.get("result", {}), "system_stats missing in widgets.get_all"
+    assert "quick_note" in r_all_initial.get("result", {}), "quick_note missing in widgets.get_all"
+    assert r_note_update.get("result", {}).get("status") == "saved", "widgets.update_note failed"
+    assert (
+        r_all_after["result"]["quick_note"]["data"]["text"] == "Тестовая заметка в ядре Luma!"
+    ), "QuickNote state was not persisted in memory"
 
     print("Luma Beta Core Self-Test PASSED!")
-    print(" -> widgets.get_data response:", json.dumps(r3, ensure_ascii=False))
+    print(" -> widgets.get_all response:", json.dumps(r_all_after, ensure_ascii=False, indent=2))
     return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Luma Beta Headless Core Daemon")
-    parser.add_argument("--host", default="127.0.0.1", help="Bind address (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=45890, help="Bind port (default: 45890)")
+    parser.add_argument("--host", default=DEFAULT_IPC_HOST, help=f"Bind address (default: {DEFAULT_IPC_HOST})")
+    parser.add_argument("--port", type=int, default=DEFAULT_IPC_PORT, help=f"Bind port (default: {DEFAULT_IPC_PORT})")
     parser.add_argument("--self-test", action="store_true", help="Run JSON-RPC contract self-test and exit")
     args = parser.parse_args()
 

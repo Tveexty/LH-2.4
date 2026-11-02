@@ -832,25 +832,39 @@ export const INITIAL_WINDOWS_NOTIFICATIONS: IslandNotificationItem[] = [
 
 export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string; summary: string }[] = [
   {
+    path: 'Luma_Core/core/widget_service.py',
+    title: 'Luma_Core/core/widget_service.py',
+    badge: 'WIDGET SERVICE',
+    summary:
+      'Сервис виджетов ядра: BaseWidget (ABC), SystemStatsWidget (CPU, RAM, Диск), QuickNoteWidget (заметка в памяти демона) и WidgetManager.',
+  },
+  {
     path: 'Luma_Core/luma_core.py',
     title: 'Luma_Core/luma_core.py',
     badge: 'LUMA BETA',
     summary:
-      'Независимое фоновое Headless-ядро (JSON-RPC 2.0 сокет 127.0.0.1:45890, WidgetEngine с опросом CPU/RAM раз в 1 сек, ProcessManager, ConfigManager, HotkeyManager).',
+      'Независимое фоновое Headless-ядро (JSON-RPC 2.0 сокет 127.0.0.1:49215, регистрация WidgetManager, методы widgets.get_all и widgets.update_note).',
+  },
+  {
+    path: 'Luma_Core/ui_tiles_dashboard.py',
+    title: 'ui_tiles_dashboard.py',
+    badge: 'FLET TILES',
+    summary:
+      'Третье окно — Дашборд плиток на Flet (127.0.0.1:49215, карточки SystemStats 2x1 и QuickNote 1x1, автоопрос каждую 1 сек и полный выход os._exit(0) без остановки ядра).',
   },
   {
     path: 'Luma_Core/ARCHITECTURE.md',
     title: 'Luma_Core/ARCHITECTURE.md',
     badge: 'CONTRACT',
     summary:
-      'Архитектурная спецификация Luma Beta: структура директорий Luma_Core/, контракт JSON-RPC 2.0 (system.ping, widgets.get_data, widgets.list) и отказоустойчивость.',
+      'Архитектурная спецификация Luma Beta: структура директорий Luma_Core/, контракт JSON-RPC 2.0 и отказоустойчивость.',
   },
   {
     path: 'Luma_Core/test_ipc_client.py',
     title: 'Luma_Core/test_ipc_client.py',
     badge: 'IPC TEST',
     summary:
-      'Асинхронный тестовый клиент JSON-RPC 2.0 для проверки локального сокета Luma Beta и метода {"method": "widgets.get_data"}.',
+      'Асинхронный тестовый клиент JSON-RPC 2.0 для проверки локального сокета 127.0.0.1:49215 (widgets.get_all, widgets.update_note).',
   },
   {
     path: 'modules/dynamic_island.py',
