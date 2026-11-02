@@ -102,6 +102,7 @@ import {
   WindowsNotificationItem,
   WorkspacePreset,
 } from './data/launcherData';
+import { TileGridHome30 } from './components/TileGridHome30';
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Gamepad2,
@@ -210,6 +211,9 @@ export default function App() {
 
   // --- Navigation & Section Transition State ---
   const [activeSection, setActiveSection] = useState<'apps' | 'tracker' | 'python_code'>('apps');
+  const [windowDisplayMode, setWindowDisplayMode] = useState<'tile_grid' | 'quick_search'>(
+    savedState?.windowDisplayMode || 'tile_grid'
+  );
   const [sectionAnimating, setSectionAnimating] = useState<boolean>(false);
   const [currentFilter, setCurrentFilter] = useState<'all' | 'web' | 'app' | 'system' | 'plugin' | 'custom'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -586,19 +590,20 @@ export default function App() {
     return () => clearInterval(timer);
   }, [sessionTrackerEnabled, pomodoroRunning, islandTimerRunning, islandStopwatchRunning]);
 
-  // Load selected Python file from /Luma_Core/ or /launcher_hab2.4/
+  // Load selected C# 3.0 or Python file from /LauncherHab3.0_CSharp/, /Luma_Core/, or /launcher_hab2.4/
   useEffect(() => {
     let cancelled = false;
-    const targetUrl = selectedPyFile.startsWith('Luma_Core/')
-      ? `/${selectedPyFile}`
-      : `/launcher_hab2.4/${selectedPyFile}`;
+    const targetUrl =
+      selectedPyFile.startsWith('LauncherHab3.0_CSharp/') || selectedPyFile.startsWith('Luma_Core/')
+        ? `/${selectedPyFile}`
+        : `/launcher_hab2.4/${selectedPyFile}`;
     fetch(targetUrl)
       .then((res) => (res.ok ? res.text() : Promise.reject('Failed')))
       .then((text) => {
         if (!cancelled) setPyFileContent(text);
       })
       .catch(() => {
-        if (!cancelled) setPyFileContent('# Не удалось загрузить файл предпросмотра');
+        if (!cancelled) setPyFileContent('// Не удалось загрузить файл предпросмотра');
       });
     return () => {
       cancelled = true;
@@ -699,6 +704,29 @@ export default function App() {
       }
     } catch {
       // ignore
+    }
+  };
+
+  const playFeedbackBeep = (freq = 720) => {
+    if (isMuted) return;
+    try {
+      const AudioCtx =
+        window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!audioCtxRef.current) audioCtxRef.current = new AudioCtx();
+      const ctx = audioCtxRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(Math.max(0.02, (volume / 100) * 0.12), ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+    } catch {
+      // ignore audio restrictions
     }
   };
 
@@ -1081,25 +1109,42 @@ export default function App() {
 
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-base lg:text-lg font-bold tracking-tight whitespace-nowrap">
-              Launcher Hab 2.6
+              Launcher Hab 3.0
             </span>
-            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              v2.6 ISLAND
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-violet-500/20 text-violet-300 border border-violet-500/40">
+              C# .NET 8 • LUMA 1.0
             </span>
           </div>
 
-          {/* Section Switcher */}
+          {/* Section Switcher + Mode Toggle (Tile Grid 3.0 vs Quick Search Classic) */}
           <nav className="hidden xl:flex items-center gap-1 p-1 rounded-xl bg-[#0d111a]/80 border border-slate-700/60 ml-1">
             <button
-              onClick={() => handleSwitchSection('apps')}
+              onClick={() => {
+                handleSwitchSection('apps');
+                setWindowDisplayMode('tile_grid');
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                activeSection === 'apps'
+                activeSection === 'apps' && windowDisplayMode === 'tile_grid'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              Приложения
+              Плитки 3.0
+            </button>
+            <button
+              onClick={() => {
+                handleSwitchSection('apps');
+                setWindowDisplayMode('quick_search');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                activeSection === 'apps' && windowDisplayMode === 'quick_search'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              Быстрый поиск
             </button>
             <button
               onClick={() => handleSwitchSection('tracker')}
@@ -1126,7 +1171,7 @@ export default function App() {
               }`}
             >
               <Code2 className="w-3.5 h-3.5" />
-              Python Код v2.6
+              Код C# 3.0 / Luma 1.0
             </button>
           </nav>
         </div>
@@ -1515,9 +1560,10 @@ export default function App() {
         </div>
       </header>
 
-      {/* ==================== MAIN BODY (Sidebar + Main Viewport matching Screenshot 2) ==================== */}
+      {/* ==================== MAIN BODY (Sidebar + Main Viewport) ==================== */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* LEFT SIDEBAR (Matches Screenshot 2 dark slate cards without yellow borders) */}
+        {/* LEFT SIDEBAR (Shown in Classic Quick Search mode or other sections) */}
+        {(windowDisplayMode === 'quick_search' || activeSection !== 'apps') && (
         <aside
           className={`w-80 lg:w-88 shrink-0 flex flex-col border-r transition-all ${
             currentTheme.isDark ? 'border-slate-800/90' : 'border-slate-300/80'
@@ -1682,6 +1728,7 @@ export default function App() {
             </button>
           </div>
         </aside>
+        )}
 
         {/* ==================== MAIN CONTENT AREA ==================== */}
         <main className="flex-1 overflow-y-auto p-6 relative">
@@ -1690,9 +1737,58 @@ export default function App() {
               sectionAnimating ? 'opacity-0 scale-[0.99] translate-y-1' : 'opacity-100 scale-100 translate-y-0'
             }`}
           >
-            {/* -------------------- SECTION 1: APPS, ANDROID VERTICAL CLOCK & PLUGINS -------------------- */}
-            {activeSection === 'apps' && (
+            {/* -------------------- SECTION 1A: NEW 3.0 TILE GRID HOME SCREEN (12 WIDGETS + FOLDERS + LIVE TILES) -------------------- */}
+            {activeSection === 'apps' && windowDisplayMode === 'tile_grid' && (
+              <div className="max-w-7xl mx-auto">
+                <TileGridHome30
+                  apps={combinedApps}
+                  isDark={currentTheme.isDark}
+                  accentHex={currentTheme.accentHex}
+                  cardBorderRadius={cardBorderRadius}
+                  iconScalePct={iconScalePct}
+                  volume={volume}
+                  isMuted={isMuted}
+                  onChangeVolume={handleVolumeChange}
+                  onToggleMute={handleToggleMute}
+                  onLaunchApp={handleLaunchApp}
+                  onSwitchToClassicSearch={() => {
+                    setWindowDisplayMode('quick_search');
+                    pushToast(
+                      'Режим Быстрого Поиска',
+                      'Включено классическое окно с боковой библиотекой и мгновенным поиском',
+                      'info'
+                    );
+                  }}
+                  onPushNotification={(title, msg, type) => {
+                    pushToast(title, msg, type || 'info');
+                    pushIslandNotification('Luma Core 1.0', title, msg, '⚡');
+                  }}
+                  onPlayBeep={playFeedbackBeep}
+                  iconMap={ICON_MAP}
+                />
+              </div>
+            )}
+
+            {/* -------------------- SECTION 1B: CLASSIC QUICK SEARCH WINDOW (Old Window Mode) -------------------- */}
+            {activeSection === 'apps' && windowDisplayMode === 'quick_search' && (
               <div className="space-y-6 max-w-6xl mx-auto">
+                {/* Mode Banner to return to Tile Grid 3.0 */}
+                <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs">
+                    <Search className="w-4 h-4 text-blue-400" />
+                    <span>
+                      Активен режим <strong>«Быстрый поиск (Классическое окно)»</strong>. Вы можете в любой момент вернуться на новый Плиточный экран 3.0.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setWindowDisplayMode('tile_grid')}
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    Перейти на Плиточный экран 3.0
+                  </button>
+                </div>
+
                 {/* ANDROID 14 / 18 STYLES CLOCK WIDGET BANNER (v2.5) */}
                 {showAndroidClockWidget && (
                   <section

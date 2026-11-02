@@ -832,6 +832,48 @@ export const INITIAL_WINDOWS_NOTIFICATIONS: IslandNotificationItem[] = [
 
 export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string; summary: string }[] = [
   {
+    path: 'LauncherHab3.0_CSharp/LauncherHab3.csproj',
+    title: 'LauncherHab3.0_CSharp/LauncherHab3.csproj',
+    badge: 'C# .NET 8',
+    summary:
+      'Манифест проекта C# (.NET 8 Windows WPF + WASAPI + CommunityToolkit.Mvvm) для релиза Launcher Hab 3.0 и ядра Luma 1.0.',
+  },
+  {
+    path: 'LauncherHab3.0_CSharp/LumaCore/LumaCoreDaemon.cs',
+    title: 'LumaCore/LumaCoreDaemon.cs',
+    badge: 'LUMA 1.0 C#',
+    summary:
+      'Независимое фоновое ядро Luma 1.0 на C# (JSON-RPC 2.0 сокет 127.0.0.1:49215, ProcessManager с Watchdog-перезапуском, WidgetEngine и PluginHostV3).',
+  },
+  {
+    path: 'LauncherHab3.0_CSharp/LumaCore/SecurityKernel.cs',
+    title: 'LumaCore/SecurityKernel.cs',
+    badge: 'SECURITY 3.0',
+    summary:
+      'Обновленное ядро безопасности Luma 1.0: шифрование AES-256-GCM (96-бит Nonce + 128-бит AuthTag), PBKDF2-HMAC-SHA512 (310 000 итераций) и HMAC-подпись IPC пакетов.',
+  },
+  {
+    path: 'LauncherHab3.0_CSharp/LumaCore/WidgetEngine.cs',
+    title: 'LumaCore/WidgetEngine.cs',
+    badge: '12 WIDGETS C#',
+    summary:
+      'Движок всех 12 интерактивных виджетов 3.0: CPU/RAM 2x1, Диски C/D 2x1, Аудио-микшер 1x1, Заметки & To-Do 2x2, Часы/Аптайм 1x1, Быстрый запуск 2x1, Сеть 1x1/2x1, Медиаплеер 2x1, Помидор 1x1, Погода Open-Meteo 1x1/2x1, Калькулятор/Конвертер 2x1 и Питание 1x1.',
+  },
+  {
+    path: 'LauncherHab3.0_CSharp/LumaCore/PluginApiV3.cs',
+    title: 'LumaCore/PluginApiV3.cs',
+    badge: 'PLUGIN API 3.0',
+    summary:
+      'Контракт ILumaPluginV3 на C#: изолированный AssemblyLoadContext, разрешения (Permissions), регистрация кастомных плиток (1x1, 2x1, 2x2) и шифрованное хранилище секретов.',
+  },
+  {
+    path: 'LauncherHab3.0_CSharp/UI/MainWindow.xaml.cs',
+    title: 'UI/MainWindow.xaml.cs',
+    badge: 'TILE GRID 3.0',
+    summary:
+      'Главное окно 3.0 в стиле живых плиток (телефон / ПК) с переключателем в классический Быстрый поиск, созданием папок и изменением размеров папок, виджетов и иконок приложений (1x1, 2x1, 2x2).',
+  },
+  {
     path: 'Luma_Core/core/widget_service.py',
     title: 'Luma_Core/core/widget_service.py',
     badge: 'WIDGET SERVICE',
@@ -958,8 +1000,35 @@ export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string;
   },
 ];
 
-// Полная история версий с 1.0 до 2.6
+// Полная история версий с 1.0 до 3.0
 export const VERSION_HISTORY: Record<string, string[]> = {
+  '3.0': [
+    '🚀 LAUNCHER HAB 3.0 (C# .NET 8 EDITION) & РЕЛИЗНОЕ ЯДРО LUMA CORE 1.0 — ПОЛНЫЙ ПЕРЕХОД НА C#, ПЛИТОЧНЫЙ ЭКРАН, ПАПКИ И 12 СИСТЕМНЫХ ВИДЖЕТОВ',
+    '💜 ПОЛНЫЙ РЕРАЙТ АРХИТЕКТУРЫ НА ЯЗЫК C# (.NET 8 / WPF / WASAPI) — нативная производительность, строгая типизация, минимальное потребление ОЗУ и мгновенный отклик интерфейса',
+    '🧠 РЕЛИЗНОЕ ЯДРО LUMA CORE 1.0 STABLE — выход из стадии Luma Beta: асинхронный JSON-RPC 2.0 сервер на 127.0.0.1:49215, Watchdog-контроль процессов и атомарная UTF-8 запись конфигураций',
+    '🔐 ОБНОВЛЕННАЯ БЕЗОПАСНОСТЬ ЯДРА LUMA SECURITY 1.0 — аутентифицированное шифрование AES-256-GCM (96-бит Nonce + 128-бит AuthTag), деривация ключей PBKDF2-HMAC-SHA512 (310 000 итераций) и HMAC-SHA256 подпись IPC-пакетов с защитой от Replay-атак',
+    '📱 ПЛИТОЧНЫЙ ГЛАВНЫЙ ЭКРАН 3.0 + ПЕРЕКЛЮЧАТЕЛЬ В «БЫСТРЫЙ ПОИСК» (СТАРОЕ ОКНО) — настраиваемая сетка живых плиток как на современных смартфонах и ПК со свободной расстановкой элементов и мгновенным переключением обратно в классическое окно быстрого поиска',
+    '📁 СОЗДАНИЕ ПАПОК И НАСТРОЙКА РАЗМЕРОВ (1x1, 2x1, 2x2) — объединение приложений в папки, переименование, выбор цвета и независимое изменение размера для Папок, Иконок приложений и Виджетов',
+    '📊 12 ИНТЕРАКТИВНЫХ ВИДЖЕТОВ LUMA 1.0 НА ГЛАВНОМ ЭКРАНЕ — Системный монитор CPU/RAM (2x1), Анализатор дисков C:/D: (2x1), Аудио-микшер WASAPI (1x1), Быстрые заметки и To-Do чек-лист (2x2), Часы/Дата/Аптайм (1x1), Быстрый запуск утилит (2x1), Сетевой монитор Network I/O (1x1/2x1), Медиаплеер Now Playing (2x1), Таймер Помидор со звуком (1x1), Погода Open-Meteo (1x1/2x1), Быстрый калькулятор и конвертер (2x1), Управление питанием и блокировкой Win+L (1x1)',
+    '🌦️ ТОЧНЫЙ ПОИСК ПОГОДЫ ПО ЛЮБОМУ ГОРОДУ МИРА — прямая интеграция Open-Meteo Geocoding API + Forecast API с живым поиском городов на русском и английском языках, почасовым прогнозом и геолокацией',
+    '🔌 ПЛАГИН API 3.0 (ILumaPluginV3 C#) — изолированный контекст загрузки сборок .NET 8, система гранулярных разрешений (Permissions), регистрация собственных плиток и плавные 60fps анимации',
+  ],
+  '2.9': [
+    '🚀 LAUNCHER HAB 2.9 & LUMA BETA — ФИНАЛЬНАЯ СИНХРОНИЗАЦИЯ ТРЕХ ОКОН И АВТОЗАПУСК ДЕМОНА',
+    '🧠 АВТОМАТИЧЕСКИЙ ЗАПУСК LUMA CORE — лаунчер сам поднимает фоновый демон ядра при старте, если порт 127.0.0.1:49215 свободен',
+    '🪟 РЕЖИМ ТРЕХ ОКОН — бесшовная работа Библиотеки, Быстрого запуска (Quick Launch) и Дашборда плиток Luma (Tiles Dashboard)',
+    '🛡️ СТАБИЛЬНОСТЬ UTF-8 И PYCAW — устранены конфликты кодировок JSON на Windows и ошибки COM-потоков аудио',
+  ],
+  '2.8': [
+    '🚀 LAUNCHER HAB 2.8 — РАСШИРЕННЫЙ ДАШБОРД ПЛИТОК LUMA И УЛУЧШЕННЫЙ IPC КЛИЕНТ',
+    '📡 АСИНХРОННЫЙ МОСТ IPC_CLIENT — неблокирующий обмен пакетами JSON-RPC 2.0 между Flet-интерфейсом и фоновым ядром',
+    '📝 СИНХРОНИЗАЦИЯ БЫСТРЫХ ЗАМЕТОК В ПАМЯТИ ЯДРА — мгновенное сохранение заметок между перезапусками графического клиента',
+  ],
+  '2.7': [
+    '🚀 LAUNCHER HAB 2.7 — ПРОТОТИП ЯДРА LUMA BETA И СЕРВИС ВИДЖЕТОВ',
+    '⚙️ HEADLESS-ДЕМОН LUMA_CORE.PY — фоновый TCP-сервер на 127.0.0.1:49215 с нулевой нагрузкой на CPU в простое',
+    '🧩 БАЗОВЫЙ СЕРВИС ВИДЖЕТОВ WIDGET_SERVICE — архитектура BaseWidget, SystemStatsWidget и QuickNoteWidget',
+  ],
   '2.6': [
     '🚀 LAUNCHER HAB 2.6 — DYNAMIC ISLAND, НАСТРОЙКИ В СТИЛЕ ANDROID, АДАПТИВНАЯ ТЕМА ДЕНЬ/НОЧЬ, АВТООБНОВЛЕНИЕ С GITHUB И ПКМ «НАЗАД»',
     '🏝️ ВСЕГДА АКТИВНЫЙ DYNAMIC ISLAND — интерактивный остров в верхней панели с постоянным отображением статуса, времени, даты и процентов заряда устройства',
