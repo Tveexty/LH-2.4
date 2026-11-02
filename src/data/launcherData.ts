@@ -832,6 +832,27 @@ export const INITIAL_WINDOWS_NOTIFICATIONS: IslandNotificationItem[] = [
 
 export const PYTHON_PROJECT_FILES: { path: string; title: string; badge: string; summary: string }[] = [
   {
+    path: 'Luma_Core/luma_core.py',
+    title: 'Luma_Core/luma_core.py',
+    badge: 'LUMA BETA',
+    summary:
+      'Независимое фоновое Headless-ядро (JSON-RPC 2.0 сокет 127.0.0.1:45890, WidgetEngine с опросом CPU/RAM раз в 1 сек, ProcessManager, ConfigManager, HotkeyManager).',
+  },
+  {
+    path: 'Luma_Core/ARCHITECTURE.md',
+    title: 'Luma_Core/ARCHITECTURE.md',
+    badge: 'CONTRACT',
+    summary:
+      'Архитектурная спецификация Luma Beta: структура директорий Luma_Core/, контракт JSON-RPC 2.0 (system.ping, widgets.get_data, widgets.list) и отказоустойчивость.',
+  },
+  {
+    path: 'Luma_Core/test_ipc_client.py',
+    title: 'Luma_Core/test_ipc_client.py',
+    badge: 'IPC TEST',
+    summary:
+      'Асинхронный тестовый клиент JSON-RPC 2.0 для проверки локального сокета Luma Beta и метода {"method": "widgets.get_data"}.',
+  },
+  {
     path: 'modules/dynamic_island.py',
     title: 'modules/dynamic_island.py',
     badge: 'NEW v2.6',
